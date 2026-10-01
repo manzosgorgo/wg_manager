@@ -5,7 +5,7 @@
 - Path: `config/wg-client-test.conf`
 - Language: `unknown`
 - Lines: 33
-- SHA256: `649ecfb27acc89d8f8dc67bb5104709678ee8648c5c8ea4e2b6ecf39fbaf848b`
+- SHA256: `f5e223905f19dadffe2441808e6b2cbad627d8a14cb7b280da35ab937135baf4`
 
 ## Source
 
@@ -40,7 +40,7 @@ enabled = false
 
 session_id_size = 16
 nonce_size = 32
-session_key_size = 32
+session_key_size = 64
 counter_min = 1
 counter_max = 4294967295
 ```

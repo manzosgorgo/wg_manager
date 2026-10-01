@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_auth_client.py`
 - Language: `python`
-- Lines: 250
-- SHA256: `c69de200c931e19d3d675742b403947d16c84843ebf786a92ab813b5d3a084c1`
+- Lines: 246
+- SHA256: `9cc0e3c3850668ad9a8e546388f487056f1e60b9cfeb1a65895faefe7e1e5f75`
 - Imports:
   - `base64`
   - `ipaddress`
@@ -88,15 +88,10 @@ DEFAULT_SOCKET = "/run/wg_manager/wg-client-test.sock"
 def activation_params():
     return {
         "socket_path": DEFAULT_SOCKET,
-        "k_sess": (
-            "b7e4a2c91f6d0835"
-            "9a31c7e4b25f608d"
-            "4c8e1a73f0b692de"
-            "5a17c3f84e29b601"
-        ),
+        "k_sess": "ab" * 64,
         "timeout": 30,
         "client_id": "pytest-client",
-        "principal": {"username": "pytest-user"},
+        "principal": {"username": "pytest-user", "peers": []},
         "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
         "listen_path": "/api/7f3a91c2e8b44d17/9c71e4a2f6b83d10",
     }
@@ -109,6 +104,7 @@ def client(activation_params):
         wg_client_config.load_config(),
         k_session,
         session_id,
+        principal=activation_params["principal"],
     )
 
     return WGClientClient(

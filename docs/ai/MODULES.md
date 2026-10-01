@@ -4,13 +4,13 @@ This file is generated automatically.
 
 | Directory | Files |
 |---|---:|
-| `/` | 4 |
+| `/` | 5 |
 | `cert.old-20260930-145739` | 15 |
 | `config` | 6 |
 | `docs` | 8 |
 | `mock` | 1 |
 | `src` | 1 |
-| `src/wg_auth` | 8 |
+| `src/wg_auth` | 9 |
 | `src/wg_client` | 12 |
 | `src/wg_frontend` | 8 |
 | `src/wg_manager` | 1 |
@@ -20,12 +20,14 @@ This file is generated automatically.
 | `tests/auth` | 4 |
 | `tests/auth/js` | 6 |
 | `tests/client` | 10 |
+| `tests/e2e` | 1 |
 | `tests/frontend` | 4 |
 
 ## Contents
 
 ### `/`
 
+- `.gitignore`
 - `README.md`
 - `TODO.md`
 - `compile_commands.json`
@@ -87,6 +89,7 @@ This file is generated automatically.
 - `wg_auth_errors.py`
 - `wg_auth_lifecycle.py`
 - `wg_auth_session.py`
+- `wg_auth_user_store.py`
 
 ### `src/wg_client`
 
@@ -166,6 +169,10 @@ This file is generated automatically.
 - `test_secure_session_threadsefety.py`
 - `test_wg_client_activator.py`
 - `test_wg_client_integration.py`
+
+### `tests/e2e`
+
+- `test_js_full_flow.mjs`
 
 ### `tests/frontend`
 

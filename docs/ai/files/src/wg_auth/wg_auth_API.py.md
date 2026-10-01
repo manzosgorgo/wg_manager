@@ -4,15 +4,17 @@
 
 - Path: `src/wg_auth/wg_auth_API.py`
 - Language: `python`
-- Lines: 351
-- SHA256: `4db4d809e56e75031cdcdcd3f723dc7ec235f3c9761d2fe9ab8c7251b9fccd50`
+- Lines: 343
+- SHA256: `6cda9d4b88209f5f9a2f50e4a406af1a7b702d13d9f00fdca74cf0d6433927af`
 - Imports:
   - `http.server`
+  - `json`
   - `logging`
   - `src.wg_auth.wg_auth_API_handler`
   - `src.wg_auth.wg_auth_IPC`
   - `src.wg_auth.wg_auth_errors`
   - `src.wg_auth.wg_auth_session`
+  - `src.wg_auth.wg_auth_user_store`
   - `ssl`
   - `threading`
 
@@ -20,12 +22,14 @@
 
 ```python
 import ssl
+import json
 import logging
 import threading
 from http.server import ThreadingHTTPServer
 
 from src.wg_auth.wg_auth_IPC import WGAuthIPC
 from src.wg_auth.wg_auth_errors import WGAuthSessionError, WGAuthAuthenticationError
+from src.wg_auth.wg_auth_user_store import WGAuthUserStore
 
 log = logging.getLogger("wg_auth.API")
 
@@ -39,6 +43,7 @@ class WGAuthAPI:
     def __init__(self, config, lifecycle):
         self.config = config
         self.lifecycle = lifecycle
+        self.user_store = WGAuthUserStore(config["auth"]["login_dir"])
 
         self.session = None
         self.ipc = None
@@ -101,29 +106,18 @@ class WGAuthAPI:
                     "session already active"
                 )
 
-            record_path = (
-                    self.config["auth"]["login_dir"]
-                    + "/"
-                    + username
-            )
-
             try:
-                with open(record_path, "rb") as f:
-                    credential_record = f.read()
-            except FileNotFoundError:
-                raise WGAuthAuthenticationError(
-                    "authentication failed"
-                )
-
-            if len(credential_record) != 256:
+                user = self.user_store.load(username)
+            except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError):
                 raise WGAuthAuthenticationError(
                     "authentication failed"
                 )
 
             session = WGAuthSession(
-                username=username,
-                credential_record=credential_record,
+                username=user.username,
+                credential_record=user.credential_record,
                 context=b"wg-manager",
+                principal=user.principal,
             )
 
             response = session.create_credential_response(pubU)
@@ -174,7 +168,7 @@ class WGAuthAPI:
                 timeout=int(self.config["client"]["timeout"]),
                 listen_path=self.config["client"]["listen_path"],
                 lifecycle=self.lifecycle,
-                principal={"username": session.username},
+                principal=session.principal,
             )
 
             self.ipc = ipc

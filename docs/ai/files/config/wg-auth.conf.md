@@ -5,13 +5,13 @@
 - Path: `config/wg-auth.conf`
 - Language: `unknown`
 - Lines: 17
-- SHA256: `4c46f20567b525f64eb96e709a51c98a0b8b8020117601905728df0b3b1c6be0`
+- SHA256: `6aa4dc8ac96cc122825a9df370c8a335eab47a1a43336bf5aa6d067c74d81e84`
 
 ## Source
 
 ```
 [auth]
-fake_id = test-user
+fake_id = admin
 login_dir = /home/main/Desktop/wg_manager/login
 
 [client]

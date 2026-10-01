@@ -16,11 +16,13 @@ This file is generated automatically.
 ## `src/wg_auth/wg_auth_API.py`
 
 - `http.server`
+- `json`
 - `logging`
 - `src.wg_auth.wg_auth_API_handler`
 - `src.wg_auth.wg_auth_IPC`
 - `src.wg_auth.wg_auth_errors`
 - `src.wg_auth.wg_auth_session`
+- `src.wg_auth.wg_auth_user_store`
 - `ssl`
 - `threading`
 
@@ -50,6 +52,14 @@ This file is generated automatically.
 - `opaque`
 - `secrets`
 - `src.wg_auth.wg_auth_errors`
+
+## `src/wg_auth/wg_auth_user_store.py`
+
+- `base64`
+- `binascii`
+- `dataclasses`
+- `json`
+- `os`
 
 ## `src/wg_client/wg_client.py`
 
@@ -284,6 +294,19 @@ This file is generated automatically.
 - `threading`
 - `time`
 - `urllib.parse`
+
+## `tests/e2e/test_js_full_flow.mjs`
+
+- `../../src/wg_frontend/wg_secure_session.js`
+- `../auth/js/opaque_client.js`
+- `../auth/js/wg_auth_client.js`
+- `node:assert/strict`
+- `node:crypto`
+- `node:fs`
+- `node:https`
+- `node:module`
+- `node:path`
+- `node:url`
 
 ## `tests/frontend/test_cross_language_vector.py`
 

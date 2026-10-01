@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_session.py`
 - Language: `python`
-- Lines: 157
-- SHA256: `9f310ba792ce654ea99c7303eb1afc5f0d92bd668f764e68ec1c6af0f31cd999`
+- Lines: 171
+- SHA256: `3ebf4b5cb24a5cbed3b8da2d5724e83018905efdb0bb4f904f311cc14fc1ee6a`
 - Imports:
   - `logging`
   - `opaque`
@@ -29,6 +29,10 @@ from src.wg_auth.wg_auth_errors import (
 
 log = logging.getLogger("wg-auth")
 
+# python-opaque currently establishes a 64-byte shared session secret.
+# Keep this separate from the length of the keys WGSecureSession derives.
+OPAQUE_SESSION_KEY_SIZE = 64
+
 
 class WGAuthSession:
 
@@ -36,10 +40,11 @@ class WGAuthSession:
     STATE_AUTHENTICATING = "AUTHENTICATING"
     STATE_AUTHENTICATED = "AUTHENTICATED"
 
-    def __init__(self, username, credential_record, context):
+    def __init__(self, username, credential_record, context, principal=None):
         self.username = username
         self.credential_record = credential_record
         self.context = context
+        self.principal = principal or {"username": username, "peers": []}
 
         self._state = self.STATE_NEW
 
@@ -114,6 +119,15 @@ class WGAuthSession:
             raise WGAuthAuthenticationError(
                 "authentication failed"
             ) from exc
+
+        if not isinstance(sk_server, bytes) or len(sk_server) != OPAQUE_SESSION_KEY_SIZE:
+            log.error(
+                "unexpected OPAQUE session key size: %r",
+                len(sk_server) if isinstance(sk_server, bytes) else type(sk_server),
+            )
+            raise WGAuthAuthenticationError(
+                "unsupported OPAQUE session key"
+            )
 
         self._authU0 = authU0
         self._k_session = sk_server.hex()

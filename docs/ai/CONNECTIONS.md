@@ -36,7 +36,7 @@ Generated mechanically by `tools/project_index.py`.
 - `WGAuthAPI._create_server`
 
 **Evidence:**
-- `src/wg_auth/wg_auth_API.py:320` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
+- `src/wg_auth/wg_auth_API.py:312` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
 
 **Message surfaces:**
 - **HTTP**
@@ -120,7 +120,7 @@ Generated mechanically by `tools/project_index.py`.
 - `main`
 
 **Evidence:**
-- `src/wg_client/wg_client.py:144` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=os.dup(sys.stdin.fileno()))`
+- `src/wg_client/wg_client.py:150` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=os.dup(sys.stdin.fileno()))`
 
 ### connection-005
 
@@ -269,8 +269,8 @@ Generated mechanically by `tools/project_index.py`.
 - `request`
 
 **Evidence:**
-- `tests/client/test_wg_client_integration.py:271` HTTP_CLIENT `http.client.HTTPSConnection('127.0.0.1', port, context=ctx, timeout=5)`
-- `tests/client/test_wg_client_integration.py:278` CLOSE `conn.close()`
+- `tests/client/test_wg_client_integration.py:298` HTTP_CLIENT `http.client.HTTPSConnection('127.0.0.1', port, context=ctx, timeout=5)`
+- `tests/client/test_wg_client_integration.py:305` CLOSE `conn.close()`
 
 ### connection-011
 

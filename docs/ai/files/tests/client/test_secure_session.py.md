@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_secure_session.py`
 - Language: `python`
-- Lines: 715
-- SHA256: `1683c639fe27e7314dec23e3845922b5cf641773b5e04eb64046eb5a97d0cff2`
+- Lines: 757
+- SHA256: `052d5839f8f72d54370237aba403ba851b4e91b5bf51821f4b193bfccf197e8b`
 - Imports:
   - `src.wg_client.wg_client_errors`
   - `src.wg_client.wg_secure_session`
@@ -42,7 +42,7 @@ from src.wg_client.wg_client_errors import (
     WGInvalidMACError,
 )
 
-K_SESSION = b"A" * 32
+K_SESSION = b"A" * 64
 SESSION_ID = b"B" * 16
 
 # Stessi default di wg_client.load_config(), riprodotti qui senza passare
@@ -304,8 +304,8 @@ def test_same_key_different_session_id_fails():
 
 def test_different_key_same_session_id_fails():
     """Session_id uguale ma K_session diverso -> chiavi derivate diverse -> fail."""
-    client = WGSecureSession(config, b"A" * 32, SESSION_ID)
-    server = WGSecureSession(config, b"Z" * 32, SESSION_ID)
+    client = WGSecureSession(config, b"A" * 64, SESSION_ID)
+    server = WGSecureSession(config, b"Z" * 64, SESSION_ID)
 
     auth = client.create_request_auth("GET", "/api/test", b"")
 
@@ -320,8 +320,8 @@ def test_different_key_same_session_id_fails():
 
 def test_different_key_and_session_id_fails():
     """Caso combinato: ne' K_session ne' session_id coincidono."""
-    client = WGSecureSession(config, b"A" * 32, b"X" * 16)
-    server = WGSecureSession(config, b"Z" * 32, b"Y" * 16)
+    client = WGSecureSession(config, b"A" * 64, b"X" * 16)
+    server = WGSecureSession(config, b"Z" * 64, b"Y" * 16)
 
     auth = client.create_request_auth("GET", "/api/test", b"")
 
@@ -728,4 +728,46 @@ if __name__ == "__main__":
         print(f"{failures} test falliti su {len(tests)}")
     else:
         print(f"Tutti i {len(tests)} test completati.")
+
+# ----------------------------------------------------------------------
+# Principal / authorization snapshot
+# ----------------------------------------------------------------------
+
+def test_non_admin_principal_can_access_only_owned_peers():
+    session = WGSecureSession(
+        config,
+        K_SESSION,
+        SESSION_ID,
+        principal={"username": "alice", "peers": ["peer-a"]},
+    )
+
+    assert session.can_access_peer("peer-a") is True
+    assert session.can_access_peer("peer-b") is False
+
+
+def test_admin_principal_can_access_every_peer():
+    session = WGSecureSession(
+        config,
+        K_SESSION,
+        SESSION_ID,
+        principal={"username": "admin", "peers": []},
+    )
+
+    assert session.is_admin is True
+    assert session.can_access_peer("any-peer") is True
+
+
+def test_session_peer_snapshot_tracks_current_session_changes():
+    session = WGSecureSession(
+        config,
+        K_SESSION,
+        SESSION_ID,
+        principal={"username": "alice", "peers": []},
+    )
+
+    session.register_peer("peer-a")
+    assert session.can_access_peer("peer-a") is True
+
+    session.unregister_peer("peer-a")
+    assert session.can_access_peer("peer-a") is False
 ```

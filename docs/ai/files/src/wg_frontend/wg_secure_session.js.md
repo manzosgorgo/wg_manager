@@ -4,8 +4,8 @@
 
 - Path: `src/wg_frontend/wg_secure_session.js`
 - Language: `javascript`
-- Lines: 683
-- SHA256: `d60b75a740d9f448f798f0199177a391d0bb3fed2ce01e69b99adf71f01f9df7`
+- Lines: 679
+- SHA256: `53bf9bc7e1530553197838fd1990b95786ee4779116d58c4a2217920479c616f`
 
 ## Source
 
@@ -28,9 +28,9 @@
  * check_vectors.mjs per la verifica automatica contro i vettori generati
  * dall'implementazione Python.
  *
- * Come in Python, la configurazione (session_id_size, nonce_size,
- * session_key_size, counter_min, counter_max) e' source of truth e viene
- * passata dal chiamante — non ci sono costanti hardcoded nel modulo.
+ * Come in Python, session_key_size controlla la lunghezza delle chiavi
+ * derivate con HKDF, non la lunghezza del segreto OPAQUE in ingresso.
+ * La dimensione del segreto OPAQUE appartiene al protocollo di attivazione.
  *
  * Differenze deliberate rispetto alla versione Python, dovute all'ambiente:
  *   - Le chiavi derivate (request_key/response_key) sono importate come
@@ -263,10 +263,6 @@ export class WGSecureSession {
     if (!(kSession instanceof Uint8Array)) {
       throw new WGInvalidFieldError("k_session must be a Uint8Array");
     }
-    if (kSession.length !== keySize) {
-      throw new WGInvalidFieldError(`k_session must be ${keySize} bytes`);
-    }
-
     if (sessionId === null) {
       sessionId = getRandomBytes(sessionIdSize);
     }

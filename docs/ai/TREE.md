@@ -43,7 +43,8 @@
 │   │   ├── wg_auth_IPC.py
 │   │   ├── wg_auth_errors.py
 │   │   ├── wg_auth_lifecycle.py
-│   │   └── wg_auth_session.py
+│   │   ├── wg_auth_session.py
+│   │   └── wg_auth_user_store.py
 │   ├── wg_client
 │   │   ├── __init__.py
 │   │   ├── wg_client.py
@@ -103,6 +104,8 @@
 │   │   ├── test_secure_session_threadsefety.py
 │   │   ├── test_wg_client_activator.py
 │   │   └── test_wg_client_integration.py
+│   ├── e2e
+│   │   └── test_js_full_flow.mjs
 │   ├── frontend
 │   │   ├── __init__.py
 │   │   ├── test_cross_language_vector.py
@@ -111,6 +114,7 @@
 │   ├── __init__.py
 │   ├── test_http_handler.py
 │   └── test_mock.py
+├── .gitignore
 ├── README.md
 ├── TODO.md
 ├── compile_commands.json

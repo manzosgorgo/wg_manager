@@ -1,7 +1,7 @@
 # Snapshot del protocollo (passo 2)
 
 - Sink analizzati: 10
-- Nodi: attr=9, const=39, ext=5, in=2, param=12, shape=20, sink=10, var=22, xf=16 · archi: 179
+- Nodi: attr=10, const=37, ext=5, in=2, param=12, shape=19, sink=10, var=20, xf=15 · archi: 173
 
 ## Canali (sink con lo stesso ricevente)
 
@@ -23,7 +23,7 @@
 
 - `{**: ‹wg_auth_API_handler.py:WGAuthAPIHandler.do_GET.status›, ok: True}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:232
 - `{activation: ‹in http.server.rfile.read›('auth'), authenticated: True, k_session: ‹wg_auth_API_handler.py:WGAuthAPIHandler.api›, ok: True, session_id: ‹wg_auth_API_handler.py:WGAuthAPIHandler.api›}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:130
-- `{client_id: ‹wg_auth_IPC.py:WGAuthIPC.client_id›∈{'client'|'client_id'}, created_at: ?, k_session: ‹in http.server.rfile.read›('/'|'auth'|'login_dir'), listen_path: ‹wg_auth_IPC.py:WGAuthIPC.listen_p…` — `wg_auth_IPC.py:WGAuthIPC.send_packet` — wg_auth_IPC.py:171
+- `{client_id: ‹wg_auth_IPC.py:WGAuthIPC.client_id›∈{'client'|'client_id'}, created_at: ?, k_session: ‹in http.server.rfile.read›('auth'|'login_dir'|'username'), listen_path: ‹wg_auth_IPC.py:WGAuthIPC.l…` — `wg_auth_IPC.py:WGAuthIPC.send_packet` — wg_auth_IPC.py:171
 - `{error: 'authentication failed', ok: False}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:142, wg_auth_API_handler.py:72
 - `{error: 'internal server error', ok: False}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:113, wg_auth_API_handler.py:182
 - `{error: 'invalid authentication request', ok: False}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:160, wg_auth_API_handler.py:91
@@ -36,8 +36,9 @@
 ## Cosa accettano i parametri (valori costanti che possono assumere)
 
 - `wg_auth_API_handler.py:WGAuthAPIHandler._send_json(status)` ∈ {200 | 400 | 401 | 404 | 409 | 500}
-- `wg_auth_IPC.py:WGAuthIPC.activate(k_session)` ∈ {'/' | 'auth' | 'login_dir' | 'rb' | 'username' | b'wg-manager'}
-- `wg_auth_IPC.py:WGAuthIPC.activate(session_id)` ∈ {'/' | 'auth' | 'login_dir' | 'rb' | 'username' | b'wg-manager'}
+- `wg_auth_IPC.py:WGAuthIPC.__init__(principal)` ∈ {'auth' | 'login_dir' | 'username' | b'wg-manager'}
+- `wg_auth_IPC.py:WGAuthIPC.activate(k_session)` ∈ {'auth' | 'login_dir' | 'username' | b'wg-manager'}
+- `wg_auth_IPC.py:WGAuthIPC.activate(session_id)` ∈ {'auth' | 'login_dir' | 'username' | b'wg-manager'}
 - `wg_auth_IPC.py:WGAuthIPC.__init__(client_id)` ∈ {'client' | 'client_id'}
 - `wg_auth_IPC.py:WGAuthIPC.__init__(listen_path)` ∈ {'client' | 'listen_path'}
 - `wg_auth_IPC.py:WGAuthIPC.__init__(socket_path)` ∈ {'client' | 'socket_path'}
@@ -45,7 +46,7 @@
 
 ## Sink
 
-### `wg_auth_API.py:WGAuthAPI._create_server` — http.server.<create http.server.ThreadingHTTPServer>@L320, socket.wrap_socket@L346
+### `wg_auth_API.py:WGAuthAPI._create_server` — http.server.<create http.server.ThreadingHTTPServer>@L312, socket.wrap_socket@L338
 - via: .wrap_socket, configparser.ConfigParser, http.server.ThreadingHTTPServer, ssl.SSLContext
 - costanti dirette: 'host', 'http', 'port'
 - esterni: ssl.CERT_REQUIRED, ssl.PROTOCOL_TLS_SERVER

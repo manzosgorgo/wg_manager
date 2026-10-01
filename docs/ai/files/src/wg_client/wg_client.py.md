@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client.py`
 - Language: `python`
-- Lines: 209
-- SHA256: `0b1be2c6f1ce3b9a99f3658bdd086d67892d8d21841222ab0c59c154913f0b00`
+- Lines: 215
+- SHA256: `9489708382c3ade94d936d2ab200236b075b485e4265e2c56d6459af17ec9701`
 - Imports:
   - `logging`
   - `os`
@@ -111,7 +111,12 @@ def activate(ipc, lifecycle):
         cfg = load_config()
         log.info("wg_client parsed config file")
 
-        session = WGSecureSession(cfg, activation["k_session"], activation["session_id"])
+        session = WGSecureSession(
+            cfg,
+            activation["k_session"],
+            activation["session_id"],
+            principal=activation["principal"],
+        )
 
         if cfg["secure_session"]["enabled"] is True:
             log.info("wg_client using secure session")
@@ -120,7 +125,6 @@ def activate(ipc, lifecycle):
                 activation["listen_path"],
                 session,
                 lifecycle,
-                principal=activation["principal"],
             )
         else:
             log.info("wg_client not using secure session")
@@ -129,13 +133,15 @@ def activate(ipc, lifecycle):
                 activation["listen_path"],
                 None,
                 lifecycle,
-                principal=activation["principal"],
             )
 
         log.debug("api bind")
         api.bind()
 
-    except (WGError, RuntimeError, OSError) as exc:
+    except Exception as exc:
+        # Activation is an IPC request/response boundary. Any ordinary
+        # exception must be reported to wg-auth as ACTIVATION_RESULT ERROR;
+        # otherwise the process exits and auth only observes an ambiguous EOF.
         log.exception("activation failed")
 
         if api is not None:

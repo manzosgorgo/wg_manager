@@ -5,10 +5,10 @@
 ## Repository
 
 - Root: `/home/main/Desktop/wg_manager`
-- Commit: `d799cb1946493a626e6a115d1c2159bc5b063c3a`
+- Commit: `bced7c5b1ae5c994e2b32087f5785ddfa2d69a63`
 - Branch: `protocol-review`
-- Files in inventory: 99
-- Text files indexed: 79
+- Files in inventory: 102
+- Text files indexed: 82
 
 ### Working tree
 
@@ -32,6 +32,7 @@ The working tree contains uncommitted changes.
 
 - [files/](files/)
 
+- `.gitignore` → [files/.gitignore.md](files/.gitignore.md)
 - `README.md` → [files/README.md.md](files/README.md.md)
 - `TODO.md` → [files/TODO.md.md](files/TODO.md.md)
 - `compile_commands.json` → [files/compile_commands.json.md](files/compile_commands.json.md)
@@ -60,6 +61,7 @@ The working tree contains uncommitted changes.
 - `src/wg_auth/wg_auth_errors.py` → [files/src/wg_auth/wg_auth_errors.py.md](files/src/wg_auth/wg_auth_errors.py.md)
 - `src/wg_auth/wg_auth_lifecycle.py` → [files/src/wg_auth/wg_auth_lifecycle.py.md](files/src/wg_auth/wg_auth_lifecycle.py.md)
 - `src/wg_auth/wg_auth_session.py` → [files/src/wg_auth/wg_auth_session.py.md](files/src/wg_auth/wg_auth_session.py.md)
+- `src/wg_auth/wg_auth_user_store.py` → [files/src/wg_auth/wg_auth_user_store.py.md](files/src/wg_auth/wg_auth_user_store.py.md)
 - `src/wg_client/__init__.py` → [files/src/wg_client/__init__.py.md](files/src/wg_client/__init__.py.md)
 - `src/wg_client/wg_client.py` → [files/src/wg_client/wg_client.py.md](files/src/wg_client/wg_client.py.md)
 - `src/wg_client/wg_client_API.py` → [files/src/wg_client/wg_client_API.py.md](files/src/wg_client/wg_client_API.py.md)
@@ -105,6 +107,7 @@ The working tree contains uncommitted changes.
 - `tests/client/test_secure_session_threadsefety.py` → [files/tests/client/test_secure_session_threadsefety.py.md](files/tests/client/test_secure_session_threadsefety.py.md)
 - `tests/client/test_wg_client_activator.py` → [files/tests/client/test_wg_client_activator.py.md](files/tests/client/test_wg_client_activator.py.md)
 - `tests/client/test_wg_client_integration.py` → [files/tests/client/test_wg_client_integration.py.md](files/tests/client/test_wg_client_integration.py.md)
+- `tests/e2e/test_js_full_flow.mjs` → [files/tests/e2e/test_js_full_flow.mjs.md](files/tests/e2e/test_js_full_flow.mjs.md)
 - `tests/frontend/__init__.py` → [files/tests/frontend/__init__.py.md](files/tests/frontend/__init__.py.md)
 - `tests/frontend/test_cross_language_vector.py` → [files/tests/frontend/test_cross_language_vector.py.md](files/tests/frontend/test_cross_language_vector.py.md)
 - `tests/frontend/test_secure_session_concurrency.test.mjs` → [files/tests/frontend/test_secure_session_concurrency.test.mjs.md](files/tests/frontend/test_secure_session_concurrency.test.mjs.md)

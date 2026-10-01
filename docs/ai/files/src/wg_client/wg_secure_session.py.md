@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_secure_session.py`
 - Language: `python`
-- Lines: 751
-- SHA256: `7d79eff98b9f678c71dc649fb1e6dff602c8d4032cc3856a0cfd6e3a2daae943`
+- Lines: 818
+- SHA256: `1b42fe66af98ed5f2b4433f6c871b2f82c430676c2d60b3beeec72e7688bb1ae`
 - Imports:
   - `base64`
   - `binascii`
@@ -59,7 +59,11 @@ class WGSecureSession:
     Cryptographic state for a wg_manager session.
 
     The caller supplies the shared K_session established during
-    the authentication phase.
+    the authentication phase. Its protocol-level size is validated
+    before this class is constructed.
+
+    session_key_size controls the length of the keys derived locally
+    from K_session with HKDF; it is not the size of K_session itself.
 
     K_session itself is never transmitted by this class.
     """
@@ -79,6 +83,7 @@ class WGSecureSession:
             config,
             k_session: bytes,
             session_id: bytes | None = None,
+            principal=None,
             rng=None,
             clock=None,
     ):
@@ -87,6 +92,7 @@ class WGSecureSession:
 
         self.session_id_size = config["secure_session"]["session_id_size"]
         self.nonce_size = config["secure_session"]["nonce_size"]
+        # Size of locally derived HKDF keys, not of the OPAQUE input secret.
         self.key_size = config["secure_session"]["session_key_size"]
         self.counter_min = config["secure_session"]["counter_min"]
 
@@ -134,12 +140,6 @@ class WGSecureSession:
             log.warning("k_session must be bytes")
             raise WGInvalidFieldError("k_session must be bytes")
 
-        if len(k_session) != self.key_size:
-            log.warning("k_session must be %d bytes", self.key_size)
-            raise WGInvalidFieldError(
-                f"k_session must be {self.key_size} bytes"
-            )
-
         if session_id is None:
             session_id = secrets.token_bytes(self.session_id_size)
 
@@ -153,8 +153,36 @@ class WGSecureSession:
                 f"session_id must be {self.session_id_size} bytes"
             )
 
+        if principal is not None:
+            if not isinstance(principal, dict):
+                raise WGInvalidFieldError("principal must be a dict")
+
+            username = principal.get("username")
+            peers = principal.get("peers")
+
+            if not isinstance(username, str) or not username.strip():
+                raise WGInvalidFieldError(
+                    "principal.username must be a non-empty string"
+                )
+
+            if not isinstance(peers, list) or any(
+                not isinstance(peer, str) or not peer for peer in peers
+            ):
+                raise WGInvalidFieldError(
+                    "principal.peers must be a list of non-empty strings"
+                )
+
+            if len(set(peers)) != len(peers):
+                raise WGInvalidFieldError("principal.peers contains duplicates")
+
+            principal = {
+                "username": username,
+                "peers": tuple(peers),
+            }
+
         self._k_session = k_session
         self._session_id = session_id
+        self._principal = principal
 
         self._session_seed = self._derive_session_seed()
 
@@ -193,6 +221,45 @@ class WGSecureSession:
     def session_id_b64(self) -> str:
         log.debug("session_id_b64 property")
         return self._b64(self._session_id)
+
+    @property
+    def principal(self):
+        return self._principal
+
+    @property
+    def is_admin(self):
+        return (
+            self._principal is not None
+            and self._principal["username"] == "admin"
+        )
+
+    def can_access_peer(self, public_key):
+        if self._principal is None:
+            return False
+
+        return (
+            self.is_admin
+            or public_key in self._principal["peers"]
+        )
+
+    def register_peer(self, public_key):
+        if self._principal is None or self.is_admin:
+            return
+
+        peers = self._principal["peers"]
+
+        if public_key not in peers:
+            self._principal["peers"] = peers + (public_key,)
+
+    def unregister_peer(self, public_key):
+        if self._principal is None or self.is_admin:
+            return
+
+        self._principal["peers"] = tuple(
+            peer
+            for peer in self._principal["peers"]
+            if peer != public_key
+        )
 
     # ------------------------------------------------------------------
     # Key derivation

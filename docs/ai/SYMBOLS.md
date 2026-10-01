@@ -11,20 +11,20 @@ Structural symbol index extracted mechanically from source files.
 
 ## `src/wg_auth/wg_auth_API.py`
 
-- **variable** `log` — line 9
-- **class** `WGAuthAPI` — line 12
-  - **method** `def __init__(self, config, lifecycle)` — line 18
-  - **method** `def __enter__(self)` — line 34
-  - **method** `def __exit__(self, exc_type, exc_value, traceback)` — line 38
-  - **method** `def run(self)` — line 41
-  - **method** `def stop(self)` — line 47
-  - **method** `def get_session_status(self)` — line 57
-  - **method** `def start_authentication(self, username, pubU)` — line 74
-  - **method** `def finish_authentication(self, authU)` — line 123
-  - **method** `def _activation_failed(self, session, ipc)` — line 216
-  - **method** `def logout(self, notify_client = True)` — line 239
-  - **method** `def _finish_shutdown(self, session, ipc, notify_client = True)` — line 284
-  - **method** `def _create_server(self)` — line 315
+- **variable** `log` — line 11
+- **class** `WGAuthAPI` — line 14
+  - **method** `def __init__(self, config, lifecycle)` — line 20
+  - **method** `def __enter__(self)` — line 37
+  - **method** `def __exit__(self, exc_type, exc_value, traceback)` — line 41
+  - **method** `def run(self)` — line 44
+  - **method** `def stop(self)` — line 50
+  - **method** `def get_session_status(self)` — line 60
+  - **method** `def start_authentication(self, username, pubU)` — line 77
+  - **method** `def finish_authentication(self, authU)` — line 115
+  - **method** `def _activation_failed(self, session, ipc)` — line 208
+  - **method** `def logout(self, notify_client = True)` — line 231
+  - **method** `def _finish_shutdown(self, session, ipc, notify_client = True)` — line 276
+  - **method** `def _create_server(self)` — line 307
 
 ## `src/wg_auth/wg_auth_API_handler.py`
 
@@ -75,14 +75,24 @@ Structural symbol index extracted mechanically from source files.
 ## `src/wg_auth/wg_auth_session.py`
 
 - **variable** `log` — line 13
-- **class** `WGAuthSession` — line 16
-  - **method** `def __init__(self, username, credential_record, context)` — line 22
-  - **method** `def authenticated(self)` — line 36
-  - **method** `def session_id(self)` — line 40
-  - **method** `def k_session(self)` — line 49
-  - **method** `def create_credential_response(self, pubU)` — line 61
-  - **method** `def authenticate(self, authU)` — line 112
-  - **method** `def logout(self)` — line 152
+- **variable** `OPAQUE_SESSION_KEY_SIZE` — line 17
+- **class** `WGAuthSession` — line 20
+  - **method** `def __init__(self, username, credential_record, context, principal = None)` — line 26
+  - **method** `def authenticated(self)` — line 41
+  - **method** `def session_id(self)` — line 45
+  - **method** `def k_session(self)` — line 54
+  - **method** `def create_credential_response(self, pubU)` — line 66
+  - **method** `def authenticate(self, authU)` — line 126
+  - **method** `def logout(self)` — line 166
+
+## `src/wg_auth/wg_auth_user_store.py`
+
+- **class** `WGAuthUser` — line 11
+  - **method** `def principal(self)` — line 17
+- **class** `WGAuthUserStore` — line 21
+  - **method** `def __init__(self, login_dir, opaque_record_len = 256)` — line 24
+  - **method** `def _path(self, username)` — line 28
+  - **method** `def load(self, username)` — line 41
 
 ## `src/wg_client/wg_client.py`
 
@@ -90,18 +100,18 @@ Structural symbol index extracted mechanically from source files.
 - **function** `def setup_logging()` — line 27
 - **function** `def systemd_notify(message)` — line 36
 - **function** `def activate(ipc, lifecycle)` — line 55
-- **function** `def main()` — line 138
+- **function** `def main()` — line 144
 
 ## `src/wg_client/wg_client_API.py`
 
 - **variable** `log` — line 12
 - **class** `WGClientAPI` — line 16
-  - **method** `def __init__(self, config, listen_path, session = None, lifecycle = None, principal = None)` — line 17
-  - **method** `def start(self)` — line 64
-  - **method** `def bind(self)` — line 69
-  - **method** `def serve(self)` — line 111
-  - **method** `def stop(self)` — line 124
-  - **method** `def close(self)` — line 138
+  - **method** `def __init__(self, config, listen_path, session = None, lifecycle = None)` — line 17
+  - **method** `def start(self)` — line 63
+  - **method** `def bind(self)` — line 68
+  - **method** `def serve(self)` — line 109
+  - **method** `def stop(self)` — line 122
+  - **method** `def close(self)` — line 136
 
 ## `src/wg_client/wg_client_API_handler.py`
 
@@ -115,50 +125,53 @@ Structural symbol index extracted mechanically from source files.
 - **variable** `_AUTH_MALFORMED_ERRORS` — line 40
 - **variable** `_AUTH_REJECTED_ERRORS` — line 48
 - **class** `WGClientHTTPServer` (http.server.ThreadingHTTPServer) — line 57
-  - **method** `def __init__(self, server_address, handler_class, controller, listen_path, interface, lifecycle, session = None, principal = None)` — line 58
-- **class** `WGClientAPIHandler` (http.server.BaseHTTPRequestHandler) — line 89
-  - **method** `def handle_one_request(self)` — line 99
-  - **method** `def controller(self)` — line 110
-  - **method** `def lifecycle(self)` — line 113
-  - **method** `def session(self)` — line 117
-  - **method** `def principal(self)` — line 121
-  - **method** `def session_lock(self)` — line 125
-  - **method** `def api_path(self)` — line 128
-  - **method** `def api_target(self)` — line 145
-  - **method** `def peer_key(self, path)` — line 170
-  - **method** `def log_message(self, format, *args)` — line 179
-  - **method** `def request_auth_headers(self)` — line 186
-  - **method** `def authenticate_request(self, body)` — line 215
-  - **method** `def _authenticated_headers(self, code, body)` — line 261
-  - **method** `def send_error(self, code, message = None, explain = None)` — line 289
-  - **method** `def send_json(self, code, obj)` — line 349
-  - **method** `def do_GET(self)` — line 383
-  - **method** `def do_POST(self)` — line 416
-  - **method** `def do_DELETE(self)` — line 425
-  - **method** `def do_CONNECT(self)` — line 451
-  - **method** `def do_PATCH(self)` — line 455
-  - **method** `def do_PUT(self)` — line 459
+  - **method** `def __init__(self, server_address, handler_class, controller, listen_path, interface, lifecycle, session = None)` — line 58
+- **class** `WGClientAPIHandler` (http.server.BaseHTTPRequestHandler) — line 87
+  - **method** `def handle_one_request(self)` — line 97
+  - **method** `def controller(self)` — line 108
+  - **method** `def lifecycle(self)` — line 111
+  - **method** `def session(self)` — line 115
+  - **method** `def session_lock(self)` — line 119
+  - **method** `def principal_required(self)` — line 122
+  - **method** `def can_access_peer(self, public_key)` — line 136
+  - **method** `def filter_status_for_principal(self, result)` — line 142
+  - **method** `def api_path(self)` — line 161
+  - **method** `def api_target(self)` — line 178
+  - **method** `def peer_key(self, path)` — line 203
+  - **method** `def log_message(self, format, *args)` — line 212
+  - **method** `def request_auth_headers(self)` — line 219
+  - **method** `def authenticate_request(self, body)` — line 248
+  - **method** `def _authenticated_headers(self, code, body)` — line 294
+  - **method** `def send_error(self, code, message = None, explain = None)` — line 322
+  - **method** `def send_json(self, code, obj)` — line 382
+  - **method** `def do_GET(self)` — line 416
+  - **method** `def do_POST(self)` — line 455
+  - **method** `def do_DELETE(self)` — line 464
+  - **method** `def do_CONNECT(self)` — line 504
+  - **method** `def do_PATCH(self)` — line 508
+  - **method** `def do_PUT(self)` — line 512
 
 ## `src/wg_client/wg_client_IPC.py`
 
 - **variable** `log` — line 8
 - **variable** `MAX_PACKET_SIZE` — line 10
 - **variable** `PROTOCOL_VERSION` — line 12
-- **variable** `MAX_SESSION_TIMEOUT` — line 15
-- **variable** `MAX_CLOCK_SKEW` — line 18
-- **variable** `LISTEN_PATH_RE` — line 20
-- **class** `WGClientIPC` — line 23
-  - **method** `def __init__(self, sock, lifecycle)` — line 25
-  - **method** `def control_loop(self)` — line 30
-  - **method** `def receive_packet(self)` — line 78
-  - **method** `def parse_packet(self, packet)` — line 101
-  - **method** `def _int_field(self, obj, name)` — line 121
-  - **method** `def _hex_field(self, obj, name)` — line 131
-  - **method** `def parse_activation(self, obj, now = None)` — line 143
-  - **method** `def _encode_packet(self, packet)` — line 207
-  - **method** `def send_result(self, status, **fields)` — line 219
-  - **method** `def _notify_stop(self)` — line 232
-  - **method** `def stop(self, notify_shutdown = True)` — line 242
+- **variable** `OPAQUE_SESSION_KEY_SIZE` — line 15
+- **variable** `MAX_SESSION_TIMEOUT` — line 18
+- **variable** `MAX_CLOCK_SKEW` — line 21
+- **variable** `LISTEN_PATH_RE` — line 23
+- **class** `WGClientIPC` — line 26
+  - **method** `def __init__(self, sock, lifecycle)` — line 28
+  - **method** `def control_loop(self)` — line 33
+  - **method** `def receive_packet(self)` — line 81
+  - **method** `def parse_packet(self, packet)` — line 104
+  - **method** `def _int_field(self, obj, name)` — line 124
+  - **method** `def _hex_field(self, obj, name)` — line 134
+  - **method** `def parse_activation(self, obj, now = None)` — line 146
+  - **method** `def _encode_packet(self, packet)` — line 229
+  - **method** `def send_result(self, status, **fields)` — line 241
+  - **method** `def _notify_stop(self)` — line 254
+  - **method** `def stop(self, notify_shutdown = True)` — line 264
 
 ## `src/wg_client/wg_client_activator.py`
 
@@ -249,34 +262,39 @@ Structural symbol index extracted mechanically from source files.
 
 - **variable** `log` — line 29
 - **class** `WGSecureSession` — line 32
-  - **method** `def __init__(self, config, k_session: bytes, session_id: bytes | None = None, rng = None, clock = None)` — line 52
-  - **method** `def session_id(self) -> bytes` — line 163
-  - **method** `def session_id_b64(self) -> str` — line 168
-  - **method** `def _derive_session_seed(self) -> bytes` — line 176
-  - **method** `def _derive_key(self, purpose: bytes) -> bytes` — line 185
-  - **method** `def create_request_auth(self, method: str, path: str, body: bytes = b'') -> dict` — line 198
-  - **method** `def _create_request_auth_unlocked(self, method: str, path: str, body: bytes = b'') -> dict` — line 212
-  - **method** `def create_response_auth(self, request_auth: dict, status: int, body: bytes = b'') -> dict` — line 275
-  - **method** `def _create_response_auth_unlocked(self, request_auth: dict, status: int, body: bytes = b'') -> dict` — line 289
-  - **method** `def verify_request(self, auth: dict, method: str, path: str, body: bytes = b'') -> bool` — line 342
-  - **method** `def _verify_request_unlocked(self, auth: dict, method: str, path: str, body: bytes = b'') -> bool` — line 358
-  - **method** `def verify_response(self, auth: dict, request_auth: dict, status: int, body: bytes = b'') -> bool` — line 437
-  - **method** `def _verify_response_unlocked(self, auth: dict, request_auth: dict, status: int, body: bytes = b'') -> bool` — line 454
-  - **method** `def _check_session_active_unlocked(self)` — line 548
-  - **method** `def _check_request_rate_unlocked(self)` — line 553
-  - **method** `def _counter_in_receive_window_unlocked(self, counter, highest_seen)` — line 567
-  - **method** `def _accept_receive_counter_unlocked(self, counter, request)` — line 574
-  - **method** `def _validate_auth_structure(auth: dict, required_fields: tuple) -> None` — line 602
-  - **method** `def _validate_session_id(self, value) -> bytes` — line 612
-  - **method** `def _validate_counter(self, value) -> int` — line 622
-  - **method** `def _validate_nonce(self, value) -> bytes` — line 631
-  - **method** `def _validate_mac(self, value) -> bytes` — line 641
-  - **method** `def _validate_request_auth(self, auth: dict) -> dict` — line 651
-  - **method** `def _validate_response_auth(self, auth: dict) -> dict` — line 665
-  - **method** `def _request_message(self, counter: int, nonce: bytes, method: str, path: str, body: bytes) -> bytes` — line 688
-  - **method** `def _response_message(self, counter: int, nonce: bytes, status: int, body: bytes) -> bytes` — line 711
-  - **method** `def _b64(value: bytes) -> str` — line 737
-  - **method** `def _unb64(value: str) -> bytes` — line 742
+  - **method** `def __init__(self, config, k_session: bytes, session_id: bytes | None = None, principal = None, rng = None, clock = None)` — line 56
+  - **method** `def session_id(self) -> bytes` — line 191
+  - **method** `def session_id_b64(self) -> str` — line 196
+  - **method** `def principal(self)` — line 201
+  - **method** `def is_admin(self)` — line 205
+  - **method** `def can_access_peer(self, public_key)` — line 211
+  - **method** `def register_peer(self, public_key)` — line 220
+  - **method** `def unregister_peer(self, public_key)` — line 229
+  - **method** `def _derive_session_seed(self) -> bytes` — line 243
+  - **method** `def _derive_key(self, purpose: bytes) -> bytes` — line 252
+  - **method** `def create_request_auth(self, method: str, path: str, body: bytes = b'') -> dict` — line 265
+  - **method** `def _create_request_auth_unlocked(self, method: str, path: str, body: bytes = b'') -> dict` — line 279
+  - **method** `def create_response_auth(self, request_auth: dict, status: int, body: bytes = b'') -> dict` — line 342
+  - **method** `def _create_response_auth_unlocked(self, request_auth: dict, status: int, body: bytes = b'') -> dict` — line 356
+  - **method** `def verify_request(self, auth: dict, method: str, path: str, body: bytes = b'') -> bool` — line 409
+  - **method** `def _verify_request_unlocked(self, auth: dict, method: str, path: str, body: bytes = b'') -> bool` — line 425
+  - **method** `def verify_response(self, auth: dict, request_auth: dict, status: int, body: bytes = b'') -> bool` — line 504
+  - **method** `def _verify_response_unlocked(self, auth: dict, request_auth: dict, status: int, body: bytes = b'') -> bool` — line 521
+  - **method** `def _check_session_active_unlocked(self)` — line 615
+  - **method** `def _check_request_rate_unlocked(self)` — line 620
+  - **method** `def _counter_in_receive_window_unlocked(self, counter, highest_seen)` — line 634
+  - **method** `def _accept_receive_counter_unlocked(self, counter, request)` — line 641
+  - **method** `def _validate_auth_structure(auth: dict, required_fields: tuple) -> None` — line 669
+  - **method** `def _validate_session_id(self, value) -> bytes` — line 679
+  - **method** `def _validate_counter(self, value) -> int` — line 689
+  - **method** `def _validate_nonce(self, value) -> bytes` — line 698
+  - **method** `def _validate_mac(self, value) -> bytes` — line 708
+  - **method** `def _validate_request_auth(self, auth: dict) -> dict` — line 718
+  - **method** `def _validate_response_auth(self, auth: dict) -> dict` — line 732
+  - **method** `def _request_message(self, counter: int, nonce: bytes, method: str, path: str, body: bytes) -> bytes` — line 755
+  - **method** `def _response_message(self, counter: int, nonce: bytes, status: int, body: bytes) -> bytes` — line 778
+  - **method** `def _b64(value: bytes) -> str` — line 804
+  - **method** `def _unb64(value: str) -> bytes` — line 809
 
 ## `src/wg_frontend/check_vectors.mjs`
 
@@ -316,7 +334,7 @@ Structural symbol index extracted mechanically from source files.
 - **function** `b64decode` — line 115
 - **function** `sha256` — line 136
 - **class** `WGSecureSession` — line 152
-- **function** `bytesEqual` — line 673
+- **function** `bytesEqual` — line 669
 
 ## `src/wg_manager/wg_manager.py`
 
@@ -382,13 +400,13 @@ Structural symbol index extracted mechanically from source files.
 - **function** `def expect_error(func, status, message)` — line 51
 - **variable** `DEFAULT_SOCKET` — line 62
 - **function** `def activation_params()` — line 64
-- **function** `def client(activation_params)` — line 80
-- **function** `def peer_data()` — line 100
-- **function** `def test_params(client, peer_data, activation_params)` — line 113
-- **function** `def test_remove_peer(client: WGClientClient, peer_data, activation_params)` — line 132
-- **function** `def test_add_peer_errors(client: WGClientClient, peer_data, activation_params)` — line 159
-- **function** `def test_add_peer_and_verify(client: WGClientClient, peer_data, activation_params)` — line 220
-- **function** `def test_authenticated_status(activation_params, client)` — line 245
+- **function** `def client(activation_params)` — line 75
+- **function** `def peer_data()` — line 96
+- **function** `def test_params(client, peer_data, activation_params)` — line 109
+- **function** `def test_remove_peer(client: WGClientClient, peer_data, activation_params)` — line 128
+- **function** `def test_add_peer_errors(client: WGClientClient, peer_data, activation_params)` — line 155
+- **function** `def test_add_peer_and_verify(client: WGClientClient, peer_data, activation_params)` — line 216
+- **function** `def test_authenticated_status(activation_params, client)` — line 241
 
 ## `tests/client/test_client.py`
 
@@ -453,6 +471,9 @@ Structural symbol index extracted mechanically from source files.
 - **function** `def test_response_status_tampering()` — line 594
 - **function** `def test_response_body_tampering()` — line 611
 - **function** `def test_request_counter_exhaustion()` — line 628
+- **function** `def test_non_admin_principal_can_access_only_owned_peers()` — line 721
+- **function** `def test_admin_principal_can_access_every_peer()` — line 733
+- **function** `def test_session_peer_snapshot_tracks_current_session_changes()` — line 745
 
 ## `tests/client/test_secure_session_concurrency.py`
 
@@ -537,33 +558,44 @@ Structural symbol index extracted mechanically from source files.
 - **function** `def ipc(lifecycle)` — line 45
 - **function** `def make_config(api_port = 0, controller_port = 9)` — line 53
 - **function** `def make_packet(**overrides)` — line 84
-- **function** `def free_port()` — line 99
-- **function** `def test_parse_activation_valid(ipc)` — line 110
-- **function** `def test_parse_activation_rejects(overrides, ipc)` — line 143
-- **function** `def run_activation(packet, cfg, monkeypatch, lifecycle)` — line 148
-- **function** `def test_activation_ok_only_after_bind(monkeypatch, caplog, lifecycle, ipc)` — line 171
-- **function** `def test_activation_error_when_port_busy(monkeypatch, lifecycle)` — line 200
-- **function** `def test_activation_error_on_invalid_packet(monkeypatch, lifecycle)` — line 214
-- **class** `FakeController` — line 226
-  - **method** `def __init__(self)` — line 227
-  - **method** `def status(self)` — line 231
-  - **method** `def add_peer(self, public_key, allowed_ip)` — line 235
-  - **method** `def remove_peer(self, public_key)` — line 239
-- **function** `def api(lifecycle)` — line 245
-- **function** `def request(api, method, path, body = None, headers = None)` — line 266
-- **function** `def test_status_below_listen_path(api)` — line 281
-- **function** `def test_outside_listen_path_is_404(api)` — line 288
-- **function** `def test_interface_mismatch_is_502(api)` — line 295
-- **function** `def test_put_decodes_public_key(api)` — line 303
-- **function** `def test_delete_decodes_public_key(api)` — line 312
-- **function** `def test_put_negative_content_length_is_400(api)` — line 321
-- **function** `def test_trace_not_supported(api)` — line 329
-- **function** `def test_stop_before_serve_loop_does_not_hang()` — line 335
-- **function** `def test_controller_unreachable_is_502()` — line 355
-- **function** `def test_controller_timeout_from_config()` — line 373
-- **function** `def run_mock(tmp_path, *args)` — line 384
-- **function** `def test_mock_handshake(tmp_path)` — line 399
-- **function** `def test_mock_handshake_unknown_peer(tmp_path)` — line 412
+- **function** `def free_port()` — line 100
+- **function** `def test_parse_activation_valid(ipc)` — line 111
+- **function** `def test_parse_activation_rejects(overrides, ipc)` — line 150
+- **function** `def run_activation(packet, cfg, monkeypatch, lifecycle)` — line 155
+- **function** `def test_activation_ok_only_after_bind(monkeypatch, caplog, lifecycle, ipc)` — line 178
+- **function** `def test_activation_error_when_port_busy(monkeypatch, lifecycle)` — line 207
+- **function** `def test_activation_error_on_invalid_packet(monkeypatch, lifecycle)` — line 221
+- **function** `def test_activation_reports_unexpected_exception(monkeypatch, lifecycle)` — line 228
+- **class** `FakeController` — line 253
+  - **method** `def __init__(self)` — line 254
+  - **method** `def status(self)` — line 258
+  - **method** `def add_peer(self, public_key, allowed_ip)` — line 262
+  - **method** `def remove_peer(self, public_key)` — line 266
+- **function** `def api(lifecycle)` — line 272
+- **function** `def request(api, method, path, body = None, headers = None)` — line 293
+- **function** `def test_status_below_listen_path(api)` — line 308
+- **function** `def test_outside_listen_path_is_404(api)` — line 315
+- **function** `def test_interface_mismatch_is_502(api)` — line 322
+- **function** `def test_put_decodes_public_key(api)` — line 330
+- **function** `def test_delete_decodes_public_key(api)` — line 339
+- **function** `def test_put_negative_content_length_is_400(api)` — line 348
+- **function** `def test_trace_not_supported(api)` — line 356
+- **function** `def test_stop_before_serve_loop_does_not_hang()` — line 362
+- **function** `def test_controller_unreachable_is_502()` — line 382
+- **function** `def test_controller_timeout_from_config()` — line 400
+- **function** `def run_mock(tmp_path, *args)` — line 411
+- **function** `def test_mock_handshake(tmp_path)` — line 426
+- **function** `def test_mock_handshake_unknown_peer(tmp_path)` — line 439
+
+## `tests/e2e/test_js_full_flow.mjs`
+
+- **function** `parseIni` — line 34
+- **function** `secureSessionConfig` — line 59
+- **function** `requestHttps` — line 76
+- **function** `secureRequest` — line 109
+- **function** `findFreeIp` — line 167
+- **function** `waitForLoggedOut` — line 184
+- **function** `main` — line 200
 
 ## `tests/frontend/test_cross_language_vector.py`
 

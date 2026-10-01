@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_IPC.py`
 - Language: `python`
-- Lines: 269
-- SHA256: `cc5ffe3db75dfa467fdde0b1baaacda23fccf45771af1bee6258cab2b5bfb922`
+- Lines: 291
+- SHA256: `d1397f1b1fb8e871e20d06d09a77fbd306bb8872241cfb0402895b1c5351f262`
 - Imports:
   - `json`
   - `logging`
@@ -29,6 +29,9 @@ log = logging.getLogger("wg_manager.IPC")
 MAX_PACKET_SIZE = 65536
 
 PROTOCOL_VERSION = 1
+
+# OPAQUE shared secret size produced by the supported library version.
+OPAQUE_SESSION_KEY_SIZE = 64
 
 # Upper bound for the session lifetime requested by auth.
 MAX_SESSION_TIMEOUT = 24 * 3600
@@ -166,7 +169,9 @@ class WGClientIPC:
         Returns a dict with decoded session_id and k_session (bytes),
         client_id, listen_path and expires_at (unix time).
 
-        Key and session id lengths are checked by WGSecureSession.
+        The OPAQUE session key length belongs to the activation protocol;
+        WGSecureSession's configured session_key_size controls only the
+        length of keys derived locally with HKDF.
         """
         if now is None:
             now = time.time()
@@ -176,6 +181,11 @@ class WGClientIPC:
 
         session_id = self._hex_field(obj, "session_id")
         k_session = self._hex_field(obj, "k_session")
+
+        if len(k_session) != OPAQUE_SESSION_KEY_SIZE:
+            raise WGProtocolError(
+                f"k_session must be {OPAQUE_SESSION_KEY_SIZE} bytes"
+            )
 
         client_id = obj.get("client_id")
 
@@ -190,9 +200,21 @@ class WGClientIPC:
         if not isinstance(username, str) or not username.strip():
             raise WGProtocolError("principal.username must be a non-empty string")
 
-        # Only the authenticated identity is accepted here. Roles will be
-        # supplied by the authoritative user registry, not by the client.
-        principal = {"username": username}
+        peers = principal.get("peers")
+        if not isinstance(peers, list) or any(
+            not isinstance(peer, str) or not peer for peer in peers
+        ):
+            raise WGProtocolError(
+                "principal.peers must be a list of non-empty strings"
+            )
+
+        if len(set(peers)) != len(peers):
+            raise WGProtocolError("principal.peers contains duplicates")
+
+        principal = {
+            "username": username,
+            "peers": list(peers),
+        }
 
         listen_path = obj.get("listen_path")
 
