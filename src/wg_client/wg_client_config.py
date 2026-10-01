@@ -153,6 +153,16 @@ def load_config():
     if replay_window_size <= 0:
         raise RuntimeError("invalid secure session replay window size")
 
+    counter_capacity = counter_max - counter_min + 1
+    if (
+        max_request_frequency > 0
+        and max_request_frequency * session_timeout > counter_capacity
+    ):
+        raise RuntimeError(
+            "secure session request frequency and timeout exceed "
+            "counter capacity"
+        )
+
     return {
         "api": {
             "host": config["api"]["host"].strip(),
