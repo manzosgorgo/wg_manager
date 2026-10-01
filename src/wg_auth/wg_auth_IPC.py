@@ -21,12 +21,14 @@ class WGAuthIPC:
         timeout,
         listen_path,
         lifecycle,
+        principal=None,
     ):
         self.socket_path = socket_path
         self.client_id = client_id
         self.timeout = timeout
         self.listen_path = listen_path
         self.lifecycle = lifecycle
+        self.principal = principal
 
         self.sock = None
     @property
@@ -173,6 +175,7 @@ class WGAuthIPC:
             "client_id": self.client_id,
             "timeout": self.timeout,
             "listen_path": self.listen_path,
+            "principal": self.principal,
             "created_at": int(time.time()),
         }
 

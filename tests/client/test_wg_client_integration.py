@@ -87,6 +87,7 @@ def make_packet(**overrides):
         "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
         "k_session": "b7e4a2c91f6d08359a31c7e4b25f608d4c8e1a73f0b692de5a17c3f84e29b601",
         "client_id": "android-test-client",
+        "principal": {"username": "alice"},
         "timeout": 1800,
         "created_at": NOW,
         "listen_path": LISTEN_PATH,
@@ -111,6 +112,7 @@ def test_parse_activation_valid(ipc):
 
     assert activation["expires_at"] == NOW + 1800
     assert activation["listen_path"] == LISTEN_PATH
+    assert activation["principal"] == {"username": "alice"}
     assert len(activation["k_session"]) == 32
     assert len(activation["session_id"]) == 16
 
@@ -123,6 +125,10 @@ def test_parse_activation_valid(ipc):
         {"k_session": None},
         {"session_id": 123},
         {"client_id": ""},
+        {"principal": None},
+        {"principal": {}},
+        {"principal": {"username": ""}},
+        {"principal": {"username": 123}},
         {"listen_path": "api/no-leading-slash"},
         {"listen_path": "/api/../etc"},
         {"listen_path": "/api/trailing/"},

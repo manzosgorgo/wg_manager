@@ -64,6 +64,7 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
             interface,
             lifecycle,
             session=None,
+            principal=None,
     ):
         super().__init__(server_address, handler_class)
         self.controller = controller
@@ -75,6 +76,7 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
         # server, or None to run unauthenticated (e.g. in tests that don't
         # care about transport authentication).
         self.session = session
+        self.principal = principal
 
         # ThreadingHTTPServer hands each request to its own thread, but
         # WGSecureSession carries mutable per-session state (the request
@@ -114,6 +116,10 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
     @property
     def session(self):
         return self.server.session
+
+    @property
+    def principal(self):
+        return self.server.principal
 
     @property
     def session_lock(self):
