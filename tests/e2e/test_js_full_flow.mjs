@@ -8,7 +8,10 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
-globalThis.crypto = webcrypto;
+if (typeof globalThis.crypto === "undefined") {
+  globalThis.crypto = webcrypto;
+}
+
 
 const require = createRequire(import.meta.url);
 const { OpaqueClient } = require("../auth/js/opaque_client.js");
