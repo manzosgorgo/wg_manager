@@ -150,12 +150,12 @@ Structural symbol index extracted mechanically from source files.
   - **method** `def control_loop(self)` — line 30
   - **method** `def receive_packet(self)` — line 78
   - **method** `def parse_packet(self, packet)` — line 101
-  - **method** `def _int_field(self, obj, name)` — line 118
-  - **method** `def _hex_field(self, obj, name)` — line 128
-  - **method** `def parse_activation(self, obj, now = None)` — line 140
-  - **method** `def send_result(self, status, **fields)` — line 191
-  - **method** `def _notify_stop(self)` — line 201
-  - **method** `def stop(self, notify_shutdown = True)` — line 216
+  - **method** `def _int_field(self, obj, name)` — line 121
+  - **method** `def _hex_field(self, obj, name)` — line 131
+  - **method** `def parse_activation(self, obj, now = None)` — line 143
+  - **method** `def send_result(self, status, **fields)` — line 194
+  - **method** `def _notify_stop(self)` — line 204
+  - **method** `def stop(self, notify_shutdown = True)` — line 219
 
 ## `src/wg_client/wg_client_activator.py`
 

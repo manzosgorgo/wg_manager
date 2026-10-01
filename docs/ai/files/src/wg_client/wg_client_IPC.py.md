@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_IPC.py`
 - Language: `python`
-- Lines: 243
-- SHA256: `90563c5dff1f0c845b466b1ec6a81007bff10304523b7293b6c1212bc1433736`
+- Lines: 246
+- SHA256: `8e007c69c8f4b20b570077b45174c4b0ac100e55762f64d99bf4b12828284d1a`
 - Imports:
   - `json`
   - `logging`
@@ -130,6 +130,9 @@ class WGClientIPC:
 
         if not isinstance(obj, dict):
             raise WGProtocolError("packet JSON root must be an object")
+
+        if obj.get("protocol_version") != PROTOCOL_VERSION:
+            raise WGProtocolError("unsupported protocol_version")
 
         return obj
 
