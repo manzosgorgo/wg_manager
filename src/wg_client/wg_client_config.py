@@ -17,6 +17,7 @@ DEFAULT_SESSION_TIMEOUT = 86400
 # Zero disables runtime frequency enforcement. When enabled, this value is
 # requests per second and is checked against the session counter capacity.
 DEFAULT_MAX_REQUEST_FREQUENCY = 0.0
+DEFAULT_REPLAY_WINDOW_SIZE = 64
 
 
 def load_config():
@@ -118,6 +119,12 @@ def load_config():
         fallback=DEFAULT_MAX_REQUEST_FREQUENCY,
     )
 
+    replay_window_size = config.getint(
+        "secure_session",
+        "replay_window_size",
+        fallback=DEFAULT_REPLAY_WINDOW_SIZE,
+    )
+
     if session_id_size <= 0:
         raise RuntimeError("invalid secure session ID size")
 
@@ -138,6 +145,9 @@ def load_config():
 
     if max_request_frequency < 0:
         raise RuntimeError("invalid secure session maximum request frequency")
+
+    if replay_window_size <= 0:
+        raise RuntimeError("invalid secure session replay window size")
 
     return {
         "api": {
@@ -167,5 +177,6 @@ def load_config():
             "counter_max": counter_max,
             "session_timeout": session_timeout,
             "max_request_frequency": max_request_frequency,
+            "replay_window_size": replay_window_size,
         },
     }
