@@ -172,6 +172,10 @@ export class WGSecureSession {
     this._requestCounter = this.counterMin - 1;
     this._lastResponseCounter = this.counterMin - 1;
     this._rng = rng || getRandomBytes;
+
+    // Serializes the check -> await -> commit sequences of verifyRequest
+    // and verifyResponse (see _withVerifyLock).
+    this._verifyChain = Promise.resolve();
   }
 
   /**
@@ -308,17 +312,19 @@ export class WGSecureSession {
     if (typeof path !== "string") throw new WGInvalidFieldError("path must be str");
     if (!(body instanceof Uint8Array)) throw new WGInvalidFieldError("body must be bytes");
 
+    // Reserve the counter synchronously, BEFORE the first await: JS
+    // interleaves async calls at every await, so reading the counter here
+    // and committing it after signing would let concurrent calls share a
+    // value. A counter burned by a later failure is harmless: the
+    // receiver accepts gaps.
     if (this._requestCounter >= this.counterMax) {
       throw new WGCounterExhaustedError("request counter exhausted");
     }
-
-    const counter = this._requestCounter + 1;
+    const counter = ++this._requestCounter;
     const nonce = this._rng(this.nonceSize);
 
     const message = await this._requestMessage(counter, nonce, method, path, body);
     const mac = await this._sign(this._requestKey, message);
-
-    this._requestCounter = counter;
 
     return {
       session_id: this.sessionIdB64,
@@ -339,20 +345,24 @@ export class WGSecureSession {
       throw new WGSessionMismatchError("invalid session id");
     }
 
-    const counter = validated.counter;
-    if (counter <= this._requestCounter) {
-      throw new WGReplayError("request counter replayed");
-    }
+    // The replay check and the counter commit must not interleave with
+    // another verification (there are awaits in between).
+    return this._withVerifyLock(async () => {
+      const counter = validated.counter;
+      if (counter <= this._requestCounter) {
+        throw new WGReplayError("request counter replayed");
+      }
 
-    const message = await this._requestMessage(counter, validated.nonce, method, path, body);
-    const valid = await this._verify(this._requestKey, validated.mac, message);
+      const message = await this._requestMessage(counter, validated.nonce, method, path, body);
+      const valid = await this._verify(this._requestKey, validated.mac, message);
 
-    if (!valid) {
-      throw new WGInvalidMACError("invalid request MAC");
-    }
+      if (!valid) {
+        throw new WGInvalidMACError("invalid request MAC");
+      }
 
-    this._requestCounter = counter;
-    return true;
+      this._requestCounter = counter;
+      return true;
+    });
   }
 
   // ------------------------------------------------------------------
@@ -407,27 +417,38 @@ export class WGSecureSession {
       throw new WGCounterError("response counter does not match request");
     }
 
-    const counter = validatedAuth.counter;
-    if (counter <= this._lastResponseCounter) {
-      throw new WGReplayError("response replayed");
-    }
+    return this._withVerifyLock(async () => {
+      const counter = validatedAuth.counter;
+      if (counter <= this._lastResponseCounter) {
+        throw new WGReplayError("response replayed");
+      }
 
-    const nonce = validatedRequest.nonce;
+      const nonce = validatedRequest.nonce;
 
-    const message = await this._responseMessage(counter, nonce, status, body);
-    const valid = await this._verify(this._responseKey, validatedAuth.mac, message);
+      const message = await this._responseMessage(counter, nonce, status, body);
+      const valid = await this._verify(this._responseKey, validatedAuth.mac, message);
 
-    if (!valid) {
-      throw new WGInvalidMACError("invalid response MAC");
-    }
+      if (!valid) {
+        throw new WGInvalidMACError("invalid response MAC");
+      }
 
-    this._lastResponseCounter = counter;
-    return true;
+      this._lastResponseCounter = counter;
+      return true;
+    });
   }
 
   // ------------------------------------------------------------------
   // Field validation (equivalenti a _validate_* in Python)
   // ------------------------------------------------------------------
+
+  // Runs fn once every previously queued verification has settled, so
+  // the replay check and the counter commit of two verifications can
+  // never interleave.
+  _withVerifyLock(fn) {
+    const run = this._verifyChain.then(fn);
+    this._verifyChain = run.catch(() => {});
+    return run;
+  }
 
   _validateAuthStructure(auth, requiredFields) {
     if (auth === null || typeof auth !== "object" || Array.isArray(auth)) {
