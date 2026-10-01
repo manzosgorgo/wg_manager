@@ -148,11 +148,9 @@ def test_request_counter_reordering_within_window_is_accepted():
 
 def test_request_counter_gaps_are_allowed_by_current_protocol():
     """
-    Documenta esplicitamente la scelta di design attuale: il protocollo
-    NON richiede counter contigui (counter == previous + 1), accetta
-    "buchi" purche' il counter sia strettamente maggiore dell'ultimo
-    accettato. Se in futuro si decide di richiedere contiguita' stretta,
-    questo test va aggiornato per riflettere la nuova policy.
+    Il protocollo NON richiede counter contigui (counter == previous + 1).
+    I "buchi" sono validi e, con la replay window, anche i counter arrivati
+    fuori ordine restano validi finche' non escono dalla finestra.
     """
     client, server = new_pair()
     auth_low = client.create_request_auth("GET", "/api/test", b"")
