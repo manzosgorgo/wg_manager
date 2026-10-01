@@ -16,8 +16,8 @@ REAL_WG_PATHS = {
     Path("/usr/local/bin/wg"),
 }
 
-PUBLIC_KEY = base64.b64encode(b"mock-test-public-key-32-bytes!!").decode()
-SECOND_PUBLIC_KEY = base64.b64encode(b"mock-test-public-key-2-32-byte!!").decode()
+PUBLIC_KEY = base64.b64encode(b"0123456789abcdef0123456789abcdef").decode()
+SECOND_PUBLIC_KEY = base64.b64encode(b"fedcba9876543210fedcba9876543210").decode()
 
 
 @pytest.fixture(scope="session", autouse=True)
