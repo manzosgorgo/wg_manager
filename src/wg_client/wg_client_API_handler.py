@@ -500,11 +500,17 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 try:
                     self.lifecycle.ipc.unregister_peer(public_key)
                 except src.wg_client.wg_client_errors.WGProtocolError as exc:
-                    log.error("peer persistence failed: %s", exc)
+                    # The WireGuard peer is already gone. Keep the session
+                    # snapshot unchanged: stale ownership is recoverable,
+                    # while deleting ownership before a live peer would not be.
+                    log.error(
+                        "peer removed but ownership cleanup failed: %s",
+                        exc,
+                    )
                     self.send_error(
                         502,
                         "Persistence error",
-                        "failed to persist peer ownership",
+                        "peer was removed but ownership cleanup failed",
                     )
                     return
 
@@ -595,11 +601,6 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                         )
                         return
 
-                result = self.controller.add_peer(
-                    public_key,
-                    allowed_ip,
-                )
-
             except src.wg_client.wg_client_errors.WGControllerError as exc:
                 self.send_error(
                     exc.status,
@@ -608,11 +609,14 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 )
                 return
 
+            ownership_persisted = False
+
             if self.session is not None:
                 try:
                     self.lifecycle.ipc.register_peer(public_key)
+                    ownership_persisted = True
                 except src.wg_client.wg_client_errors.WGProtocolError as exc:
-                    log.error("peer persistence failed: %s", exc)
+                    log.error("peer ownership persistence failed: %s", exc)
                     self.send_error(
                         502,
                         "Persistence error",
@@ -620,6 +624,35 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                     )
                     return
 
+            try:
+                result = self.controller.add_peer(
+                    public_key,
+                    allowed_ip,
+                )
+
+            except src.wg_client.wg_client_errors.WGControllerError as exc:
+                if ownership_persisted:
+                    try:
+                        self.lifecycle.ipc.unregister_peer(public_key)
+                    except src.wg_client.wg_client_errors.WGProtocolError:
+                        log.exception(
+                            "peer creation failed and ownership rollback failed"
+                        )
+                        self.send_error(
+                            502,
+                            "Consistency error",
+                            "peer creation failed and ownership rollback failed",
+                        )
+                        return
+
+                self.send_error(
+                    exc.status,
+                    "Controller error",
+                    exc.message,
+                )
+                return
+
+            if self.session is not None:
                 self.session.register_peer(public_key)
 
             self.send_json(200, result)

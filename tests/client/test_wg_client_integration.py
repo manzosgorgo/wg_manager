@@ -498,3 +498,17 @@ def test_peer_register_rpc_is_completed_by_control_loop(lifecycle):
     finally:
         auth_sock.close()
         client_sock.close()
+
+
+def test_peer_register_on_closed_ipc_is_protocol_error(lifecycle):
+    auth_sock, client_sock = socket.socketpair()
+
+    try:
+        ipc = WGClientIPC(client_sock, lifecycle)
+        ipc.stop(notify_shutdown=False)
+
+        with pytest.raises(WGProtocolError, match="IPC connection is closed"):
+            ipc.register_peer(PUBLIC_KEY)
+
+    finally:
+        auth_sock.close()

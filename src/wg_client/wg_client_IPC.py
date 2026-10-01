@@ -287,8 +287,17 @@ class WGClientIPC:
         }
 
         try:
-            with self._send_lock:
-                self.sock.sendall(self._encode_packet(packet))
+            sock = self.sock
+            if sock is None:
+                raise WGProtocolError("IPC connection is closed")
+
+            try:
+                with self._send_lock:
+                    sock.sendall(self._encode_packet(packet))
+            except OSError as exc:
+                raise WGProtocolError(
+                    f"IPC peer request failed: {exc}"
+                ) from exc
 
             if not event.wait(IPC_RESPONSE_TIMEOUT):
                 raise WGProtocolError("IPC peer request timed out")
