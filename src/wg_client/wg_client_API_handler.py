@@ -64,7 +64,6 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
             interface,
             lifecycle,
             session=None,
-            principal=None,
     ):
         super().__init__(server_address, handler_class)
         self.controller = controller
@@ -76,7 +75,6 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
         # server, or None to run unauthenticated (e.g. in tests that don't
         # care about transport authentication).
         self.session = session
-        self.principal = principal
 
         # ThreadingHTTPServer hands each request to its own thread, but
         # WGSecureSession carries mutable per-session state (the request
@@ -118,12 +116,47 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
         return self.server.session
 
     @property
-    def principal(self):
-        return self.server.principal
-
-    @property
     def session_lock(self):
         return self.server.session_lock
+
+    def principal_required(self):
+        if self.session is None:
+            return True
+
+        if self.session.principal is None:
+            self.send_error(
+                403,
+                "Forbidden",
+                "authenticated session has no principal",
+            )
+            return False
+
+        return True
+
+    def can_access_peer(self, public_key):
+        return (
+            self.session is None
+            or self.session.can_access_peer(public_key)
+        )
+
+    def filter_status_for_principal(self, result):
+        if self.session is None or self.session.is_admin:
+            return result
+
+        filtered = dict(result)
+        peers = result.get("peers", [])
+
+        if not isinstance(peers, list):
+            return filtered
+
+        filtered["peers"] = [
+            peer
+            for peer in peers
+            if isinstance(peer, dict)
+            and self.session.can_access_peer(peer.get("public_key"))
+        ]
+
+        return filtered
 
     def api_path(self):
         """
@@ -391,6 +424,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 self.send_error(404)
                 return
 
+            if not self.principal_required():
+                return
+
             try:
                 result = self.controller.status()
 
@@ -411,7 +447,10 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 )
                 return
 
-            self.send_json(200, result)
+            self.send_json(
+                200,
+                self.filter_status_for_principal(result),
+            )
 
     def do_POST(self):
         log.info("Received HTTP POST request: %s", self.path)
@@ -435,6 +474,17 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 self.send_error(404)
                 return
 
+            if not self.principal_required():
+                return
+
+            if not self.can_access_peer(public_key):
+                self.send_error(
+                    403,
+                    "Forbidden",
+                    "peer is not owned by this principal",
+                )
+                return
+
             try:
                 result = self.controller.remove_peer(public_key)
 
@@ -445,6 +495,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                     exc.message,
                 )
                 return
+
+            if self.session is not None:
+                self.session.unregister_peer(public_key)
 
             self.send_json(200, result)
 
@@ -484,6 +537,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 self.send_error(404)
                 return
 
+            if not self.principal_required():
+                return
+
             try:
                 obj = json.loads(raw_body.decode("utf-8"))
                 allowed_ip = obj["allowed_ip"]
@@ -497,6 +553,37 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             try:
+                if self.session is not None:
+                    current = self.controller.status()
+
+                    if (
+                        not isinstance(current, dict)
+                        or current.get("interface") != self.server.interface
+                    ):
+                        self.send_error(
+                            502,
+                            "Controller error",
+                            "controller interface mismatch",
+                        )
+                        return
+
+                    existing_keys = {
+                        peer.get("public_key")
+                        for peer in current.get("peers", [])
+                        if isinstance(peer, dict)
+                    }
+
+                    if (
+                        public_key in existing_keys
+                        and not self.can_access_peer(public_key)
+                    ):
+                        self.send_error(
+                            403,
+                            "Forbidden",
+                            "peer is not owned by this principal",
+                        )
+                        return
+
                 result = self.controller.add_peer(
                     public_key,
                     allowed_ip,
@@ -509,5 +596,8 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                     exc.message,
                 )
                 return
+
+            if self.session is not None:
+                self.session.register_peer(public_key)
 
             self.send_json(200, result)

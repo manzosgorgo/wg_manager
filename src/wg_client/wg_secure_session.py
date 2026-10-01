@@ -58,6 +58,7 @@ class WGSecureSession:
             config,
             k_session: bytes,
             session_id: bytes | None = None,
+            principal=None,
             rng=None,
             clock=None,
     ):
@@ -127,8 +128,36 @@ class WGSecureSession:
                 f"session_id must be {self.session_id_size} bytes"
             )
 
+        if principal is not None:
+            if not isinstance(principal, dict):
+                raise WGInvalidFieldError("principal must be a dict")
+
+            username = principal.get("username")
+            peers = principal.get("peers")
+
+            if not isinstance(username, str) or not username.strip():
+                raise WGInvalidFieldError(
+                    "principal.username must be a non-empty string"
+                )
+
+            if not isinstance(peers, list) or any(
+                not isinstance(peer, str) or not peer for peer in peers
+            ):
+                raise WGInvalidFieldError(
+                    "principal.peers must be a list of non-empty strings"
+                )
+
+            if len(set(peers)) != len(peers):
+                raise WGInvalidFieldError("principal.peers contains duplicates")
+
+            principal = {
+                "username": username,
+                "peers": tuple(peers),
+            }
+
         self._k_session = k_session
         self._session_id = session_id
+        self._principal = principal
 
         self._session_seed = self._derive_session_seed()
 
@@ -167,6 +196,45 @@ class WGSecureSession:
     def session_id_b64(self) -> str:
         log.debug("session_id_b64 property")
         return self._b64(self._session_id)
+
+    @property
+    def principal(self):
+        return self._principal
+
+    @property
+    def is_admin(self):
+        return (
+            self._principal is not None
+            and self._principal["username"] == "admin"
+        )
+
+    def can_access_peer(self, public_key):
+        if self._principal is None:
+            return False
+
+        return (
+            self.is_admin
+            or public_key in self._principal["peers"]
+        )
+
+    def register_peer(self, public_key):
+        if self._principal is None or self.is_admin:
+            return
+
+        peers = self._principal["peers"]
+
+        if public_key not in peers:
+            self._principal["peers"] = peers + (public_key,)
+
+    def unregister_peer(self, public_key):
+        if self._principal is None or self.is_admin:
+            return
+
+        self._principal["peers"] = tuple(
+            peer
+            for peer in self._principal["peers"]
+            if peer != public_key
+        )
 
     # ------------------------------------------------------------------
     # Key derivation

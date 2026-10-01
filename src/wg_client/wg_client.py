@@ -84,7 +84,12 @@ def activate(ipc, lifecycle):
         cfg = load_config()
         log.info("wg_client parsed config file")
 
-        session = WGSecureSession(cfg, activation["k_session"], activation["session_id"])
+        session = WGSecureSession(
+            cfg,
+            activation["k_session"],
+            activation["session_id"],
+            principal=activation["principal"],
+        )
 
         if cfg["secure_session"]["enabled"] is True:
             log.info("wg_client using secure session")
@@ -93,7 +98,6 @@ def activate(ipc, lifecycle):
                 activation["listen_path"],
                 session,
                 lifecycle,
-                principal=activation["principal"],
             )
         else:
             log.info("wg_client not using secure session")
@@ -102,7 +106,6 @@ def activate(ipc, lifecycle):
                 activation["listen_path"],
                 None,
                 lifecycle,
-                principal=activation["principal"],
             )
 
         log.debug("api bind")
