@@ -587,10 +587,8 @@ class WGSecureSession:
             self.counter_min,
             highest - self.replay_window_size + 1,
         )
-        accepted.difference_update(
-            value for value in accepted if value < lower_bound
-        )
-
+        expired = {value for value in accepted if value < lower_bound}
+        accepted.difference_update(expired)
         if request:
             self._request_receive_highest = highest
         else:

@@ -1,0 +1,84 @@
+# `tests/frontend/test_secure_session_concurrency.test.mjs`
+
+## Metadata
+
+- Path: `tests/frontend/test_secure_session_concurrency.test.mjs`
+- Language: `javascript`
+- Lines: 66
+- SHA256: `58c53cc91b7c69dfab75e584c45b4faecb9e63bdeea675407ce06e9bc506b0ff`
+- Imports:
+  - `../../src/wg_frontend/wg_secure_session.js`
+  - `node:assert`
+  - `node:crypto`
+  - `node:test`
+
+## Source
+
+```javascript
+// Destinazione suggerita: tests/frontend/secure_session_concurrency.test.mjs
+// Esecuzione:  node --test tests/frontend/
+//
+// createRequestAuth legge il contatore prima di due `await` (hash e firma)
+// e lo assegna dopo: due chiamate concorrenti vedono lo stesso valore.
+// Con il codice attuale il primo test deve FALLIRE.
+
+import test from "node:test";
+import assert from "node:assert";
+import { webcrypto } from "node:crypto";
+
+globalThis.crypto ??= webcrypto;
+
+const { WGSecureSession } = await import("../../src/wg_frontend/wg_secure_session.js");
+
+const CFG = {
+    secure_session: {
+        session_id_size: 16,
+        nonce_size: 32,
+        session_key_size: 32,
+        counter_min: 1,
+        counter_max: 0xffffffff,
+    },
+};
+
+async function newSession() {
+    const k = Uint8Array.from({ length: 32 }, (_, i) => i);
+    return WGSecureSession.create(CFG, k, new Uint8Array(16));
+}
+
+test("createRequestAuth concorrenti non duplicano il contatore",
+    { todo: "bug noto: tutte le chiamate concorrenti leggono lo stesso contatore (misurato: 20 volte il valore 1)" },
+    async () => {
+        const s = await newSession();
+        const auths = await Promise.all(
+            Array.from({ length: 20 }, () => s.createRequestAuth("GET", "/v1/status")),
+        );
+        const counters = auths.map((a) => a.counter);
+        assert.strictEqual(new Set(counters).size, counters.length, `contatori: ${counters}`);
+    });
+
+test("createRequestAuth sequenziali: contatori consecutivi", async () => {
+    const s = await newSession();
+    const counters = [];
+    for (let i = 0; i < 5; i++) {
+        counters.push((await s.createRequestAuth("GET", "/v1/status")).counter);
+    }
+    assert.deepStrictEqual(counters, [1, 2, 3, 4, 5]);
+});
+
+test("verifyResponse concorrente della stessa risposta accettata una sola volta",
+    { todo: "bug noto: check-then-await-then-set (misurato: 8 accettate su 8)" },
+    async () => {
+        const tx = await newSession();
+        const rx = await newSession();
+
+        const reqAuth = await tx.createRequestAuth("GET", "/v1/status");
+        await rx.verifyRequest(reqAuth, "GET", "/v1/status");
+        const respAuth = await rx.createResponseAuth(reqAuth, 200, new Uint8Array(0));
+
+        const results = await Promise.allSettled(
+            Array.from({ length: 8 }, () => tx.verifyResponse(respAuth, reqAuth, 200, new Uint8Array(0))),
+        );
+        const ok = results.filter((r) => r.status === "fulfilled").length;
+        assert.strictEqual(ok, 1, `accettate: ${ok}`);
+    });
+```
