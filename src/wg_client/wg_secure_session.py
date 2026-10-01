@@ -34,7 +34,11 @@ class WGSecureSession:
     Cryptographic state for a wg_manager session.
 
     The caller supplies the shared K_session established during
-    the authentication phase.
+    the authentication phase. Its protocol-level size is validated
+    before this class is constructed.
+
+    session_key_size controls the length of the keys derived locally
+    from K_session with HKDF; it is not the size of K_session itself.
 
     K_session itself is never transmitted by this class.
     """
@@ -62,6 +66,7 @@ class WGSecureSession:
 
         self.session_id_size = config["secure_session"]["session_id_size"]
         self.nonce_size = config["secure_session"]["nonce_size"]
+        # Size of locally derived HKDF keys, not of the OPAQUE input secret.
         self.key_size = config["secure_session"]["session_key_size"]
         self.counter_min = config["secure_session"]["counter_min"]
 
@@ -108,12 +113,6 @@ class WGSecureSession:
         if not isinstance(k_session, bytes):
             log.warning("k_session must be bytes")
             raise WGInvalidFieldError("k_session must be bytes")
-
-        if len(k_session) != self.key_size:
-            log.warning("k_session must be %d bytes", self.key_size)
-            raise WGInvalidFieldError(
-                f"k_session must be {self.key_size} bytes"
-            )
 
         if session_id is None:
             session_id = secrets.token_bytes(self.session_id_size)

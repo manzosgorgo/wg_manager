@@ -11,6 +11,9 @@ MAX_PACKET_SIZE = 65536
 
 PROTOCOL_VERSION = 1
 
+# OPAQUE shared secret size produced by the supported library version.
+OPAQUE_SESSION_KEY_SIZE = 64
+
 # Upper bound for the session lifetime requested by auth.
 MAX_SESSION_TIMEOUT = 24 * 3600
 
@@ -147,7 +150,9 @@ class WGClientIPC:
         Returns a dict with decoded session_id and k_session (bytes),
         client_id, listen_path and expires_at (unix time).
 
-        Key and session id lengths are checked by WGSecureSession.
+        The OPAQUE session key length belongs to the activation protocol;
+        WGSecureSession's configured session_key_size controls only the
+        length of keys derived locally with HKDF.
         """
         if now is None:
             now = time.time()
@@ -157,6 +162,11 @@ class WGClientIPC:
 
         session_id = self._hex_field(obj, "session_id")
         k_session = self._hex_field(obj, "k_session")
+
+        if len(k_session) != OPAQUE_SESSION_KEY_SIZE:
+            raise WGProtocolError(
+                f"k_session must be {OPAQUE_SESSION_KEY_SIZE} bytes"
+            )
 
         client_id = obj.get("client_id")
 

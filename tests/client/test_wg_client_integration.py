@@ -85,7 +85,8 @@ def make_packet(**overrides):
     packet = {
         "protocol_version": 1,
         "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
-        "k_session": "b7e4a2c91f6d08359a31c7e4b25f608d4c8e1a73f0b692de5a17c3f84e29b601",
+        # OPAQUE shared session secret: 64 bytes, transported as hex.
+        "k_session": "ab" * 64,
         "client_id": "android-test-client",
         "principal": {"username": "alice"},
         "timeout": 1800,
@@ -113,7 +114,7 @@ def test_parse_activation_valid(ipc):
     assert activation["expires_at"] == NOW + 1800
     assert activation["listen_path"] == LISTEN_PATH
     assert activation["principal"] == {"username": "alice"}
-    assert len(activation["k_session"]) == 32
+    assert len(activation["k_session"]) == 64
     assert len(activation["session_id"]) == 16
 
 
@@ -123,6 +124,8 @@ def test_parse_activation_valid(ipc):
         {"protocol_version": 2},
         {"k_session": "not-hex"},
         {"k_session": None},
+        {"k_session": "00" * 63},
+        {"k_session": "00" * 65},
         {"session_id": 123},
         {"client_id": ""},
         {"principal": None},
