@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_auth_client.py`
 - Language: `python`
-- Lines: 249
-- SHA256: `d29397d991094e2edcf842eb36e3ac6bd40cb1ecef7d12f0d458e1046de621f8`
+- Lines: 250
+- SHA256: `c69de200c931e19d3d675742b403947d16c84843ebf786a92ab813b5d3a084c1`
 - Imports:
   - `base64`
   - `ipaddress`
@@ -96,6 +96,7 @@ def activation_params():
         ),
         "timeout": 30,
         "client_id": "pytest-client",
+        "principal": {"username": "pytest-user"},
         "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
         "listen_path": "/api/7f3a91c2e8b44d17/9c71e4a2f6b83d10",
     }

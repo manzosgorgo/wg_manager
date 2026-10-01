@@ -36,7 +36,7 @@ Generated mechanically by `tools/project_index.py`.
 - `WGAuthAPI._create_server`
 
 **Evidence:**
-- `src/wg_auth/wg_auth_API.py:319` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
+- `src/wg_auth/wg_auth_API.py:320` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
 
 **Message surfaces:**
 - **HTTP**
@@ -69,12 +69,12 @@ Generated mechanically by `tools/project_index.py`.
 - `WGAuthIPC.activate`
 
 **Evidence:**
-- `src/wg_auth/wg_auth_IPC.py:162` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
+- `src/wg_auth/wg_auth_IPC.py:164` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
 
 **Message surfaces:**
 - **IPC**
   - `WGAuthIPC.activate()`
-    - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, listen_path, created_at}`
+    - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, listen_path, principal, created_at}`
 
 ### connection-003
 
@@ -120,7 +120,7 @@ Generated mechanically by `tools/project_index.py`.
 - `main`
 
 **Evidence:**
-- `src/wg_client/wg_client.py:132` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=os.dup(sys.stdin.fileno()))`
+- `src/wg_client/wg_client.py:144` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=os.dup(sys.stdin.fileno()))`
 
 ### connection-005
 
@@ -142,15 +142,15 @@ Generated mechanically by `tools/project_index.py`.
 - `activate_client`
 
 **Evidence:**
-- `src/wg_client/wg_client_activator.py:46` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
-- `src/wg_client/wg_client_activator.py:52` CONNECT `sock.connect(socket_path)`
-- `src/wg_client/wg_client_activator.py:53` SENDALL `sock.sendall(payload)`
-- `src/wg_client/wg_client_activator.py:77` CLOSE `sock.close()`
+- `src/wg_client/wg_client_activator.py:48` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
+- `src/wg_client/wg_client_activator.py:54` CONNECT `sock.connect(socket_path)`
+- `src/wg_client/wg_client_activator.py:55` SENDALL `sock.sendall(payload)`
+- `src/wg_client/wg_client_activator.py:79` CLOSE `sock.close()`
 
 **Message surfaces:**
 - **INTERNAL**
   - `activate_client()`
-    - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, created_at, listen_path}`
+    - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, created_at, listen_path, principal}`
 
 ### connection-006
 
@@ -269,8 +269,8 @@ Generated mechanically by `tools/project_index.py`.
 - `request`
 
 **Evidence:**
-- `tests/client/test_wg_client_integration.py:265` HTTP_CLIENT `http.client.HTTPSConnection('127.0.0.1', port, context=ctx, timeout=5)`
-- `tests/client/test_wg_client_integration.py:272` CLOSE `conn.close()`
+- `tests/client/test_wg_client_integration.py:271` HTTP_CLIENT `http.client.HTTPSConnection('127.0.0.1', port, context=ctx, timeout=5)`
+- `tests/client/test_wg_client_integration.py:278` CLOSE `conn.close()`
 
 ### connection-011
 

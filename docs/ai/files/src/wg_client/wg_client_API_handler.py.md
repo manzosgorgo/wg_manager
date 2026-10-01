@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_API_handler.py`
 - Language: `python`
-- Lines: 507
-- SHA256: `d50937b35fe7eecea89d5e523a6293edab980a349299ececdd413dd456caf301`
+- Lines: 513
+- SHA256: `2b01acb4e6957e4539c5106d8f9720f27a21cb04a15f40d628afa9bbde27362f`
 - Imports:
   - `datetime`
   - `http`
@@ -85,6 +85,7 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
             interface,
             lifecycle,
             session=None,
+            principal=None,
     ):
         super().__init__(server_address, handler_class)
         self.controller = controller
@@ -96,6 +97,7 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
         # server, or None to run unauthenticated (e.g. in tests that don't
         # care about transport authentication).
         self.session = session
+        self.principal = principal
 
         # ThreadingHTTPServer hands each request to its own thread, but
         # WGSecureSession carries mutable per-session state (the request
@@ -135,6 +137,10 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
     @property
     def session(self):
         return self.server.session
+
+    @property
+    def principal(self):
+        return self.server.principal
 
     @property
     def session_lock(self):

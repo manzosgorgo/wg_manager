@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_wg_client_activator.py`
 - Language: `python`
-- Lines: 158
-- SHA256: `275573432ca78e75c286eeb85ea462f72ad58e1934b7208234a9403a8faaa0b8`
+- Lines: 159
+- SHA256: `61137f3fb7cd3cefbf9485e6fafc0a3d8972e1e9138383a56ac33a0649e0fc32`
 - Imports:
   - `asyncio`
   - `concurrent.futures`
@@ -44,6 +44,7 @@ def activation_params():
         ),
         "timeout": 30,
         "client_id": "pytest-client",
+        "principal": {"username": "pytest-user"},
         "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
         "listen_path": "/api/7f3a91c2e8b44d17/9c71e4a2f6b83d10",
     }

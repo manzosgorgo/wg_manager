@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client.py`
 - Language: `python`
-- Lines: 197
-- SHA256: `fa1f3e8099819715eb12d7737d305aae35919c5e92fbf32136acd858d22c9a60`
+- Lines: 209
+- SHA256: `0b1be2c6f1ce3b9a99f3658bdd086d67892d8d21841222ab0c59c154913f0b00`
 - Imports:
   - `logging`
   - `os`
@@ -115,10 +115,22 @@ def activate(ipc, lifecycle):
 
         if cfg["secure_session"]["enabled"] is True:
             log.info("wg_client using secure session")
-            api = WGClientAPI(cfg, activation["listen_path"], session,lifecycle)
+            api = WGClientAPI(
+                cfg,
+                activation["listen_path"],
+                session,
+                lifecycle,
+                principal=activation["principal"],
+            )
         else:
             log.info("wg_client not using secure session")
-            api = WGClientAPI(cfg, activation["listen_path"], None,lifecycle)
+            api = WGClientAPI(
+                cfg,
+                activation["listen_path"],
+                None,
+                lifecycle,
+                principal=activation["principal"],
+            )
 
         log.debug("api bind")
         api.bind()

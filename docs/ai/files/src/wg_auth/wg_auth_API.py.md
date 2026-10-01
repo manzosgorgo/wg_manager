@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_API.py`
 - Language: `python`
-- Lines: 350
-- SHA256: `5b2aaca6d542f1b87c00b0c1a5c6ae21e07c6a7bddc506378c27e8d68f2c5d4d`
+- Lines: 351
+- SHA256: `4db4d809e56e75031cdcdcd3f723dc7ec235f3c9761d2fe9ab8c7251b9fccd50`
 - Imports:
   - `http.server`
   - `logging`
@@ -174,6 +174,7 @@ class WGAuthAPI:
                 timeout=int(self.config["client"]["timeout"]),
                 listen_path=self.config["client"]["listen_path"],
                 lifecycle=self.lifecycle,
+                principal={"username": session.username},
             )
 
             self.ipc = ipc

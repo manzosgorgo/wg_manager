@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_IPC.py`
 - Language: `python`
-- Lines: 225
-- SHA256: `69c030c80ff292d121bd5f4485e57d4d1ed2d3182bd89e74dcd61d7e32572ecd`
+- Lines: 235
+- SHA256: `edc287d3c25229c62c8186bbaff7a2c87e346995b6acd45bec28ba5bbc77ff68`
 - Imports:
   - `json`
   - `logging`
@@ -39,12 +39,14 @@ class WGAuthIPC:
         timeout,
         listen_path,
         lifecycle,
+        principal=None,
     ):
         self.socket_path = socket_path
         self.client_id = client_id
         self.timeout = timeout
         self.listen_path = listen_path
         self.lifecycle = lifecycle
+        self.principal = principal
 
         self.sock = None
     @property
@@ -191,6 +193,7 @@ class WGAuthIPC:
             "client_id": self.client_id,
             "timeout": self.timeout,
             "listen_path": self.listen_path,
+            "principal": self.principal,
             "created_at": int(time.time()),
         }
 
@@ -219,14 +222,21 @@ class WGAuthIPC:
 
         self.close()
 
-    def send_packet(self, packet):
+    def _encode_packet(self, packet):
         payload = (
-                json.dumps(
-                    packet,
-                    separators=(",", ":")
-                ) + "\n"
-        ).encode("utf-8")
-        self.sock.sendall(payload)
+            json.dumps(packet, separators=(",", ":")).encode("utf-8")
+            + b"\n"
+        )
+
+        if len(payload) > MAX_PACKET_SIZE:
+            raise WGAuthProtocolError(
+                "packet too large"
+            )
+
+        return payload
+
+    def send_packet(self, packet):
+        self.sock.sendall(self._encode_packet(packet))
 
     def close(self):
         if self.sock is None:

@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_activator.py`
 - Language: `python`
-- Lines: 78
-- SHA256: `041e8bf144e2e695a06e148ca374c0fd43290cb5f3957869acadf3b224de2cf9`
+- Lines: 80
+- SHA256: `ddb4026d5615895c4c3b8cac177f88dc6093690663610d7de304bf7d8bec4d50`
 - Imports:
   - `json`
   - `socket`
@@ -40,7 +40,8 @@ def activate_client(
         timeout,
         client_id,
         session_id,
-        listen_path
+        listen_path,
+        principal,
 ):
     packet = {
         "protocol_version": 1,
@@ -50,6 +51,7 @@ def activate_client(
         "timeout": timeout,
         "created_at": int(time.time()),
         "listen_path": listen_path,
+        "principal": principal,
     }
 
     payload = (

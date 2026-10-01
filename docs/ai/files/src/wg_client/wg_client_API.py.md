@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_API.py`
 - Language: `python`
-- Lines: 142
-- SHA256: `8fe1c5b92200cee3cdabf6ecbe5518e4a567b898f3431a37cc03125a8448a3f9`
+- Lines: 144
+- SHA256: `9c27378dc83256e3893ca8d18ac7bcd4df858ca2ddcaca6e27a4aad07358a60a`
 - Imports:
   - `logging`
   - `src.wg_client.wg_client_API_handler`
@@ -33,7 +33,7 @@ log.setLevel(logging.DEBUG)
 
 
 class WGClientAPI:
-    def __init__(self, config, listen_path, session=None,lifecycle=None):
+    def __init__(self, config, listen_path, session=None, lifecycle=None, principal=None):
         self.server = None
         log.debug("Initializing WGClientAPI")
 
@@ -57,6 +57,7 @@ class WGClientAPI:
         # WGSecureSession built from the activation packet.
         # Not used to authenticate requests yet.
         self.session = session
+        self.principal = principal
 
         if lifecycle is None:
             lifecycle = WGClientLifecycle(self)
@@ -102,6 +103,7 @@ class WGClientAPI:
                 self.interface,
                 self.lifecycle,
                 self.session,
+                self.principal,
             )
 
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)

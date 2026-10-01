@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_client.py`
 - Language: `python`
-- Lines: 247
-- SHA256: `be937e2f03f7d532770fa02662c15509cebb75b3c5443ce03646ee3747aae0d7`
+- Lines: 248
+- SHA256: `292c0ae49a64005c1713808afde81a039104399d3cd56de384a6c7c6d1bdb517`
 - Imports:
   - `base64`
   - `ipaddress`
@@ -106,6 +106,7 @@ def activation_params():
         "client_id": "pytest-client",
         "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
         "listen_path": "/api/7f3a91c2e8b44d17/9c71e4a2f6b83d10",
+        "principal": {"username": "admin"}
     }
 @pytest.fixture
 def client():

@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_IPC.py`
 - Language: `python`
-- Lines: 249
-- SHA256: `8197881b233b41aac2fe05af0185881093c5382da332455308425972fc3492db`
+- Lines: 269
+- SHA256: `cc5ffe3db75dfa467fdde0b1baaacda23fccf45771af1bee6258cab2b5bfb922`
 - Imports:
   - `json`
   - `logging`
@@ -182,6 +182,18 @@ class WGClientIPC:
         if not isinstance(client_id, str) or not client_id:
             raise WGProtocolError("client_id must be a non-empty string")
 
+        principal = obj.get("principal")
+        if not isinstance(principal, dict):
+            raise WGProtocolError("principal must be an object")
+
+        username = principal.get("username")
+        if not isinstance(username, str) or not username.strip():
+            raise WGProtocolError("principal.username must be a non-empty string")
+
+        # Only the authenticated identity is accepted here. Roles will be
+        # supplied by the authoritative user registry, not by the client.
+        principal = {"username": username}
+
         listen_path = obj.get("listen_path")
 
         if not isinstance(listen_path, str) or not LISTEN_PATH_RE.fullmatch(listen_path):
@@ -205,9 +217,22 @@ class WGClientIPC:
             "session_id": session_id,
             "k_session": k_session,
             "client_id": client_id,
+            "principal": principal,
             "listen_path": listen_path,
             "expires_at": expires_at,
         }
+
+
+    def _encode_packet(self, packet):
+        payload = (
+            json.dumps(packet, separators=(",", ":")).encode("utf-8")
+            + b"\n"
+        )
+
+        if len(payload) > MAX_PACKET_SIZE:
+            raise WGProtocolError("packet too large")
+
+        return payload
 
 
     def send_result(self, status, **fields):
@@ -221,7 +246,7 @@ class WGClientIPC:
             **fields,
         }
 
-        self.sock.sendall(json.dumps(response, separators=(",", ":")).encode("utf-8") + b"\n")
+        self.sock.sendall(self._encode_packet(response))
 
     def _notify_stop(self):
         if self.sock is None:
@@ -231,12 +256,7 @@ class WGClientIPC:
             "protocol_version": PROTOCOL_VERSION,
             "type": "STOP",
         }
-        self.sock.sendall(
-            json.dumps(
-                response,
-                separators=(",", ":"),
-            ).encode("utf-8") + b"\n"
-        )
+        self.sock.sendall(self._encode_packet(response))
         log.debug("sent STOP on ipc")
     def stop(self, notify_shutdown=True):
         sock = self.sock
