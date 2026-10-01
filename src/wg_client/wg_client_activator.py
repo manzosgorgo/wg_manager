@@ -62,6 +62,15 @@ def activate_client(
 
         response = json.loads(response.decode('utf-8', 'replace').strip())
 
+        if not isinstance(response, dict):
+            raise ValueError("activation response must be a JSON object")
+        if response.get("protocol_version") != 1:
+            raise ValueError("unsupported activation response protocol_version")
+        if response.get("type") != "ACTIVATION_RESULT":
+            raise ValueError("invalid activation response type")
+        if response.get("status") not in {"OK", "ERROR"}:
+            raise ValueError("invalid activation response status")
+
         return WGClientActivation(sock, response)
     except Exception as e:
         if sock is not None:
