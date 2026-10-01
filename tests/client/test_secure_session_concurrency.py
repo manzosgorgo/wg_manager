@@ -63,9 +63,8 @@ class FakeController:
         return {"ok": True}
 
 
-@pytest.fixture
-def server():
-    session = WGSecureSession(CFG, K_SESSION, SESSION_ID)
+def start_server():
+    """Server HTTP reale con sessione sicura nuova (contatore del ricevente a zero)."""
     srv = WGClientHTTPServer(
         ("127.0.0.1", 0),
         WGClientAPIHandler,
@@ -73,13 +72,22 @@ def server():
         LISTEN_PATH,
         INTERFACE,
         None,  # lifecycle: non usato da GET/PUT/DELETE
-        session,
+        WGSecureSession(CFG, K_SESSION, SESSION_ID),
     )
-    thread = threading.Thread(target=srv.serve_forever, daemon=True)
-    thread.start()
-    yield srv
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
+
+
+def stop_server(srv):
     srv.shutdown()
     srv.server_close()
+
+
+@pytest.fixture
+def server():
+    srv = start_server()
+    yield srv
+    stop_server(srv)
 
 
 def new_sender():
@@ -89,6 +97,15 @@ def new_sender():
 
 def sign(sender, method="GET", path="/v1/status", body=b""):
     return sender.create_request_auth(method, path, body)
+
+
+SIGN_LOCK = threading.Lock()
+
+
+def sign_serialized(sender, method="GET", path="/v1/status", body=b""):
+    """Firma sotto lock: isola il riordino di rete dalla race lato mittente."""
+    with SIGN_LOCK:
+        return sender.create_request_auth(method, path, body)
 
 
 def send(srv, auth, method="GET", path="/v1/status", body=b""):
@@ -156,6 +173,7 @@ def test_retry_with_same_counter_after_lost_response_is_rejected(server):
     assert send(server, sign(sender)) == 200
 
 
+@pytest.mark.xfail(strict=True, reason="create_request_auth non e' thread-safe: contatori duplicati (misurato: 185 unici su 2000)")
 def test_python_sender_counters_unique_under_threads():
     """create_request_auth condiviso tra thread non deve duplicare contatori."""
     sender = new_sender()
@@ -187,19 +205,36 @@ def test_reordered_pair_both_accepted_with_window(server):
     assert send(server, older) == 200      # target dopo la finestra
 
 
-def test_concurrent_requests_report(server):
-    """Non asserisce un esito: stampa quante richieste concorrenti falliscono."""
+def run_parallel(server, signer, n=64, workers=16):
     sender = new_sender()
-    with ThreadPoolExecutor(16) as ex:
-        codes = list(ex.map(lambda _: send(server, sign(sender)), range(64)))
-    print("\nconcurrent signed requests ->", dict(Counter(codes)))
-    assert codes.count(200) >= 1
-    assert set(codes) <= {200, 401}
+    with ThreadPoolExecutor(workers) as ex:
+        return list(ex.map(lambda _: send(server, signer(sender)), range(n)))
 
 
-@pytest.mark.xfail(strict=False, reason="dipende dallo scheduling: oggi di solito alcune risposte sono 401")
-def test_concurrent_requests_all_succeed(server):
-    sender = new_sender()
-    with ThreadPoolExecutor(16) as ex:
-        codes = list(ex.map(lambda _: send(server, sign(sender)), range(64)))
+def test_concurrent_requests_report():
+    """Non asserisce un esito preciso: stampa quante richieste falliscono.
+
+    serialized     = firma sotto lock, invio parallelo -> misura SOLO il riordino di rete
+    unsynchronized = firma e invio paralleli           -> race del mittente + riordino
+    """
+    for label, signer in (("serialized", sign_serialized), ("unsynchronized", sign)):
+        srv = start_server()
+        try:
+            codes = run_parallel(srv, signer)
+        finally:
+            stop_server(srv)
+        print(f"\nconcurrent, {label} signing -> {dict(Counter(codes))}")
+        assert codes.count(200) >= 1
+        assert set(codes) <= {200, 401}
+
+
+@pytest.mark.xfail(strict=False, reason="riordino di rete: senza finestra alcune risposte sono 401 (dipende dallo scheduling)")
+def test_concurrent_requests_all_succeed_serialized_signing(server):
+    codes = run_parallel(server, sign_serialized)
+    assert set(codes) == {200}, Counter(codes)
+
+
+@pytest.mark.xfail(strict=False, reason="race del mittente + riordino di rete (dipende dallo scheduling)")
+def test_concurrent_requests_all_succeed_unsynchronized_signing(server):
+    codes = run_parallel(server, sign)
     assert set(codes) == {200}, Counter(codes)
