@@ -191,6 +191,18 @@ class WGClientIPC:
         }
 
 
+    def _encode_packet(self, packet):
+        payload = (
+            json.dumps(packet, separators=(",", ":")).encode("utf-8")
+            + b"\n"
+        )
+
+        if len(payload) > MAX_PACKET_SIZE:
+            raise WGProtocolError("packet too large")
+
+        return payload
+
+
     def send_result(self, status, **fields):
         if status not in {"OK", "ERROR"}:
             raise WGProtocolError("invalid activation result status")
@@ -202,7 +214,7 @@ class WGClientIPC:
             **fields,
         }
 
-        self.sock.sendall(json.dumps(response, separators=(",", ":")).encode("utf-8") + b"\n")
+        self.sock.sendall(self._encode_packet(response))
 
     def _notify_stop(self):
         if self.sock is None:
@@ -212,12 +224,7 @@ class WGClientIPC:
             "protocol_version": PROTOCOL_VERSION,
             "type": "STOP",
         }
-        self.sock.sendall(
-            json.dumps(
-                response,
-                separators=(",", ":"),
-            ).encode("utf-8") + b"\n"
-        )
+        self.sock.sendall(self._encode_packet(response))
         log.debug("sent STOP on ipc")
     def stop(self, notify_shutdown=True):
         sock = self.sock
