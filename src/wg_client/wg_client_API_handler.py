@@ -16,6 +16,7 @@ from src.wg_client.wg_client_errors import (
     WGInvalidMACError,
     WGSessionMismatchError,
     WGReplayError,
+    WGSessionExpiredError,
 )
 
 log = logging.getLogger("wg_manager.api.handler")
@@ -49,6 +50,7 @@ _AUTH_REJECTED_ERRORS = (
     WGInvalidMACError,
     WGSessionMismatchError,
     WGReplayError,
+    WGSessionExpiredError,
 )
 
 
