@@ -294,6 +294,8 @@ class WGSecureSession:
         """
         log.debug("Create authentication parameters for a response")
 
+        self._check_session_active_unlocked()
+
         if not isinstance(status, int) or isinstance(status, bool):
             log.warning("status must be int")
             raise WGInvalidFieldError("status must be int")
@@ -364,6 +366,8 @@ class WGSecureSession:
         not have been accepted before.
         """
         log.debug("Verify request authentication")
+
+        self._check_session_active_unlocked()
 
         if not isinstance(method, str):
             log.warning("method must be str")
@@ -455,6 +459,8 @@ class WGSecureSession:
         Verify authentication of a server response.
         """
         log.debug("Verify authentication of a server response")
+
+        self._check_session_active_unlocked()
 
         if not isinstance(status, int) or isinstance(status, bool):
             log.warning("status must be int")
