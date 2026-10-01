@@ -135,20 +135,15 @@ def test_request_counters_strictly_increasing_accepted():
     print("[PASS] counter strettamente crescenti (1,2,3) accettati")
 
 
-def test_request_counter_lower_than_last_accepted_fails():
-    """Dopo aver accettato counter=2, un counter=1 successivo deve fallire."""
+def test_request_counter_reordering_within_window_is_accepted():
+    """Un counter piu' vecchio ma ancora nella window resta accettabile."""
     client, server = new_pair()
     auth1 = client.create_request_auth("GET", "/api/test", b"")
     auth2 = client.create_request_auth("GET", "/api/test", b"")
     server.verify_request(auth2, "GET", "/api/test", b"")
 
-    try:
-        server.verify_request(auth1, "GET", "/api/test", b"")
-    except WGReplayError:
-        print("[PASS] counter piu' vecchio dell'ultimo accettato rifiutato")
-        return
-
-    raise AssertionError("counter piu' vecchio accettato dopo uno piu' recente")
+    assert server.verify_request(auth1, "GET", "/api/test", b"") is True
+    print("[PASS] counter riordinato accettato nella replay window")
 
 
 def test_request_counter_gaps_are_allowed_by_current_protocol():
@@ -173,7 +168,7 @@ def test_request_counter_gaps_are_allowed_by_current_protocol():
 
     assert server.verify_request(auth_high, "GET", "/api/test", b"")
 
-    print("[PASS] un salto di counter (buco) e' accettato dal protocollo attuale")
+    print("[PASS] un salto di counter (buco) e' accettato")
 
 
 def test_response_counter_must_match_request_counter():
