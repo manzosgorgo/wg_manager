@@ -192,6 +192,9 @@ class WGClientIPC:
 
 
     def send_result(self, status, **fields):
+        if status not in {"OK", "ERROR"}:
+            raise WGProtocolError("invalid activation result status")
+
         response = {
             "protocol_version": PROTOCOL_VERSION,
             "type": "ACTIVATION_RESULT",
