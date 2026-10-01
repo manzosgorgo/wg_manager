@@ -5,8 +5,10 @@ import binascii
 import hashlib
 import hmac
 import logging
+import math
 import secrets
 import threading
+import time
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
@@ -18,6 +20,8 @@ from src.wg_client.wg_client_errors import (
     WGCounterError,
     WGCounterExhaustedError,
     WGReplayError,
+    WGSessionExpiredError,
+    WGRequestRateExceededError,
     WGSessionMismatchError,
     WGInvalidMACError,
 )
@@ -51,6 +55,7 @@ class WGSecureSession:
             k_session: bytes,
             session_id: bytes | None = None,
             rng=None,
+            clock=None,
     ):
         log.info("initializing WGSecureSession")
         self.config = config
@@ -69,6 +74,33 @@ class WGSecureSession:
 
         if self.counter_max > 0xFFFFFFFF:
             raise WGInvalidFieldError("counter maximum exceeds uint32 range")
+
+        secure_config = config["secure_session"]
+        self.session_timeout = secure_config.get("session_timeout", 86400)
+        self.max_request_frequency = secure_config.get(
+            "max_request_frequency", 0.0
+        )
+        self.replay_window_size = secure_config.get("replay_window_size", 64)
+
+        if self.session_timeout <= 0:
+            raise WGInvalidFieldError("invalid session timeout")
+
+        if self.max_request_frequency < 0:
+            raise WGInvalidFieldError("invalid maximum request frequency")
+
+        if self.replay_window_size <= 0:
+            raise WGInvalidFieldError("invalid replay window size")
+
+        counter_capacity = self.counter_max - self.counter_min + 1
+        if (
+            self.max_request_frequency > 0
+            and self.max_request_frequency * self.session_timeout
+            > counter_capacity
+        ):
+            raise WGInvalidFieldError(
+                "maximum request frequency and session timeout exceed "
+                "the secure session counter capacity"
+            )
 
         if not isinstance(k_session, bytes):
             log.warning("k_session must be bytes")
@@ -103,11 +135,22 @@ class WGSecureSession:
         self._response_key = self._derive_key(b"response authentication")
 
         self._request_counter = self.counter_min - 1
-        self._last_response_counter = self.counter_min - 1
+        self._pending_requests = {}
+
+        self._request_receive_highest = self.counter_min - 1
+        self._request_receive_accepted = set()
+        self._response_receive_highest = self.counter_min - 1
+        self._response_receive_accepted = set()
+
+        self._clock = clock or time.monotonic
+        self._session_started = self._clock()
+        self._session_expires_at = self._session_started + self.session_timeout
+
         self._rng = rng or secrets.token_bytes
 
-        # Protects both counters: reading, checking and advancing them
-        # must be one atomic step when the instance is shared by threads.
+        # Protects all mutable session state. Counter allocation, replay
+        # checks and lifecycle policy decisions must be atomic when the
+        # instance is shared by threads.
         self._lock = threading.Lock()
     # ------------------------------------------------------------------
     # Public session information
@@ -186,9 +229,13 @@ class WGSecureSession:
             log.warning("body must be bytes")
             raise WGInvalidFieldError("body must be bytes")
 
+        self._check_session_active_unlocked()
+
         if self._request_counter >= self.counter_max:
             log.warning("request counter exhausted")
             raise WGCounterExhaustedError("request counter exhausted")
+
+        self._check_request_rate_unlocked()
 
         counter = self._request_counter + 1
         nonce = self._rng(self.nonce_size)
@@ -209,12 +256,14 @@ class WGSecureSession:
 
         self._request_counter = counter
 
-        return {
+        auth = {
             "session_id": self.session_id_b64,
             "counter": counter,
             "nonce": self._b64(nonce),
             "mac": self._b64(mac),
         }
+        self._pending_requests[counter] = dict(auth)
+        return auth
 
     # ------------------------------------------------------------------
     # Response authentication
@@ -260,13 +309,6 @@ class WGSecureSession:
             raise WGSessionMismatchError("invalid session id")
 
         counter = validated_request["counter"]
-
-        if counter != self._request_counter:
-            log.warning("response does not correspond to latest request")
-            raise WGCounterError(
-                "response does not correspond to latest request"
-            )
-
         nonce = validated_request["nonce"]
 
         message = self._response_message(
@@ -318,8 +360,8 @@ class WGSecureSession:
         """
         Verify request authentication.
 
-        The request counter must be strictly greater than the
-        last accepted request counter.
+        The request counter must be inside the replay window and must
+        not have been accepted before.
         """
         log.debug("Verify request authentication")
 
@@ -343,7 +385,14 @@ class WGSecureSession:
 
         counter = validated["counter"]
 
-        if counter <= self._request_counter:
+        if not self._counter_in_receive_window_unlocked(
+            counter,
+            self._request_receive_highest,
+        ):
+            log.warning("request counter outside replay window")
+            raise WGReplayError("request counter outside replay window")
+
+        if counter in self._request_receive_accepted:
             log.warning("request counter replayed")
             raise WGReplayError("request counter replayed")
 
@@ -371,7 +420,10 @@ class WGSecureSession:
             log.error("invalid request MAC")
             raise WGInvalidMACError("invalid request MAC")
 
-        self._request_counter = counter
+        self._accept_receive_counter_unlocked(
+            counter,
+            request=True,
+        )
 
         return True
 
@@ -433,9 +485,25 @@ class WGSecureSession:
 
         counter = validated_auth["counter"]
 
-        if counter <= self._last_response_counter:
+        if not self._counter_in_receive_window_unlocked(
+            counter,
+            self._response_receive_highest,
+        ):
+            log.warning("response counter outside replay window")
+            raise WGReplayError("response counter outside replay window")
+
+        if counter in self._response_receive_accepted:
             log.warning("response counter replayed")
             raise WGReplayError("response replayed")
+
+        pending = self._pending_requests.get(counter)
+        if pending is None:
+            log.warning("response does not correspond to a pending request")
+            raise WGCounterError("response does not correspond to a pending request")
+
+        if pending["nonce"] != validated_request["nonce"]:
+            log.warning("response request nonce does not match pending request")
+            raise WGCounterError("response request does not match pending request")
 
         nonce = validated_request["nonce"]
         received_mac = validated_auth["mac"]
@@ -460,9 +528,68 @@ class WGSecureSession:
             log.error("invalid response MAC")
             raise WGInvalidMACError("invalid response MAC")
 
-        self._last_response_counter = counter
+        self._accept_receive_counter_unlocked(
+            counter,
+            request=False,
+        )
+        del self._pending_requests[counter]
 
         return True
+
+    # ------------------------------------------------------------------
+    # Session lifecycle and replay windows
+    # ------------------------------------------------------------------
+
+    def _check_session_active_unlocked(self):
+        if self._clock() >= self._session_expires_at:
+            log.warning("secure session expired")
+            raise WGSessionExpiredError("secure session expired")
+
+    def _check_request_rate_unlocked(self):
+        if self.max_request_frequency <= 0:
+            return
+
+        elapsed = max(0.0, self._clock() - self._session_started)
+        requests_used = self._request_counter - self.counter_min + 1
+        allowed = math.floor(elapsed * self.max_request_frequency) + 1
+
+        if requests_used >= allowed:
+            log.warning("maximum request frequency exceeded")
+            raise WGRequestRateExceededError(
+                "maximum request frequency exceeded"
+            )
+
+    def _counter_in_receive_window_unlocked(self, counter, highest_seen):
+        lower_bound = max(
+            self.counter_min,
+            highest_seen - self.replay_window_size + 1,
+        )
+        return lower_bound <= counter <= self.counter_max
+
+    def _accept_receive_counter_unlocked(self, counter, request):
+        if request:
+            accepted = self._request_receive_accepted
+            highest = self._request_receive_highest
+        else:
+            accepted = self._response_receive_accepted
+            highest = self._response_receive_highest
+
+        if counter > highest:
+            highest = counter
+
+        accepted.add(counter)
+        lower_bound = max(
+            self.counter_min,
+            highest - self.replay_window_size + 1,
+        )
+        accepted.difference_update(
+            value for value in accepted if value < lower_bound
+        )
+
+        if request:
+            self._request_receive_highest = highest
+        else:
+            self._response_receive_highest = highest
 
     # ------------------------------------------------------------------
     # Field validation
