@@ -9,12 +9,10 @@ Nessun systemd, nessun TLS, nessuna rete esterna: WGClientHTTPServer viene
 istanziato direttamente su 127.0.0.1:<porta libera> con un controller finto.
 
 Convenzione:
-  * i test "guard" passano oggi e devono continuare a passare dopo la
-    finestra di contatori validi;
-  * i test marcati xfail(strict=True) documentano il comportamento ATTUALE
-    che si vuole cambiare: quando implementi la finestra diventeranno XPASS
-    e strict=True li fara' fallire, ricordandoti di togliere il marker e di
-    invertire l'asserzione.
+  * i test verificano la replay window e la sicurezza dell'allocatore
+    concorrente;
+  * le richieste possono arrivare fuori ordine finche' restano nella
+    replay window.
 
 Per vedere il "report" dei risultati concorrenti:
     pytest tests/client/test_secure_session_concurrency.py -s -v
