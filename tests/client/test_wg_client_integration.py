@@ -438,3 +438,63 @@ def test_mock_handshake(tmp_path):
 
 def test_mock_handshake_unknown_peer(tmp_path):
     assert run_mock(tmp_path, "handshake", "wg0", PUBLIC_KEY).returncode == 1
+
+
+# ----------------------------------------------------------------------
+# Persistent IPC peer ownership RPC
+# ----------------------------------------------------------------------
+
+def test_peer_register_rpc_is_completed_by_control_loop(lifecycle):
+    auth_sock, client_sock = socket.socketpair()
+
+    try:
+        ipc = WGClientIPC(client_sock, lifecycle)
+
+        thread = threading.Thread(
+            target=ipc.control_loop,
+            daemon=True,
+        )
+        thread.start()
+
+        def responder():
+            with auth_sock.makefile("rb") as stream:
+                request = json.loads(stream.readline())
+
+            assert request["type"] == "PEER_REGISTER"
+            assert request["public_key"] == PUBLIC_KEY
+            assert type(request["request_id"]) is int
+
+            auth_sock.sendall(
+                json.dumps({
+                    "protocol_version": 1,
+                    "type": "PEER_RESULT",
+                    "request_id": request["request_id"],
+                    "status": "OK",
+                }).encode("utf-8") + b"\n"
+            )
+
+        responder_thread = threading.Thread(
+            target=responder,
+            daemon=True,
+        )
+        responder_thread.start()
+
+        response = ipc.register_peer(PUBLIC_KEY)
+
+        responder_thread.join(timeout=2)
+        assert not responder_thread.is_alive()
+        assert response["status"] == "OK"
+
+        auth_sock.sendall(
+            json.dumps({
+                "protocol_version": 1,
+                "type": "STOP",
+            }).encode("utf-8") + b"\n"
+        )
+
+        thread.join(timeout=2)
+        assert not thread.is_alive()
+
+    finally:
+        auth_sock.close()
+        client_sock.close()

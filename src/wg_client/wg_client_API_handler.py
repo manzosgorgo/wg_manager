@@ -497,6 +497,17 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             if self.session is not None:
+                try:
+                    self.lifecycle.ipc.unregister_peer(public_key)
+                except src.wg_client.wg_client_errors.WGProtocolError as exc:
+                    log.error("peer persistence failed: %s", exc)
+                    self.send_error(
+                        502,
+                        "Persistence error",
+                        "failed to persist peer ownership",
+                    )
+                    return
+
                 self.session.unregister_peer(public_key)
 
             self.send_json(200, result)
@@ -598,6 +609,17 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             if self.session is not None:
+                try:
+                    self.lifecycle.ipc.register_peer(public_key)
+                except src.wg_client.wg_client_errors.WGProtocolError as exc:
+                    log.error("peer persistence failed: %s", exc)
+                    self.send_error(
+                        502,
+                        "Persistence error",
+                        "failed to persist peer ownership",
+                    )
+                    return
+
                 self.session.register_peer(public_key)
 
             self.send_json(200, result)

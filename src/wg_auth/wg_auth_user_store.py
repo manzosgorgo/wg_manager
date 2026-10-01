@@ -4,6 +4,8 @@ import base64
 import binascii
 import json
 import os
+import tempfile
+import threading
 from dataclasses import dataclass
 
 
@@ -24,6 +26,7 @@ class WGAuthUserStore:
     def __init__(self, login_dir, opaque_record_len=256):
         self.login_dir = login_dir
         self.opaque_record_len = opaque_record_len
+        self._lock = threading.RLock()
 
     def _path(self, username):
         if (
@@ -77,3 +80,76 @@ class WGAuthUserStore:
             credential_record=credential_record,
             peers=tuple(peers),
         )
+
+
+    def _write_user(self, user):
+        path = self._path(user.username)
+        record = {
+            "opaque_record": base64.b64encode(
+                user.credential_record
+            ).decode("ascii"),
+            "peers": list(user.peers),
+        }
+
+        fd, tmp_path = tempfile.mkstemp(
+            dir=self.login_dir,
+            prefix=f".{user.username}.",
+            text=True,
+        )
+
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(record, f, indent=2)
+                f.write("\n")
+                f.flush()
+                os.fsync(f.fileno())
+
+            os.chmod(tmp_path, 0o600)
+            os.replace(tmp_path, path)
+
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except FileNotFoundError:
+                pass
+
+    def add_peer(self, username, public_key):
+        if not isinstance(public_key, str) or not public_key:
+            raise ValueError("public_key must be a non-empty string")
+
+        with self._lock:
+            user = self.load(username)
+
+            if public_key in user.peers:
+                return user
+
+            updated = WGAuthUser(
+                username=user.username,
+                credential_record=user.credential_record,
+                peers=user.peers + (public_key,),
+            )
+
+            self._write_user(updated)
+            return updated
+
+    def remove_peer(self, username, public_key):
+        if not isinstance(public_key, str) or not public_key:
+            raise ValueError("public_key must be a non-empty string")
+
+        with self._lock:
+            user = self.load(username)
+
+            if public_key not in user.peers:
+                return user
+
+            updated = WGAuthUser(
+                username=user.username,
+                credential_record=user.credential_record,
+                peers=tuple(
+                    peer for peer in user.peers
+                    if peer != public_key
+                ),
+            )
+
+            self._write_user(updated)
+            return updated

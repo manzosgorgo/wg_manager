@@ -146,6 +146,8 @@ class WGAuthAPI:
                 listen_path=self.config["client"]["listen_path"],
                 lifecycle=self.lifecycle,
                 principal=session.principal,
+                peer_register=self._register_peer,
+                peer_unregister=self._unregister_peer,
             )
 
             self.ipc = ipc
@@ -200,6 +202,12 @@ class WGAuthAPI:
         return response
 
 
+
+    def _register_peer(self, username, public_key):
+        self.user_store.add_peer(username, public_key)
+
+    def _unregister_peer(self, username, public_key):
+        self.user_store.remove_peer(username, public_key)
 
     # ------------------------------------------------------------------
     # Activation failure

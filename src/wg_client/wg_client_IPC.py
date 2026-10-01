@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import socket
+import threading
 import time
 
 from src.wg_client.wg_client_errors import WGProtocolError
@@ -21,6 +22,7 @@ MAX_SESSION_TIMEOUT = 24 * 3600
 MAX_CLOCK_SKEW = 30
 
 LISTEN_PATH_RE = re.compile(r"(/[A-Za-z0-9_-]+)+")
+IPC_RESPONSE_TIMEOUT = 10
 
 
 class WGClientIPC:
@@ -28,6 +30,11 @@ class WGClientIPC:
     def __init__(self, sock, lifecycle):
         self.sock = sock
         self.lifecycle = lifecycle
+
+        self._send_lock = threading.Lock()
+        self._pending_lock = threading.Lock()
+        self._pending = {}
+        self._next_request_id = 1
 
 
     def control_loop(self):
@@ -62,6 +69,10 @@ class WGClientIPC:
                     self.lifecycle.request_shutdown(notify_shutdown=False)
                     return
 
+                if command == "PEER_RESULT":
+                    self._complete_pending(request)
+                    continue
+
                 log.error("unknown IPC command: %r", command)
                 self.lifecycle.request_shutdown()
                 return
@@ -75,6 +86,7 @@ class WGClientIPC:
             self.lifecycle.request_shutdown()
 
         finally:
+            self._fail_pending("IPC control loop stopped")
             log.debug("IPC control loop stopped")
 
 
@@ -226,6 +238,92 @@ class WGClientIPC:
         }
 
 
+    def _complete_pending(self, response):
+        request_id = response.get("request_id")
+
+        if type(request_id) is not int:
+            raise WGProtocolError("invalid PEER_RESULT request_id")
+
+        with self._pending_lock:
+            pending = self._pending.get(request_id)
+
+        if pending is None:
+            raise WGProtocolError("unexpected PEER_RESULT request_id")
+
+        pending["response"] = response
+        pending["event"].set()
+
+    def _fail_pending(self, error):
+        with self._pending_lock:
+            pending = list(self._pending.values())
+
+        for item in pending:
+            item["error"] = error
+            item["event"].set()
+
+    def _peer_request(self, command, public_key):
+        if command not in ("PEER_REGISTER", "PEER_UNREGISTER"):
+            raise WGProtocolError("invalid peer IPC command")
+
+        if not isinstance(public_key, str) or not public_key:
+            raise WGProtocolError("public_key must be a non-empty string")
+
+        event = threading.Event()
+
+        with self._pending_lock:
+            request_id = self._next_request_id
+            self._next_request_id += 1
+            self._pending[request_id] = {
+                "event": event,
+                "response": None,
+                "error": None,
+            }
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": command,
+            "request_id": request_id,
+            "public_key": public_key,
+        }
+
+        try:
+            with self._send_lock:
+                self.sock.sendall(self._encode_packet(packet))
+
+            if not event.wait(IPC_RESPONSE_TIMEOUT):
+                raise WGProtocolError("IPC peer request timed out")
+
+            with self._pending_lock:
+                pending = self._pending.get(request_id)
+
+            if pending is None:
+                raise WGProtocolError("IPC peer request disappeared")
+
+            if pending["error"] is not None:
+                raise WGProtocolError(pending["error"])
+
+            response = pending["response"]
+
+            if not isinstance(response, dict):
+                raise WGProtocolError("missing PEER_RESULT")
+
+            if response.get("status") != "OK":
+                raise WGProtocolError(
+                    response.get("error", "peer persistence failed")
+                )
+
+            return response
+
+        finally:
+            with self._pending_lock:
+                self._pending.pop(request_id, None)
+
+    def register_peer(self, public_key):
+        return self._peer_request("PEER_REGISTER", public_key)
+
+    def unregister_peer(self, public_key):
+        return self._peer_request("PEER_UNREGISTER", public_key)
+
     def _encode_packet(self, packet):
         payload = (
             json.dumps(packet, separators=(",", ":")).encode("utf-8")
@@ -249,7 +347,8 @@ class WGClientIPC:
             **fields,
         }
 
-        self.sock.sendall(self._encode_packet(response))
+        with self._send_lock:
+            self.sock.sendall(self._encode_packet(response))
 
     def _notify_stop(self):
         if self.sock is None:
@@ -259,7 +358,8 @@ class WGClientIPC:
             "protocol_version": PROTOCOL_VERSION,
             "type": "STOP",
         }
-        self.sock.sendall(self._encode_packet(response))
+        with self._send_lock:
+            self.sock.sendall(self._encode_packet(response))
         log.debug("sent STOP on ipc")
     def stop(self, notify_shutdown=True):
         sock = self.sock

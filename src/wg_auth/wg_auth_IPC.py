@@ -22,6 +22,8 @@ class WGAuthIPC:
         listen_path,
         lifecycle,
         principal=None,
+        peer_register=None,
+        peer_unregister=None,
     ):
         self.socket_path = socket_path
         self.client_id = client_id
@@ -29,6 +31,8 @@ class WGAuthIPC:
         self.listen_path = listen_path
         self.lifecycle = lifecycle
         self.principal = principal
+        self.peer_register = peer_register
+        self.peer_unregister = peer_unregister
 
         self.sock = None
     @property
@@ -62,6 +66,10 @@ class WGAuthIPC:
                     )
                     self.lifecycle.request_session_shutdown(notify_client=False)
                     return
+
+                if command in ("PEER_REGISTER", "PEER_UNREGISTER"):
+                    self._handle_peer_request(request)
+                    continue
 
                 log.error(
                     "unknown IPC command: %r",
@@ -99,6 +107,51 @@ class WGAuthIPC:
 
         finally:
             log.debug("IPC control loop stopped")
+
+    def _handle_peer_request(self, request):
+        request_id = request.get("request_id")
+        public_key = request.get("public_key")
+
+        if type(request_id) is not int or request_id < 1:
+            raise WGAuthProtocolError("invalid request_id")
+
+        if not isinstance(public_key, str) or not public_key:
+            raise WGAuthProtocolError("invalid public_key")
+
+        username = None
+        if isinstance(self.principal, dict):
+            username = self.principal.get("username")
+
+        if not isinstance(username, str) or not username:
+            raise WGAuthProtocolError("IPC principal is missing")
+
+        try:
+            if request["type"] == "PEER_REGISTER":
+                if self.peer_register is None:
+                    raise RuntimeError("peer register callback is unavailable")
+                self.peer_register(username, public_key)
+            else:
+                if self.peer_unregister is None:
+                    raise RuntimeError("peer unregister callback is unavailable")
+                self.peer_unregister(username, public_key)
+
+        except Exception as exc:
+            log.exception("peer persistence request failed")
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "PEER_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "error": str(exc),
+            })
+            return
+
+        self.send_packet({
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "PEER_RESULT",
+            "request_id": request_id,
+            "status": "OK",
+        })
 
     def receive_packet(self):
         data = bytearray()
