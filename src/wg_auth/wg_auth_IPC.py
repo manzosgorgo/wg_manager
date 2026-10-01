@@ -201,14 +201,21 @@ class WGAuthIPC:
 
         self.close()
 
-    def send_packet(self, packet):
+    def _encode_packet(self, packet):
         payload = (
-                json.dumps(
-                    packet,
-                    separators=(",", ":")
-                ) + "\n"
-        ).encode("utf-8")
-        self.sock.sendall(payload)
+            json.dumps(packet, separators=(",", ":")).encode("utf-8")
+            + b"\n"
+        )
+
+        if len(payload) > MAX_PACKET_SIZE:
+            raise WGAuthProtocolError(
+                "packet too large"
+            )
+
+        return payload
+
+    def send_packet(self, packet):
+        self.sock.sendall(self._encode_packet(packet))
 
     def close(self):
         if self.sock is None:
