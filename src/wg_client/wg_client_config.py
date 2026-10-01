@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import configparser
+import math
 import os
 
 
@@ -143,7 +144,10 @@ def load_config():
     if session_timeout <= 0:
         raise RuntimeError("invalid secure session timeout")
 
-    if max_request_frequency < 0:
+    if (
+        not math.isfinite(max_request_frequency)
+        or max_request_frequency < 0
+    ):
         raise RuntimeError("invalid secure session maximum request frequency")
 
     if replay_window_size <= 0:
