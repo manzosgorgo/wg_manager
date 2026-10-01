@@ -201,6 +201,41 @@ class WGSecureSession:
     def principal(self):
         return self._principal
 
+    @property
+    def is_admin(self):
+        return (
+            self._principal is not None
+            and self._principal["username"] == "admin"
+        )
+
+    def can_access_peer(self, public_key):
+        if self._principal is None:
+            return False
+
+        return (
+            self.is_admin
+            or public_key in self._principal["peers"]
+        )
+
+    def register_peer(self, public_key):
+        if self._principal is None or self.is_admin:
+            return
+
+        peers = self._principal["peers"]
+
+        if public_key not in peers:
+            self._principal["peers"] = peers + (public_key,)
+
+    def unregister_peer(self, public_key):
+        if self._principal is None or self.is_admin:
+            return
+
+        self._principal["peers"] = tuple(
+            peer
+            for peer in self._principal["peers"]
+            if peer != public_key
+        )
+
     # ------------------------------------------------------------------
     # Key derivation
     # ------------------------------------------------------------------
