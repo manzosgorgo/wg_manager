@@ -23,7 +23,14 @@ export class WGError extends Error {
   }
 }
 
-export class WGProtocolError extends WGError {
+export class WGClientError extends WGError {
+  constructor(message) {
+    super(message);
+    this.name = "WGClientError";
+  }
+}
+
+export class WGProtocolError extends WGClientError {
   constructor(message) {
     super(message);
     this.name = "WGProtocolError";
@@ -65,7 +72,7 @@ export class WGCounterExhaustedError extends WGCounterError {
   }
 }
 
-export class WGAuthenticationError extends WGError {
+export class WGAuthenticationError extends WGClientError {
   constructor(message) {
     super(message);
     this.name = "WGAuthenticationError";
@@ -86,7 +93,28 @@ export class WGSessionMismatchError extends WGAuthenticationError {
   }
 }
 
-export class WGReplayError extends WGError {
+export class WGSessionError extends WGClientError {
+  constructor(message) {
+    super(message);
+    this.name = "WGSessionError";
+  }
+}
+
+export class WGSessionExpiredError extends WGSessionError {
+  constructor(message) {
+    super(message);
+    this.name = "WGSessionExpiredError";
+  }
+}
+
+export class WGRequestRateExceededError extends WGSessionError {
+  constructor(message) {
+    super(message);
+    this.name = "WGRequestRateExceededError";
+  }
+}
+
+export class WGReplayError extends WGProtocolError {
   constructor(message) {
     super(message);
     this.name = "WGReplayError";
