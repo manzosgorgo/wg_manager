@@ -82,6 +82,7 @@ def activation_params():
         "client_id": "pytest-client",
         "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
         "listen_path": "/api/7f3a91c2e8b44d17/9c71e4a2f6b83d10",
+        "principal": {"username": "admin"}
     }
 @pytest.fixture
 def client():
