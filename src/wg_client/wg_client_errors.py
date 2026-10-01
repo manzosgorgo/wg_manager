@@ -89,6 +89,16 @@ class WGCounterExhaustedError(WGCounterError):
     pass
 
 
+class WGSessionExpiredError(WGSessionError):
+    """The secure session lifetime has expired."""
+    pass
+
+
+class WGRequestRateExceededError(WGSessionError):
+    """The configured maximum request frequency has been exceeded."""
+    pass
+
+
 class WGInvalidMACError(WGAuthenticationError):
     """The supplied MAC does not authenticate the message."""
     pass
