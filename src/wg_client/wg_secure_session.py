@@ -507,10 +507,6 @@ class WGSecureSession:
             log.warning("response does not correspond to a pending request")
             raise WGCounterError("response does not correspond to a pending request")
 
-        if pending["nonce"] != validated_request["nonce"]:
-            log.warning("response request nonce does not match pending request")
-            raise WGCounterError("response request does not match pending request")
-
         nonce = validated_request["nonce"]
         received_mac = validated_auth["mac"]
 
