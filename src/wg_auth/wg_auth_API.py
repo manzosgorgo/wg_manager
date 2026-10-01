@@ -94,6 +94,7 @@ class WGAuthAPI:
                 username=user.username,
                 credential_record=user.credential_record,
                 context=b"wg-manager",
+                principal=user.principal,
             )
 
             response = session.create_credential_response(pubU)
@@ -144,7 +145,7 @@ class WGAuthAPI:
                 timeout=int(self.config["client"]["timeout"]),
                 listen_path=self.config["client"]["listen_path"],
                 lifecycle=self.lifecycle,
-                principal={"username": session.username},
+                principal=session.principal,
             )
 
             self.ipc = ipc

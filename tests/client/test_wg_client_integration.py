@@ -88,7 +88,7 @@ def make_packet(**overrides):
         # OPAQUE shared session secret: 64 bytes, transported as hex.
         "k_session": "ab" * 64,
         "client_id": "android-test-client",
-        "principal": {"username": "alice"},
+        "principal": {"username": "alice", "peers": []},
         "timeout": 1800,
         "created_at": NOW,
         "listen_path": LISTEN_PATH,
@@ -113,7 +113,7 @@ def test_parse_activation_valid(ipc):
 
     assert activation["expires_at"] == NOW + 1800
     assert activation["listen_path"] == LISTEN_PATH
-    assert activation["principal"] == {"username": "alice"}
+    assert activation["principal"] == {"username": "alice", "peers": []}
     assert len(activation["k_session"]) == 64
     assert len(activation["session_id"]) == 16
 
@@ -131,7 +131,11 @@ def test_parse_activation_valid(ipc):
         {"principal": None},
         {"principal": {}},
         {"principal": {"username": ""}},
-        {"principal": {"username": 123}},
+        {"principal": {"username": 123, "peers": []}},
+        {"principal": {"username": "alice"}},
+        {"principal": {"username": "alice", "peers": "not-a-list"}},
+        {"principal": {"username": "alice", "peers": ["", "peer"]}},
+        {"principal": {"username": "alice", "peers": ["peer", "peer"]}},
         {"listen_path": "api/no-leading-slash"},
         {"listen_path": "/api/../etc"},
         {"listen_path": "/api/trailing/"},

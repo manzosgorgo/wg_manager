@@ -23,10 +23,11 @@ class WGAuthSession:
     STATE_AUTHENTICATING = "AUTHENTICATING"
     STATE_AUTHENTICATED = "AUTHENTICATED"
 
-    def __init__(self, username, credential_record, context):
+    def __init__(self, username, credential_record, context, principal=None):
         self.username = username
         self.credential_record = credential_record
         self.context = context
+        self.principal = principal or {"username": username, "peers": []}
 
         self._state = self.STATE_NEW
 

@@ -15,7 +15,7 @@ class WGAuthUser:
 
     @property
     def principal(self):
-        return {"username": self.username}
+        return {"username": self.username, "peers": list(self.peers)}
 
 
 class WGAuthUserStore:

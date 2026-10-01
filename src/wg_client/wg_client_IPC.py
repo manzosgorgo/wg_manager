@@ -181,9 +181,21 @@ class WGClientIPC:
         if not isinstance(username, str) or not username.strip():
             raise WGProtocolError("principal.username must be a non-empty string")
 
-        # Only the authenticated identity is accepted here. Roles will be
-        # supplied by the authoritative user registry, not by the client.
-        principal = {"username": username}
+        peers = principal.get("peers")
+        if not isinstance(peers, list) or any(
+            not isinstance(peer, str) or not peer for peer in peers
+        ):
+            raise WGProtocolError(
+                "principal.peers must be a list of non-empty strings"
+            )
+
+        if len(set(peers)) != len(peers):
+            raise WGProtocolError("principal.peers contains duplicates")
+
+        principal = {
+            "username": username,
+            "peers": list(peers),
+        }
 
         listen_path = obj.get("listen_path")
 
