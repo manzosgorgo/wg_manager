@@ -57,27 +57,6 @@ function parseIni(filename) {
   return config;
 }
 
-function setSecureSessionEnabled(text, enabled) {
-  const section = /(^|\n)\[secure_session\][\s\S]*?(?=\n\[|$)/m;
-  const match = text.match(section);
-
-  if (!match) {
-    throw new Error("[secure_session] section not found");
-  }
-
-  let block = match[0];
-  const value = enabled ? "true" : "false";
-
-  if (/^enabled\s*=.*$/m.test(block)) {
-    block = block.replace(/^enabled\s*=.*$/m, `enabled = ${value}`);
-  } else {
-    block += `\nenabled = ${value}\n`;
-  }
-
-  return text.slice(0, match.index) + block +
-    text.slice(match.index + match[0].length);
-}
-
 function secureSessionConfig(clientConfig) {
   const sc = clientConfig.secure_session;
 
@@ -221,7 +200,7 @@ async function waitForLoggedOut(authClient) {
 
 async function main() {
   const authConfig = parseIni(AUTH_CONF);
-  const originalClientConfig = fs.readFileSync(CLIENT_CONF, "utf8");
+  const clientConfig = parseIni(CLIENT_CONF);
 
   const username = authConfig.auth.username;
   const password = authConfig.auth.password;
@@ -235,13 +214,11 @@ async function main() {
   const clientPort = 9444;
 
   try {
-    fs.writeFileSync(
-      CLIENT_CONF,
-      setSecureSessionEnabled(originalClientConfig, true),
-      "utf8",
-    );
-
-    const clientConfig = parseIni(CLIENT_CONF);
+    if (clientConfig.secure_session?.enabled?.toLowerCase() !== "true") {
+      throw new Error(
+        "config/wg-client-test-auth.conf must have [secure_session] enabled = true"
+      );
+    }
 
     console.log("[1/8] OPAQUE authentication");
 
@@ -398,7 +375,6 @@ async function main() {
       }
     }
 
-    fs.writeFileSync(CLIENT_CONF, originalClientConfig, "utf8");
   }
 }
 
