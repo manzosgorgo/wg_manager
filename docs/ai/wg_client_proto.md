@@ -39,14 +39,14 @@
 
 - `{allowed_ip: ‹in http.server.rfile.read›('allowed_ip'|'utf-8'), public_key: ‹in http.server.path›('/v1/peers/')}` — `wg_controller_client.py:WGClientClient._request`, `wg_controller_client.py:WGControllerClient._request` — wg_controller_client.py:202, wg_controller_client.py:85
 - `{}` — `wg_client_API_handler.py:WGClientAPIHandler.send_error`, `wg_client_API_handler.py:WGClientAPIHandler.send_json` — wg_client_API_handler.py:265
-- `{**: ‹wg_client_IPC.py:WGClientIPC.send_result(fields)›, protocol_version: ‹wg_client_IPC.py:PROTOCOL_VERSION›∈{1}, status: ‹wg_client_IPC.py:WGClientIPC.send_result(status)›∈{'ERROR'|'OK'}, type: 'A…` — `wg_client_IPC.py:WGClientIPC.send_result` — wg_client_IPC.py:195
+- `{**: ‹wg_client_IPC.py:WGClientIPC.send_result(fields)›, protocol_version: ‹wg_client_IPC.py:PROTOCOL_VERSION›∈{1}, status: ‹wg_client_IPC.py:WGClientIPC.send_result(status)›∈{'ERROR'|'OK'}, type: 'A…` — `wg_client_IPC.py:WGClientIPC.send_result` — wg_client_IPC.py:198
 - `{<AUTH_COUNTER_HEADER>: 'counter' | ‹in http.server.path›(','|'/v1/peers/'|'/v1/status'), <AUTH_MAC_HEADER>: 'mac' | ‹in http.server.path›(','|'/v1/peers/'|'/v1/status'), <AUTH_NONCE_HEADER>: 'nonce'…` — `wg_controller_client.py:WGClientClient._request` — wg_controller_client.py:129
 - `{<AUTH_COUNTER_HEADER>: 'counter' | ‹wg_client_API_handler.py:WGClientAPIHandler.request_auth› | ‹wg_client_API_handler.py:WGClientAPIHandler.send_error(code)›∈{400|401|404|405|502} | ‹wg_client_API_…` — `wg_client_API_handler.py:WGClientAPIHandler.send_error` — wg_client_API_handler.py:273
 - `{<AUTH_COUNTER_HEADER>: 'counter' | ‹wg_client_API_handler.py:WGClientAPIHandler.request_auth› | ‹wg_client_API_handler.py:WGClientAPIHandler.send_json(code)›∈{200} | ‹in http.server.path,http.server…` — `wg_client_API_handler.py:WGClientAPIHandler.send_json` — wg_client_API_handler.py:273
 - `{Accept: 'application/json', Connection: 'close', Content-Length: ‹wg_controller_client.py:WGControllerClient._request.data›∈{','|':'}, Content-Type: 'application/json'}` — `wg_controller_client.py:WGControllerClient._request` — wg_controller_client.py:36
 - `{client_id: ‹wg_client_activator.py:activate_client(client_id)›, created_at: ?, k_session: ‹wg_client_activator.py:activate_client(k_sess)›, listen_path: ‹wg_client_activator.py:activate_client(liste…` — `wg_client_activator.py:activate_client` — wg_client_activator.py:29
 - `{error: ‹wg_client_API_handler.py:WGClientAPIHandler.send_error(message)›∈{'Bad Request'|'Controller error'|'Unauthorized'}, message: ‹wg_client_API_handler.py:WGClientAPIHandler.send_error(explain)›…` — `wg_client_API_handler.py:WGClientAPIHandler.send_error` — wg_client_API_handler.py:310
-- `{protocol_version: ‹wg_client_IPC.py:PROTOCOL_VERSION›∈{1}, type: 'STOP'}` — `wg_client_IPC.py:WGClientIPC._notify_stop` — wg_client_IPC.py:208
+- `{protocol_version: ‹wg_client_IPC.py:PROTOCOL_VERSION›∈{1}, type: 'STOP'}` — `wg_client_IPC.py:WGClientIPC._notify_stop` — wg_client_IPC.py:211
 - `{status: 'ok'}` — `wg_client_API_handler.py:WGClientAPIHandler.send_json` — wg_client_API_handler.py:417
 
 ## Cosa accettano i parametri (valori costanti che possono assumere)
@@ -117,7 +117,7 @@
 - dalla rete: http.server.path, http.server.rfile.read
 - forme: 3 (vedi sopra)
 
-### `wg_client_IPC.py:WGClientIPC._notify_stop` — socket.sendall@L212
+### `wg_client_IPC.py:WGClientIPC._notify_stop` — socket.sendall@L215
 - via: json.dumps
 - costanti dirette: ',', ':', 'utf-8', b'\n'
 - forme: 1 (vedi sopra)
@@ -125,14 +125,14 @@
 ### `wg_client_IPC.py:WGClientIPC.receive_packet` — socket.recv@L82
 - costanti dirette: 4096
 
-### `wg_client_IPC.py:WGClientIPC.send_result` — socket.sendall@L202
+### `wg_client_IPC.py:WGClientIPC.send_result` — socket.sendall@L205
 - via: json.dumps
 - costanti dirette: ',', ':', 'utf-8', b'\n'
 - forme: 1 (vedi sopra)
 
 ### `wg_client_activator.py:WGClientActivation.close` — socket.close@L12
 
-### `wg_client_activator.py:activate_client` — socket.<create socket.socket>@L46, socket.close@L68, socket.connect@L52, socket.makefile@L55, socket.sendall@L53
+### `wg_client_activator.py:activate_client` — socket.<create socket.socket>@L46, socket.close@L77, socket.connect@L52, socket.makefile@L55, socket.sendall@L53
 - via: json.dumps
 - costanti dirette: ',', ':', '\n', 'rb', 'utf-8'
 - esterni: socket.AF_UNIX, socket.SOCK_STREAM

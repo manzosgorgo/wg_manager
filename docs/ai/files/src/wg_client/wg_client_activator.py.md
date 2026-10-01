@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_activator.py`
 - Language: `python`
-- Lines: 69
-- SHA256: `ab560b015f90dd6e3c82c942b9ee5ee74e368de06594f51beb93dff3c8e217e9`
+- Lines: 78
+- SHA256: `041e8bf144e2e695a06e148ca374c0fd43290cb5f3957869acadf3b224de2cf9`
 - Imports:
   - `json`
   - `socket`
@@ -77,6 +77,15 @@ def activate_client(
             )
 
         response = json.loads(response.decode('utf-8', 'replace').strip())
+
+        if not isinstance(response, dict):
+            raise ValueError("activation response must be a JSON object")
+        if response.get("protocol_version") != 1:
+            raise ValueError("unsupported activation response protocol_version")
+        if response.get("type") != "ACTIVATION_RESULT":
+            raise ValueError("invalid activation response type")
+        if response.get("status") not in {"OK", "ERROR"}:
+            raise ValueError("invalid activation response status")
 
         return WGClientActivation(sock, response)
     except Exception as e:

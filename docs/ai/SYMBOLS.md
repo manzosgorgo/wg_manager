@@ -154,8 +154,8 @@ Structural symbol index extracted mechanically from source files.
   - **method** `def _hex_field(self, obj, name)` — line 131
   - **method** `def parse_activation(self, obj, now = None)` — line 143
   - **method** `def send_result(self, status, **fields)` — line 194
-  - **method** `def _notify_stop(self)` — line 204
-  - **method** `def stop(self, notify_shutdown = True)` — line 219
+  - **method** `def _notify_stop(self)` — line 207
+  - **method** `def stop(self, notify_shutdown = True)` — line 222
 
 ## `src/wg_client/wg_client_activator.py`
 

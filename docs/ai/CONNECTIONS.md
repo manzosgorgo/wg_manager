@@ -145,7 +145,7 @@ Generated mechanically by `tools/project_index.py`.
 - `src/wg_client/wg_client_activator.py:46` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
 - `src/wg_client/wg_client_activator.py:52` CONNECT `sock.connect(socket_path)`
 - `src/wg_client/wg_client_activator.py:53` SENDALL `sock.sendall(payload)`
-- `src/wg_client/wg_client_activator.py:68` CLOSE `sock.close()`
+- `src/wg_client/wg_client_activator.py:77` CLOSE `sock.close()`
 
 **Message surfaces:**
 - **INTERNAL**

@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_IPC.py`
 - Language: `python`
-- Lines: 246
-- SHA256: `8e007c69c8f4b20b570077b45174c4b0ac100e55762f64d99bf4b12828284d1a`
+- Lines: 249
+- SHA256: `8197881b233b41aac2fe05af0185881093c5382da332455308425972fc3492db`
 - Imports:
   - `json`
   - `logging`
@@ -211,6 +211,9 @@ class WGClientIPC:
 
 
     def send_result(self, status, **fields):
+        if status not in {"OK", "ERROR"}:
+            raise WGProtocolError("invalid activation result status")
+
         response = {
             "protocol_version": PROTOCOL_VERSION,
             "type": "ACTIVATION_RESULT",
