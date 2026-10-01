@@ -112,6 +112,9 @@ class WGClientIPC:
         if not isinstance(obj, dict):
             raise WGProtocolError("packet JSON root must be an object")
 
+        if obj.get("protocol_version") != PROTOCOL_VERSION:
+            raise WGProtocolError("unsupported protocol_version")
+
         return obj
 
 
