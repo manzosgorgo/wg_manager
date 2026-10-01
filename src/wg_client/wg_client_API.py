@@ -14,7 +14,7 @@ log.setLevel(logging.DEBUG)
 
 
 class WGClientAPI:
-    def __init__(self, config, listen_path, session=None,lifecycle=None):
+    def __init__(self, config, listen_path, session=None, lifecycle=None, principal=None):
         self.server = None
         log.debug("Initializing WGClientAPI")
 
@@ -38,6 +38,7 @@ class WGClientAPI:
         # WGSecureSession built from the activation packet.
         # Not used to authenticate requests yet.
         self.session = session
+        self.principal = principal
 
         if lifecycle is None:
             lifecycle = WGClientLifecycle(self)
@@ -83,6 +84,7 @@ class WGClientAPI:
                 self.interface,
                 self.lifecycle,
                 self.session,
+                self.principal,
             )
 
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)

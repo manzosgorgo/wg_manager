@@ -24,7 +24,8 @@ def activate_client(
         timeout,
         client_id,
         session_id,
-        listen_path
+        listen_path,
+        principal,
 ):
     packet = {
         "protocol_version": 1,
@@ -34,6 +35,7 @@ def activate_client(
         "timeout": timeout,
         "created_at": int(time.time()),
         "listen_path": listen_path,
+        "principal": principal,
     }
 
     payload = (

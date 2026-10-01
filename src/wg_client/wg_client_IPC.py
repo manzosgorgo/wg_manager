@@ -160,6 +160,18 @@ class WGClientIPC:
         if not isinstance(client_id, str) or not client_id:
             raise WGProtocolError("client_id must be a non-empty string")
 
+        principal = obj.get("principal")
+        if not isinstance(principal, dict):
+            raise WGProtocolError("principal must be an object")
+
+        username = principal.get("username")
+        if not isinstance(username, str) or not username.strip():
+            raise WGProtocolError("principal.username must be a non-empty string")
+
+        # Only the authenticated identity is accepted here. Roles will be
+        # supplied by the authoritative user registry, not by the client.
+        principal = {"username": username}
+
         listen_path = obj.get("listen_path")
 
         if not isinstance(listen_path, str) or not LISTEN_PATH_RE.fullmatch(listen_path):
@@ -183,6 +195,7 @@ class WGClientIPC:
             "session_id": session_id,
             "k_session": k_session,
             "client_id": client_id,
+            "principal": principal,
             "listen_path": listen_path,
             "expires_at": expires_at,
         }

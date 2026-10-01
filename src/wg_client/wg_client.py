@@ -88,10 +88,22 @@ def activate(ipc, lifecycle):
 
         if cfg["secure_session"]["enabled"] is True:
             log.info("wg_client using secure session")
-            api = WGClientAPI(cfg, activation["listen_path"], session,lifecycle)
+            api = WGClientAPI(
+                cfg,
+                activation["listen_path"],
+                session,
+                lifecycle,
+                principal=activation["principal"],
+            )
         else:
             log.info("wg_client not using secure session")
-            api = WGClientAPI(cfg, activation["listen_path"], None,lifecycle)
+            api = WGClientAPI(
+                cfg,
+                activation["listen_path"],
+                None,
+                lifecycle,
+                principal=activation["principal"],
+            )
 
         log.debug("api bind")
         api.bind()

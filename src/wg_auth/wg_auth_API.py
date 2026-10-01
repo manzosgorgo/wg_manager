@@ -153,6 +153,7 @@ class WGAuthAPI:
                 timeout=int(self.config["client"]["timeout"]),
                 listen_path=self.config["client"]["listen_path"],
                 lifecycle=self.lifecycle,
+                principal={"username": session.username},
             )
 
             self.ipc = ipc
