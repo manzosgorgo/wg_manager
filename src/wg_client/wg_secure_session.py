@@ -85,7 +85,10 @@ class WGSecureSession:
         if self.session_timeout <= 0:
             raise WGInvalidFieldError("invalid session timeout")
 
-        if self.max_request_frequency < 0:
+        if (
+            not math.isfinite(self.max_request_frequency)
+            or self.max_request_frequency < 0
+        ):
             raise WGInvalidFieldError("invalid maximum request frequency")
 
         if self.replay_window_size <= 0:
