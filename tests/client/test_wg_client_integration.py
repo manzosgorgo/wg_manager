@@ -225,6 +225,26 @@ def test_activation_error_on_invalid_packet(monkeypatch,lifecycle):
     assert reply["status"] == "ERROR"
 
 
+def test_activation_reports_unexpected_exception(monkeypatch, lifecycle):
+    packet = make_packet(created_at=int(time.time()))
+
+    def explode():
+        raise ValueError("synthetic activation failure")
+
+    monkeypatch.setattr(wg_client, "load_config", explode)
+
+    result, reply = run_activation(
+        packet,
+        make_config(),
+        monkeypatch,
+        lifecycle,
+    )
+
+    assert result is None
+    assert reply["status"] == "ERROR"
+    assert reply["error"] == "synthetic activation failure"
+
+
 # ----------------------------------------------------------------------
 # HTTPS API
 # ----------------------------------------------------------------------

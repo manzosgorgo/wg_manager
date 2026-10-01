@@ -111,7 +111,10 @@ def activate(ipc, lifecycle):
         log.debug("api bind")
         api.bind()
 
-    except (WGError, RuntimeError, OSError) as exc:
+    except Exception as exc:
+        # Activation is an IPC request/response boundary. Any ordinary
+        # exception must be reported to wg-auth as ACTIVATION_RESULT ERROR;
+        # otherwise the process exits and auth only observes an ambiguous EOF.
         log.exception("activation failed")
 
         if api is not None:
