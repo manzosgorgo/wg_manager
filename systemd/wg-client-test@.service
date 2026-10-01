@@ -1,0 +1,31 @@
+[Unit]
+Description=WireGuard client test instance %i
+
+[Service]
+Type=notify
+NotifyAccess=all
+
+User=wg-client
+Group=wg-client
+
+Environment="PYTHONPATH=/home/main/Desktop/wg_manager"
+Environment="WG_CLIENT_CONFIG=/home/main/Desktop/wg_manager/config/wg-client-test-auth.conf"
+ExecStart=/usr/bin/flock /run/wg_manager/wg-client-test.lock -c "/usr/bin/python3 /home/main/Desktop/wg_manager/src/wg_client/wg_client.py"
+
+StandardInput=socket
+StandardOutput=journal
+StandardError=journal
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RemoveIPC=yes
+
+UMask=0077

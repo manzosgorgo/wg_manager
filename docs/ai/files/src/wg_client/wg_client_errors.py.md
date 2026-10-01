@@ -1,0 +1,112 @@
+# `src/wg_client/wg_client_errors.py`
+
+## Metadata
+
+- Path: `src/wg_client/wg_client_errors.py`
+- Language: `python`
+- Lines: 99
+- SHA256: `69fa9f906fcc2f1c30cdb237c1ce835b01b38d1cda00ac5806b6a9a41f7f60a6`
+
+## Source
+
+```python
+class WGError(Exception):
+    """Base class for all wg-manager exceptions."""
+
+    pass
+
+
+class WGControllerError(WGError):
+    """Error returned by the WireGuard controller."""
+
+    def __init__(self, status, message, response=None):
+        super().__init__(message)
+        self.status = status
+        # The API handler reads exc.message: it was never set before.
+        self.message = message
+        self.response = response
+
+
+class WGClientError(WGError):
+    """Base class for errors raised by the WireGuard client."""
+
+    pass
+
+
+class WGPeerError(WGClientError):
+    """A peer operation could not be completed (carries an HTTP status)."""
+
+    def __init__(self, status, message):
+        super().__init__(message)
+        self.status = status
+        self.message = message
+
+
+class WGAuthenticationError(WGClientError):
+    """Authentication failed."""
+
+    pass
+
+
+class WGSessionError(WGClientError):
+    """Session is invalid or expired."""
+
+    pass
+
+
+class WGProtocolError(WGClientError):
+    """Invalid or malformed protocol message."""
+
+    pass
+
+
+class WGConnectionClosed(WGProtocolError):
+    """IPC connection to the WireGuard client was closed with an EOF."""
+
+    pass
+
+
+class WGAPIError(WGClientError):
+    """Error raised while processing an API request."""
+
+    pass
+
+
+class WGReplayError(WGProtocolError):
+    """A valid protocol message was rejected because it was replayed."""
+
+    pass
+class WGMalformedMessageError(WGProtocolError):
+    """The message structure is malformed or incomplete."""
+    pass
+
+
+class WGInvalidFieldError(WGProtocolError):
+    """A message field has an invalid type or value."""
+    pass
+
+
+class WGInvalidEncodingError(WGProtocolError):
+    """A message field uses an invalid encoding."""
+    pass
+
+
+class WGCounterError(WGProtocolError):
+    """A session counter is invalid or cannot be used."""
+    pass
+
+
+class WGCounterExhaustedError(WGCounterError):
+    """The session counter has reached its maximum value."""
+    pass
+
+
+class WGInvalidMACError(WGAuthenticationError):
+    """The supplied MAC does not authenticate the message."""
+    pass
+
+
+class WGSessionMismatchError(WGAuthenticationError):
+    """The message belongs to a different session."""
+    pass
+```

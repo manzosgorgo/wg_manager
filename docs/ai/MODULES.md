@@ -1,0 +1,169 @@
+# Modules / Directories
+
+This file is generated automatically.
+
+| Directory | Files |
+|---|---:|
+| `/` | 4 |
+| `cert.old-20260930-145739` | 15 |
+| `config` | 6 |
+| `docs` | 8 |
+| `mock` | 1 |
+| `src` | 1 |
+| `src/wg_auth` | 8 |
+| `src/wg_client` | 11 |
+| `src/wg_frontend` | 8 |
+| `src/wg_manager` | 1 |
+| `systemd` | 6 |
+| `systemd/install` | 2 |
+| `tests` | 2 |
+| `tests/auth` | 4 |
+| `tests/auth/js` | 6 |
+| `tests/client` | 7 |
+| `tests/frontend` | 3 |
+
+## Contents
+
+### `/`
+
+- `README.md`
+- `TODO.md`
+- `compile_commands.json`
+- `pyproject.toml`
+
+### `cert.old-20260930-145739`
+
+- `auth.crt`
+- `auth.csr`
+- `auth.ext`
+- `auth.key`
+- `ca.crt`
+- `ca.key`
+- `ca.srl`
+- `client.crt`
+- `client.csr`
+- `client.ext`
+- `client.key`
+- `server.crt`
+- `server.csr`
+- `server.ext`
+- `server.key`
+
+### `config`
+
+- `wg-auth.conf`
+- `wg-client-test-auth.conf`
+- `wg-client-test.conf`
+- `wg-manager-captest.conf`
+- `wg-manager-realtest.conf`
+- `wg-manager.conf`
+
+### `docs`
+
+- `README.md`
+- `_config.yml`
+- `comm-callgraph.md`
+- `gestione_permessi_uid_gid.md`
+- `protocol-flow.md`
+- `static-analysis.md`
+- `wg-client-api.md`
+- `wg-secure-session-docs.md`
+
+### `mock`
+
+- `mock`
+
+### `src`
+
+- `__init__.py`
+
+### `src/wg_auth`
+
+- `__init__.py`
+- `wg_auth.py`
+- `wg_auth_API.py`
+- `wg_auth_API_handler.py`
+- `wg_auth_IPC.py`
+- `wg_auth_errors.py`
+- `wg_auth_lifecycle.py`
+- `wg_auth_session.py`
+
+### `src/wg_client`
+
+- `__init__.py`
+- `wg_client.py`
+- `wg_client_API.py`
+- `wg_client_API_handler.py`
+- `wg_client_IPC.py`
+- `wg_client_activator.py`
+- `wg_client_config.py`
+- `wg_client_errors.py`
+- `wg_client_lifecycle.py`
+- `wg_controller_client.py`
+- `wg_secure_session.py`
+
+### `src/wg_frontend`
+
+- `__init__.py`
+- `check_vectors.mjs`
+- `package.json`
+- `test_wg_secure_session_vectors.json`
+- `wg_auth_session.js`
+- `wg_client_errors.js`
+- `wg_secure_session.js`
+- `wg_secure_session_vector_input.json`
+
+### `src/wg_manager`
+
+- `wg_manager.py`
+
+### `systemd`
+
+- `wg-client-test.socket`
+- `wg-client-test@.service`
+- `wg-client-test@.service.bak`
+- `wg-controller-test.socket`
+- `wg-controller-test@.service`
+- `wg_client.conf`
+
+### `systemd/install`
+
+- `install-client-service.sh`
+- `install-server-service.sh`
+
+### `tests`
+
+- `__init__.py`
+- `test_http_handler.py`
+
+### `tests/auth`
+
+- `__init__.py`
+- `test_auth_races.py`
+- `test_wg_auth.js`
+- `test_wg_auth.py`
+
+### `tests/auth/js`
+
+- `client_cli.js`
+- `opaque_client.js`
+- `package-lock.json`
+- `package.json`
+- `test_auth.conf`
+- `wg_auth_client.js`
+
+### `tests/client`
+
+- `__init__.py`
+- `test_auth_client.py`
+- `test_client.py`
+- `test_client_API.py`
+- `test_secure_session.py`
+- `test_wg_client_activator.py`
+- `test_wg_client_integration.py`
+
+### `tests/frontend`
+
+- `__init__.py`
+- `test_cross_language_vector.py`
+- `wg_secure_session_gen_vectors.py`

@@ -1,0 +1,11 @@
+{
+  "name": "wg_client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "wg_secure_session.js",
+  "scripts": {
+    "test": "node check_vectors.mjs"
+  },
+  "private": true,
+  "type": "module"
+}

@@ -1,0 +1,12 @@
+[Unit]
+Description=WireGuard client test IPC socket
+
+[Socket]
+ListenStream=/run/wg_manager/wg-client-test.sock
+SocketUser=wg-client
+SocketGroup=wg-client
+SocketMode=0660
+Accept=yes
+
+[Install]
+# Non abilitiamo il socket indipendentemente.

@@ -1,0 +1,31 @@
+[Unit]
+Description=WireGuard client test instance %i
+
+[Service]
+Type=simple
+
+User=wg-manager
+Group=wg-manager
+
+ExecStart=/usr/bin/python3 /home/main/Desktop/wg-manager/backend/wg-client.py
+
+StandardInput=socket
+StandardOutput=journal
+StandardError=journal
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RemoveIPC=yes
+
+UMask=0077
+
+RestrictAddressFamilies=AF_UNIX

@@ -1,0 +1,20 @@
+[Unit]
+Description=WG Manager test service
+
+[Service]
+Type=simple
+User=wg-manager
+Group=wg-manager
+
+WorkingDirectory=/home/main/Desktop/wg_manager
+
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+NoNewPrivileges=yes
+
+Environment=WG_CONFIG=/home/main/Desktop/wg_manager/config/wg-manager.conf
+Environment=WG_PROGRAM=/home/main/Desktop/wg_manager/mock/mock
+Environment=WG_MOCK_STATE=/tmp/mock-state.txt
+Environment=WG_MOCK_LOG=/tmp/mock.log
+
+ExecStart=/usr/bin/python3 /home/main/Desktop/wg_manager/src/wg_manager/wg_manager.py

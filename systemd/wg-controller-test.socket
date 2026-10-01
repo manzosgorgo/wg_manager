@@ -1,0 +1,9 @@
+[Unit]
+Description=WG Manager test socket
+
+[Socket]
+ListenStream=127.0.0.1:9443
+Accept=yes
+
+[Install]
+WantedBy=sockets.target
