@@ -665,7 +665,7 @@ if __name__ == "__main__":
         test_response_nonce_is_inherited_from_request_not_from_auth,
         # 2. semantica del counter
         test_request_counters_strictly_increasing_accepted,
-        test_request_counter_lower_than_last_accepted_fails,
+        test_request_counter_reordering_within_window_is_accepted,
         test_request_counter_gaps_are_allowed_by_current_protocol,
         test_response_counter_must_match_request_counter,
         test_response_replay_detected,
