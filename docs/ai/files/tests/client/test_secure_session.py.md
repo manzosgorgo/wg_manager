@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_secure_session.py`
 - Language: `python`
-- Lines: 722
-- SHA256: `2ab7fb1d6caf782dad22e3c601d2cee00c2c654fa63a7e28011962ebfee055b7`
+- Lines: 715
+- SHA256: `1683c639fe27e7314dec23e3845922b5cf641773b5e04eb64046eb5a97d0cff2`
 - Imports:
   - `src.wg_client.wg_client_errors`
   - `src.wg_client.wg_secure_session`
@@ -150,29 +150,22 @@ def test_request_counters_strictly_increasing_accepted():
     print("[PASS] counter strettamente crescenti (1,2,3) accettati")
 
 
-def test_request_counter_lower_than_last_accepted_fails():
-    """Dopo aver accettato counter=2, un counter=1 successivo deve fallire."""
+def test_request_counter_reordering_within_window_is_accepted():
+    """Un counter piu' vecchio ma ancora nella window resta accettabile."""
     client, server = new_pair()
     auth1 = client.create_request_auth("GET", "/api/test", b"")
     auth2 = client.create_request_auth("GET", "/api/test", b"")
     server.verify_request(auth2, "GET", "/api/test", b"")
 
-    try:
-        server.verify_request(auth1, "GET", "/api/test", b"")
-    except WGReplayError:
-        print("[PASS] counter piu' vecchio dell'ultimo accettato rifiutato")
-        return
-
-    raise AssertionError("counter piu' vecchio accettato dopo uno piu' recente")
+    assert server.verify_request(auth1, "GET", "/api/test", b"") is True
+    print("[PASS] counter riordinato accettato nella replay window")
 
 
 def test_request_counter_gaps_are_allowed_by_current_protocol():
     """
-    Documenta esplicitamente la scelta di design attuale: il protocollo
-    NON richiede counter contigui (counter == previous + 1), accetta
-    "buchi" purche' il counter sia strettamente maggiore dell'ultimo
-    accettato. Se in futuro si decide di richiedere contiguita' stretta,
-    questo test va aggiornato per riflettere la nuova policy.
+    Il protocollo NON richiede counter contigui (counter == previous + 1).
+    I "buchi" sono validi e, con la replay window, anche i counter arrivati
+    fuori ordine restano validi finche' non escono dalla finestra.
     """
     client, server = new_pair()
     auth_low = client.create_request_auth("GET", "/api/test", b"")
@@ -188,7 +181,7 @@ def test_request_counter_gaps_are_allowed_by_current_protocol():
 
     assert server.verify_request(auth_high, "GET", "/api/test", b"")
 
-    print("[PASS] un salto di counter (buco) e' accettato dal protocollo attuale")
+    print("[PASS] un salto di counter (buco) e' accettato")
 
 
 def test_response_counter_must_match_request_counter():
@@ -685,7 +678,7 @@ if __name__ == "__main__":
         test_response_nonce_is_inherited_from_request_not_from_auth,
         # 2. semantica del counter
         test_request_counters_strictly_increasing_accepted,
-        test_request_counter_lower_than_last_accepted_fails,
+        test_request_counter_reordering_within_window_is_accepted,
         test_request_counter_gaps_are_allowed_by_current_protocol,
         test_response_counter_must_match_request_counter,
         test_response_replay_detected,

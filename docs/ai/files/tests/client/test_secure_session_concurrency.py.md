@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_secure_session_concurrency.py`
 - Language: `python`
-- Lines: 240
-- SHA256: `e73fb8aff879d7024e4b73e2ad719f2c7ccc99d8844174481c17b6850b942a6d`
+- Lines: 226
+- SHA256: `cd92a91c672e46a9742b4e0c20de09f6703c3feafc1c090f612d08135f0fcb84`
 - Imports:
   - `collections`
   - `concurrent.futures`
@@ -29,12 +29,10 @@ Nessun systemd, nessun TLS, nessuna rete esterna: WGClientHTTPServer viene
 istanziato direttamente su 127.0.0.1:<porta libera> con un controller finto.
 
 Convenzione:
-  * i test "guard" passano oggi e devono continuare a passare dopo la
-    finestra di contatori validi;
-  * i test marcati xfail(strict=True) documentano il comportamento ATTUALE
-    che si vuole cambiare: quando implementi la finestra diventeranno XPASS
-    e strict=True li fara' fallire, ricordandoti di togliere il marker e di
-    invertire l'asserzione.
+  * i test verificano la replay window e la sicurezza dell'allocatore
+    concorrente;
+  * le richieste possono arrivare fuori ordine finche' restano nella
+    replay window.
 
 Per vedere il "report" dei risultati concorrenti:
     pytest tests/client/test_secure_session_concurrency.py -s -v
@@ -193,7 +191,6 @@ def test_retry_with_same_counter_after_lost_response_is_rejected(server):
     assert send(server, sign(sender)) == 200
 
 
-@pytest.mark.xfail(strict=True, reason="create_request_auth non e' thread-safe: contatori duplicati (misurato: 185 unici su 2000)")
 def test_python_sender_counters_unique_under_threads():
     """create_request_auth condiviso tra thread non deve duplicare contatori."""
     sender = new_sender()
@@ -207,22 +204,13 @@ def test_python_sender_counters_unique_under_threads():
 # Caratterizzazione: comportamento attuale che la finestra deve cambiare
 # ----------------------------------------------------------------------
 
-def test_reordered_pair_rejects_the_older_request(server):
-    """Documenta il comportamento attuale (vedi il test xfail sotto)."""
-    sender = new_sender()
-    older = sign(sender)
-    newer = sign(sender)
-    assert send(server, newer) == 200
-    assert send(server, older) == 401      # oggi: counter <= ultimo accettato
-
-
-@pytest.mark.xfail(strict=True, reason="senza finestra, il riordino scarta la richiesta piu' vecchia")
 def test_reordered_pair_both_accepted_with_window(server):
+    """Le richieste riordinate restano valide finche' sono nella window."""
     sender = new_sender()
     older = sign(sender)
     newer = sign(sender)
     assert send(server, newer) == 200
-    assert send(server, older) == 200      # target dopo la finestra
+    assert send(server, older) == 200
 
 
 def run_parallel(server, signer, n=64, workers=16):
@@ -248,13 +236,11 @@ def test_concurrent_requests_report():
         assert set(codes) <= {200, 401}
 
 
-@pytest.mark.xfail(strict=False, reason="riordino di rete: senza finestra alcune risposte sono 401 (dipende dallo scheduling)")
 def test_concurrent_requests_all_succeed_serialized_signing(server):
     codes = run_parallel(server, sign_serialized)
     assert set(codes) == {200}, Counter(codes)
 
 
-@pytest.mark.xfail(strict=False, reason="race del mittente + riordino di rete (dipende dallo scheduling)")
 def test_concurrent_requests_all_succeed_unsynchronized_signing(server):
     codes = run_parallel(server, sign)
     assert set(codes) == {200}, Counter(codes)

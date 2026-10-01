@@ -10,7 +10,7 @@ Generated mechanically by `tools/project_index.py`.
 ## Summary
 
 - Production connections: **7**
-- Test connections: **3**
+- Test connections: **4**
 
 ## Production connections
 
@@ -204,6 +204,30 @@ Generated mechanically by `tools/project_index.py`.
 
 ### connection-008
 
+- **Kind:** http-client
+- **Role:** client
+- **Transport:** TCP
+
+**Layers:**
+- TCP
+- HTTP
+
+**Variables:**
+- `conn`
+
+**Files:**
+- `/home/main/Desktop/wg_manager/tests/client/test_secure_session_concurrency.py`
+- `tests/client/test_secure_session_concurrency.py`
+
+**Symbols:**
+- `send`
+
+**Evidence:**
+- `tests/client/test_secure_session_concurrency.py:120` HTTP_CLIENT `http.client.HTTPConnection('127.0.0.1', port, timeout=5)`
+- `tests/client/test_secure_session_concurrency.py:127` CLOSE `conn.close()`
+
+### connection-009
+
 - **Kind:** socket
 - **Transport:** UNIX
 
@@ -224,7 +248,7 @@ Generated mechanically by `tools/project_index.py`.
 - `tests/client/test_wg_client_integration.py:46` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
 - `tests/client/test_wg_client_integration.py:50` CLOSE `sock.close()`
 
-### connection-009
+### connection-010
 
 - **Kind:** http-client
 - **Role:** client
@@ -248,7 +272,7 @@ Generated mechanically by `tools/project_index.py`.
 - `tests/client/test_wg_client_integration.py:265` HTTP_CLIENT `http.client.HTTPSConnection('127.0.0.1', port, context=ctx, timeout=5)`
 - `tests/client/test_wg_client_integration.py:272` CLOSE `conn.close()`
 
-### connection-010
+### connection-011
 
 - **Kind:** socket
 - **Transport:** TCP

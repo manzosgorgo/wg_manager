@@ -5,10 +5,10 @@
 ## Repository
 
 - Root: `/home/main/Desktop/wg_manager`
-- Commit: `unknown`
-- Branch: `unknown`
-- Files in inventory: 93
-- Text files indexed: 73
+- Commit: `91d08ab749d1a91b65a8721c1c9117af7b26b047`
+- Branch: `protocol-review`
+- Files in inventory: 99
+- Text files indexed: 79
 
 ### Working tree
 
@@ -67,6 +67,7 @@ The working tree contains uncommitted changes.
 - `src/wg_client/wg_client_IPC.py` → [files/src/wg_client/wg_client_IPC.py.md](files/src/wg_client/wg_client_IPC.py.md)
 - `src/wg_client/wg_client_activator.py` → [files/src/wg_client/wg_client_activator.py.md](files/src/wg_client/wg_client_activator.py.md)
 - `src/wg_client/wg_client_config.py` → [files/src/wg_client/wg_client_config.py.md](files/src/wg_client/wg_client_config.py.md)
+- `src/wg_client/wg_client_errors.js` → [files/src/wg_client/wg_client_errors.js.md](files/src/wg_client/wg_client_errors.js.md)
 - `src/wg_client/wg_client_errors.py` → [files/src/wg_client/wg_client_errors.py.md](files/src/wg_client/wg_client_errors.py.md)
 - `src/wg_client/wg_client_lifecycle.py` → [files/src/wg_client/wg_client_lifecycle.py.md](files/src/wg_client/wg_client_lifecycle.py.md)
 - `src/wg_client/wg_controller_client.py` → [files/src/wg_client/wg_controller_client.py.md](files/src/wg_client/wg_controller_client.py.md)
@@ -99,9 +100,14 @@ The working tree contains uncommitted changes.
 - `tests/client/test_client.py` → [files/tests/client/test_client.py.md](files/tests/client/test_client.py.md)
 - `tests/client/test_client_API.py` → [files/tests/client/test_client_API.py.md](files/tests/client/test_client_API.py.md)
 - `tests/client/test_secure_session.py` → [files/tests/client/test_secure_session.py.md](files/tests/client/test_secure_session.py.md)
+- `tests/client/test_secure_session_concurrency.py` → [files/tests/client/test_secure_session_concurrency.py.md](files/tests/client/test_secure_session_concurrency.py.md)
+- `tests/client/test_secure_session_policy.py` → [files/tests/client/test_secure_session_policy.py.md](files/tests/client/test_secure_session_policy.py.md)
+- `tests/client/test_secure_session_threadsefety.py` → [files/tests/client/test_secure_session_threadsefety.py.md](files/tests/client/test_secure_session_threadsefety.py.md)
 - `tests/client/test_wg_client_activator.py` → [files/tests/client/test_wg_client_activator.py.md](files/tests/client/test_wg_client_activator.py.md)
 - `tests/client/test_wg_client_integration.py` → [files/tests/client/test_wg_client_integration.py.md](files/tests/client/test_wg_client_integration.py.md)
 - `tests/frontend/__init__.py` → [files/tests/frontend/__init__.py.md](files/tests/frontend/__init__.py.md)
 - `tests/frontend/test_cross_language_vector.py` → [files/tests/frontend/test_cross_language_vector.py.md](files/tests/frontend/test_cross_language_vector.py.md)
+- `tests/frontend/test_secure_session_concurrency.test.mjs` → [files/tests/frontend/test_secure_session_concurrency.test.mjs.md](files/tests/frontend/test_secure_session_concurrency.test.mjs.md)
 - `tests/frontend/wg_secure_session_gen_vectors.py` → [files/tests/frontend/wg_secure_session_gen_vectors.py.md](files/tests/frontend/wg_secure_session_gen_vectors.py.md)
 - `tests/test_http_handler.py` → [files/tests/test_http_handler.py.md](files/tests/test_http_handler.py.md)
+- `tests/test_mock.py` → [files/tests/test_mock.py.md](files/tests/test_mock.py.md)

@@ -106,6 +106,7 @@ This file is generated automatically.
 ## `src/wg_client/wg_client_config.py`
 
 - `configparser`
+- `math`
 - `os`
 
 ## `src/wg_client/wg_client_lifecycle.py`
@@ -132,8 +133,11 @@ This file is generated automatically.
 - `hashlib`
 - `hmac`
 - `logging`
+- `math`
 - `secrets`
 - `src.wg_client.wg_client_errors`
+- `threading`
+- `time`
 
 ## `src/wg_frontend/check_vectors.mjs`
 
@@ -224,6 +228,30 @@ This file is generated automatically.
 - `src.wg_client.wg_client_errors`
 - `src.wg_client.wg_secure_session`
 
+## `tests/client/test_secure_session_concurrency.py`
+
+- `collections`
+- `concurrent.futures`
+- `http.client`
+- `pytest`
+- `src.wg_client.wg_client_API_handler`
+- `src.wg_client.wg_secure_session`
+- `threading`
+
+## `tests/client/test_secure_session_policy.py`
+
+- `pytest`
+- `src.wg_client.wg_client_errors`
+- `src.wg_client.wg_secure_session`
+
+## `tests/client/test_secure_session_threadsefety.py`
+
+- `concurrent.futures`
+- `pytest`
+- `src.wg_client.wg_client_errors`
+- `src.wg_client.wg_secure_session`
+- `threading`
+
 ## `tests/client/test_wg_client_activator.py`
 
 - `asyncio`
@@ -266,6 +294,13 @@ This file is generated automatically.
 - `subprocess`
 - `tempfile`
 
+## `tests/frontend/test_secure_session_concurrency.test.mjs`
+
+- `../../src/wg_frontend/wg_secure_session.js`
+- `node:assert`
+- `node:crypto`
+- `node:test`
+
 ## `tests/frontend/wg_secure_session_gen_vectors.py`
 
 - `hashlib`
@@ -280,3 +315,12 @@ This file is generated automatically.
 - `socket`
 - `ssl`
 - `tests.client.test_wg_handler`
+
+## `tests/test_mock.py`
+
+- `base64`
+- `os`
+- `pathlib`
+- `pytest`
+- `subprocess`
+- `sys`

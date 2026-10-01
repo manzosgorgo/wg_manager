@@ -4,8 +4,8 @@
 
 - Path: `src/wg_frontend/wg_secure_session.js`
 - Language: `javascript`
-- Lines: 555
-- SHA256: `1360549562d3b3c9f0b5b1f6f2de42697abbde024eec6769d57e892e9efbfa98`
+- Lines: 683
+- SHA256: `d60b75a740d9f448f798f0199177a391d0bb3fed2ce01e69b99adf71f01f9df7`
 
 ## Source
 
@@ -54,6 +54,8 @@ import {
   WGInvalidMACError,
   WGSessionMismatchError,
   WGReplayError,
+  WGSessionExpiredError,
+  WGRequestRateExceededError,
 } from "./wg_client_errors.js";
 
 // ----------------------------------------------------------------------
@@ -166,7 +168,7 @@ export class WGSecureSession {
    * la derivazione delle chiavi con SubtleCrypto e' asincrona e un
    * costruttore JS non puo' essere async.
    */
-  constructor(config, sessionId, sessionSeed, requestKey, responseKey, rng) {
+  constructor(config, sessionId, sessionSeed, requestKey, responseKey, rng, clock) {
     this._config = config;
 
     this.sessionIdSize = config.secure_session.session_id_size;
@@ -174,6 +176,9 @@ export class WGSecureSession {
     this.keySize = config.secure_session.session_key_size;
     this.counterMin = config.secure_session.counter_min;
     this.counterMax = config.secure_session.counter_max;
+    this.sessionTimeout = config.secure_session.session_timeout ?? 86400;
+    this.maxRequestFrequency = config.secure_session.max_request_frequency ?? 0.0;
+    this.replayWindowSize = config.secure_session.replay_window_size ?? 64;
     this.MAC_SIZE = MAC_SIZE;
 
     this._sessionId = sessionId; // Uint8Array
@@ -182,8 +187,22 @@ export class WGSecureSession {
     this._responseKey = responseKey; // CryptoKey (HMAC)
 
     this._requestCounter = this.counterMin - 1;
-    this._lastResponseCounter = this.counterMin - 1;
+    this._pendingRequests = {};
+
+    this._requestReceiveHighest = this.counterMin - 1;
+    this._requestReceiveAccepted = new Set();
+    this._responseReceiveHighest = this.counterMin - 1;
+    this._responseReceiveAccepted = new Set();
+
     this._rng = rng || getRandomBytes;
+    this._clock = clock || (() => (
+      globalThis.performance?.now ? globalThis.performance.now() / 1000 : Date.now() / 1000
+    ));
+    this._sessionStarted = this._clock();
+    this._sessionExpiresAt = this._sessionStarted + this.sessionTimeout;
+
+    // Serializes the check -> await -> commit sequences of verification.
+    this._verifyChain = Promise.resolve();
   }
 
   /**
@@ -201,7 +220,7 @@ export class WGSecureSession {
    * test a vettori deterministici; il default e' il CSPRNG del Web
    * Crypto standard.
    */
-  static async create(config, kSession, sessionId = null, rng = null) {
+  static async create(config, kSession, sessionId = null, rng = null, clock = null) {
     const sc = config?.secure_session;
     if (!sc) {
       throw new WGInvalidFieldError('config.secure_session is required');
@@ -212,6 +231,24 @@ export class WGSecureSession {
     const keySize = sc.session_key_size;
     const counterMin = sc.counter_min;
     const counterMax = sc.counter_max;
+    const sessionTimeout = sc.session_timeout ?? 86400;
+    const maxRequestFrequency = sc.max_request_frequency ?? 0.0;
+    const replayWindowSize = sc.replay_window_size ?? 64;
+
+    if (!Number.isInteger(sessionTimeout) || sessionTimeout <= 0) {
+      throw new WGInvalidFieldError("invalid session timeout");
+    }
+    if (!Number.isFinite(maxRequestFrequency) || maxRequestFrequency < 0) {
+      throw new WGInvalidFieldError("invalid maximum request frequency");
+    }
+    if (!Number.isInteger(replayWindowSize) || replayWindowSize <= 0) {
+      throw new WGInvalidFieldError("invalid replay window size");
+    }
+
+    const counterCapacity = counterMax - counterMin + 1;
+    if (maxRequestFrequency > 0 && maxRequestFrequency * sessionTimeout > counterCapacity) {
+      throw new WGInvalidFieldError("maximum request frequency and session timeout exceed counter capacity");
+    }
 
     if (counterMin < 1) {
       throw new WGInvalidFieldError("invalid counter minimum");
@@ -300,7 +337,9 @@ export class WGSecureSession {
       ["sign", "verify"],
     );
 
-    return new WGSecureSession(config, sessionId, new Uint8Array(sessionSeed), requestKey, responseKey, rng);
+    return new WGSecureSession(
+      config, sessionId, new Uint8Array(sessionSeed), requestKey, responseKey, rng, clock
+    );
   }
 
   get sessionId() {
@@ -320,24 +359,28 @@ export class WGSecureSession {
     if (typeof path !== "string") throw new WGInvalidFieldError("path must be str");
     if (!(body instanceof Uint8Array)) throw new WGInvalidFieldError("body must be bytes");
 
+    // Reserve the counter synchronously, BEFORE the first await.
+    // A burned counter is harmless because receivers accept gaps.
+    this._checkSessionActive();
     if (this._requestCounter >= this.counterMax) {
       throw new WGCounterExhaustedError("request counter exhausted");
     }
+    this._checkRequestRate();
 
-    const counter = this._requestCounter + 1;
+    const counter = ++this._requestCounter;
     const nonce = this._rng(this.nonceSize);
 
     const message = await this._requestMessage(counter, nonce, method, path, body);
     const mac = await this._sign(this._requestKey, message);
 
-    this._requestCounter = counter;
-
-    return {
+    const auth = {
       session_id: this.sessionIdB64,
       counter,
       nonce: b64encode(nonce),
       mac: b64encode(mac),
     };
+    this._pendingRequests[counter] = { ...auth };
+    return auth;
   }
 
   async verifyRequest(auth, method, path, body = new Uint8Array(0)) {
@@ -351,20 +394,29 @@ export class WGSecureSession {
       throw new WGSessionMismatchError("invalid session id");
     }
 
-    const counter = validated.counter;
-    if (counter <= this._requestCounter) {
-      throw new WGReplayError("request counter replayed");
-    }
+    // The replay check and the counter commit must not interleave with
+    // another verification (there are awaits in between).
+    return this._withVerifyLock(async () => {
+      this._checkSessionActive();
+      const counter = validated.counter;
 
-    const message = await this._requestMessage(counter, validated.nonce, method, path, body);
-    const valid = await this._verify(this._requestKey, validated.mac, message);
+      if (!this._counterInReceiveWindow(counter, this._requestReceiveHighest)) {
+        throw new WGReplayError("request counter outside replay window");
+      }
+      if (this._requestReceiveAccepted.has(counter)) {
+        throw new WGReplayError("request counter replayed");
+      }
 
-    if (!valid) {
-      throw new WGInvalidMACError("invalid request MAC");
-    }
+      const message = await this._requestMessage(counter, validated.nonce, method, path, body);
+      const valid = await this._verify(this._requestKey, validated.mac, message);
 
-    this._requestCounter = counter;
-    return true;
+      if (!valid) {
+        throw new WGInvalidMACError("invalid request MAC");
+      }
+
+      this._acceptReceiveCounter(counter, true);
+      return true;
+    });
   }
 
   // ------------------------------------------------------------------
@@ -381,11 +433,8 @@ export class WGSecureSession {
       throw new WGSessionMismatchError("invalid session id");
     }
 
+    this._checkSessionActive();
     const counter = validatedRequest.counter;
-    if (counter !== this._requestCounter) {
-      throw new WGCounterError("response does not correspond to latest request");
-    }
-
     const nonce = validatedRequest.nonce;
 
     const message = await this._responseMessage(counter, nonce, status, body);
@@ -419,27 +468,106 @@ export class WGSecureSession {
       throw new WGCounterError("response counter does not match request");
     }
 
-    const counter = validatedAuth.counter;
-    if (counter <= this._lastResponseCounter) {
-      throw new WGReplayError("response replayed");
+    return this._withVerifyLock(async () => {
+      this._checkSessionActive();
+      const counter = validatedAuth.counter;
+
+      if (!this._counterInReceiveWindow(counter, this._responseReceiveHighest)) {
+        throw new WGReplayError("response counter outside replay window");
+      }
+      if (this._responseReceiveAccepted.has(counter)) {
+        throw new WGReplayError("response replayed");
+      }
+
+      if (!(counter in this._pendingRequests)) {
+        throw new WGCounterError("response does not correspond to a pending request");
+      }
+
+      const nonce = validatedRequest.nonce;
+
+      const message = await this._responseMessage(counter, nonce, status, body);
+      const valid = await this._verify(this._responseKey, validatedAuth.mac, message);
+
+      if (!valid) {
+        throw new WGInvalidMACError("invalid response MAC");
+      }
+
+      this._acceptReceiveCounter(counter, false);
+      delete this._pendingRequests[counter];
+      return true;
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // Session lifecycle and replay windows
+  // ------------------------------------------------------------------
+
+  _checkSessionActive() {
+    if (this._clock() >= this._sessionExpiresAt) {
+      throw new WGSessionExpiredError("secure session expired");
+    }
+  }
+
+  _checkRequestRate() {
+    if (this.maxRequestFrequency <= 0) return;
+
+    const elapsed = Math.max(0, this._clock() - this._sessionStarted);
+    const requestsUsed = this._requestCounter - this.counterMin + 1;
+    const allowed = Math.floor(elapsed * this.maxRequestFrequency) + 1;
+
+    if (requestsUsed >= allowed) {
+      throw new WGRequestRateExceededError("maximum request frequency exceeded");
+    }
+  }
+
+  _counterInReceiveWindow(counter, highestSeen) {
+    const lowerBound = Math.max(
+      this.counterMin,
+      highestSeen - this.replayWindowSize + 1,
+    );
+    return lowerBound <= counter && counter <= this.counterMax;
+  }
+
+  _acceptReceiveCounter(counter, request) {
+    const accepted = request
+      ? this._requestReceiveAccepted
+      : this._responseReceiveAccepted;
+
+    let highest = request
+      ? this._requestReceiveHighest
+      : this._responseReceiveHighest;
+
+    if (counter > highest) highest = counter;
+
+    accepted.add(counter);
+    const lowerBound = Math.max(
+      this.counterMin,
+      highest - this.replayWindowSize + 1,
+    );
+
+    for (const value of Array.from(accepted)) {
+      if (value < lowerBound) accepted.delete(value);
     }
 
-    const nonce = validatedRequest.nonce;
-
-    const message = await this._responseMessage(counter, nonce, status, body);
-    const valid = await this._verify(this._responseKey, validatedAuth.mac, message);
-
-    if (!valid) {
-      throw new WGInvalidMACError("invalid response MAC");
+    if (request) {
+      this._requestReceiveHighest = highest;
+    } else {
+      this._responseReceiveHighest = highest;
     }
-
-    this._lastResponseCounter = counter;
-    return true;
   }
 
   // ------------------------------------------------------------------
   // Field validation (equivalenti a _validate_* in Python)
   // ------------------------------------------------------------------
+
+  // Runs fn once every previously queued verification has settled, so
+  // the replay check and the counter commit of two verifications can
+  // never interleave.
+  _withVerifyLock(fn) {
+    const run = this._verifyChain.then(fn);
+    this._verifyChain = run.catch(() => {});
+    return run;
+  }
 
   _validateAuthStructure(auth, requiredFields) {
     if (auth === null || typeof auth !== "object" || Array.isArray(auth)) {

@@ -4,10 +4,11 @@
 
 - Path: `src/wg_client/wg_client_config.py`
 - Language: `python`
-- Lines: 147
-- SHA256: `a19e5b610c5a3e9ffaa09d05a53f1e435b66dca160b46b94f11eb0bbb852a845`
+- Lines: 196
+- SHA256: `43663f5e49fab720ee15000c581fe844b3163a1f93df4710446914085684f09e`
 - Imports:
   - `configparser`
+  - `math`
   - `os`
 
 ## Source
@@ -16,6 +17,7 @@
 #!/usr/bin/env python3
 
 import configparser
+import math
 import os
 
 
@@ -28,6 +30,11 @@ DEFAULT_NONCE_SIZE = 32
 DEFAULT_SESSION_KEY_SIZE = 32
 DEFAULT_COUNTER_MIN = 1
 DEFAULT_COUNTER_MAX = 0xFFFFFFFF
+DEFAULT_SESSION_TIMEOUT = 86400
+# Zero disables runtime frequency enforcement. When enabled, this value is
+# requests per second and is checked against the session counter capacity.
+DEFAULT_MAX_REQUEST_FREQUENCY = 0.0
+DEFAULT_REPLAY_WINDOW_SIZE = 64
 
 
 def load_config():
@@ -117,6 +124,24 @@ def load_config():
         fallback=DEFAULT_COUNTER_MAX,
     )
 
+    session_timeout = config.getint(
+        "secure_session",
+        "session_timeout",
+        fallback=DEFAULT_SESSION_TIMEOUT,
+    )
+
+    max_request_frequency = config.getfloat(
+        "secure_session",
+        "max_request_frequency",
+        fallback=DEFAULT_MAX_REQUEST_FREQUENCY,
+    )
+
+    replay_window_size = config.getint(
+        "secure_session",
+        "replay_window_size",
+        fallback=DEFAULT_REPLAY_WINDOW_SIZE,
+    )
+
     if session_id_size <= 0:
         raise RuntimeError("invalid secure session ID size")
 
@@ -131,6 +156,28 @@ def load_config():
 
     if counter_max < counter_min:
         raise RuntimeError("invalid secure session counter range")
+
+    if session_timeout <= 0:
+        raise RuntimeError("invalid secure session timeout")
+
+    if (
+        not math.isfinite(max_request_frequency)
+        or max_request_frequency < 0
+    ):
+        raise RuntimeError("invalid secure session maximum request frequency")
+
+    if replay_window_size <= 0:
+        raise RuntimeError("invalid secure session replay window size")
+
+    counter_capacity = counter_max - counter_min + 1
+    if (
+        max_request_frequency > 0
+        and max_request_frequency * session_timeout > counter_capacity
+    ):
+        raise RuntimeError(
+            "secure session request frequency and timeout exceed "
+            "counter capacity"
+        )
 
     return {
         "api": {
@@ -158,6 +205,9 @@ def load_config():
             "session_key_size": session_key_size,
             "counter_min": counter_min,
             "counter_max": counter_max,
+            "session_timeout": session_timeout,
+            "max_request_frequency": max_request_frequency,
+            "replay_window_size": replay_window_size,
         },
     }
 ```

@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_errors.py`
 - Language: `python`
-- Lines: 99
-- SHA256: `69fa9f906fcc2f1c30cdb237c1ce835b01b38d1cda00ac5806b6a9a41f7f60a6`
+- Lines: 109
+- SHA256: `b3cf1c755112b18852b113b6f8f80440850601503ffe39e2c78c350363fd7383`
 
 ## Source
 
@@ -98,6 +98,16 @@ class WGCounterError(WGProtocolError):
 
 class WGCounterExhaustedError(WGCounterError):
     """The session counter has reached its maximum value."""
+    pass
+
+
+class WGSessionExpiredError(WGSessionError):
+    """The secure session lifetime has expired."""
+    pass
+
+
+class WGRequestRateExceededError(WGSessionError):
+    """The configured maximum request frequency has been exceeded."""
     pass
 
 

@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_API_handler.py`
 - Language: `python`
-- Lines: 505
-- SHA256: `ce417bff8ecc1d41b839cdf5d45a5d73860bb0f44fd332922cff0e7107cf1ecc`
+- Lines: 507
+- SHA256: `d50937b35fe7eecea89d5e523a6293edab980a349299ececdd413dd456caf301`
 - Imports:
   - `datetime`
   - `http`
@@ -37,6 +37,7 @@ from src.wg_client.wg_client_errors import (
     WGInvalidMACError,
     WGSessionMismatchError,
     WGReplayError,
+    WGSessionExpiredError,
 )
 
 log = logging.getLogger("wg_manager.api.handler")
@@ -70,6 +71,7 @@ _AUTH_REJECTED_ERRORS = (
     WGInvalidMACError,
     WGSessionMismatchError,
     WGReplayError,
+    WGSessionExpiredError,
 )
 
 

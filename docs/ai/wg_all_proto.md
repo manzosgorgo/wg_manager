@@ -59,12 +59,12 @@
 
 - `{allowed_ip: ‹in http.server.rfile.read›('allowed_ip'|'utf-8'), public_key: ‹in http.server.path›('/v1/peers/')}` — `wg_controller_client.py:WGClientClient._request`, `wg_controller_client.py:WGControllerClient._request` — wg_controller_client.py:202, wg_controller_client.py:85
 - `{error: ?, ok: False}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json`, `wg_manager.py:reply` — wg_auth_API_handler.py:102, wg_auth_API_handler.py:151, wg_auth_API_handler.py:171
-- `{}` — `wg_client_API_handler.py:WGClientAPIHandler.send_error`, `wg_client_API_handler.py:WGClientAPIHandler.send_json` — wg_client_API_handler.py:263
+- `{}` — `wg_client_API_handler.py:WGClientAPIHandler.send_error`, `wg_client_API_handler.py:WGClientAPIHandler.send_json` — wg_client_API_handler.py:265
 - `{**: ‹wg_auth_API_handler.py:WGAuthAPIHandler.do_GET.status›, ok: True}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:232
 - `{**: ‹wg_client_IPC.py:WGClientIPC.send_result(fields)›, protocol_version: ‹wg_client_IPC.py:PROTOCOL_VERSION›∈{1}, status: ‹wg_client_IPC.py:WGClientIPC.send_result(status)›∈{'ERROR'|'OK'}, type: 'A…` — `wg_client_IPC.py:WGClientIPC.send_result` — wg_client_IPC.py:192
 - `{<AUTH_COUNTER_HEADER>: 'counter' | ‹in http.server.path›(','|'/v1/peers/'|'/v1/status'), <AUTH_MAC_HEADER>: 'mac' | ‹in http.server.path›(','|'/v1/peers/'|'/v1/status'), <AUTH_NONCE_HEADER>: 'nonce'…` — `wg_controller_client.py:WGClientClient._request` — wg_controller_client.py:129
-- `{<AUTH_COUNTER_HEADER>: 'counter' | ‹wg_client_API_handler.py:WGClientAPIHandler.request_auth› | ‹wg_client_API_handler.py:WGClientAPIHandler.send_error(code)›∈{400|401|404|405|502} | ‹wg_client_API_…` — `wg_client_API_handler.py:WGClientAPIHandler.send_error` — wg_client_API_handler.py:271
-- `{<AUTH_COUNTER_HEADER>: 'counter' | ‹wg_client_API_handler.py:WGClientAPIHandler.request_auth› | ‹wg_client_API_handler.py:WGClientAPIHandler.send_json(code)›∈{200} | ‹in http.server.path,http.server…` — `wg_client_API_handler.py:WGClientAPIHandler.send_json` — wg_client_API_handler.py:271
+- `{<AUTH_COUNTER_HEADER>: 'counter' | ‹wg_client_API_handler.py:WGClientAPIHandler.request_auth› | ‹wg_client_API_handler.py:WGClientAPIHandler.send_error(code)›∈{400|401|404|405|502} | ‹wg_client_API_…` — `wg_client_API_handler.py:WGClientAPIHandler.send_error` — wg_client_API_handler.py:273
+- `{<AUTH_COUNTER_HEADER>: 'counter' | ‹wg_client_API_handler.py:WGClientAPIHandler.request_auth› | ‹wg_client_API_handler.py:WGClientAPIHandler.send_json(code)›∈{200} | ‹in http.server.path,http.server…` — `wg_client_API_handler.py:WGClientAPIHandler.send_json` — wg_client_API_handler.py:273
 - `{<k.lower().strip()>: ‹in socket.recv›(':'|'\r\n'|'iso-8859-1')}` — `wg_manager.py:request` — wg_manager.py:58
 - `{Accept: 'application/json', Connection: 'close', Content-Length: ‹wg_controller_client.py:WGControllerClient._request.data›∈{','|':'}, Content-Type: 'application/json'}` — `wg_controller_client.py:WGControllerClient._request` — wg_controller_client.py:36
 - `{activation: ‹in http.server.rfile.read›('auth'), authenticated: True, k_session: ‹wg_auth_API_handler.py:WGAuthAPIHandler.api›, ok: True, session_id: ‹wg_auth_API_handler.py:WGAuthAPIHandler.api›}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:130
@@ -76,14 +76,14 @@
 - `{error: 'internal server error', ok: False}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:113, wg_auth_API_handler.py:182
 - `{error: 'invalid authentication request', ok: False}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:160, wg_auth_API_handler.py:91
 - `{error: 'not found', ok: False}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:199, wg_auth_API_handler.py:206, wg_auth_API_handler.py:224
-- `{error: ‹wg_client_API_handler.py:WGClientAPIHandler.send_error(message)›∈{'Bad Request'|'Controller error'|'Unauthorized'}, message: ‹wg_client_API_handler.py:WGClientAPIHandler.send_error(explain)›…` — `wg_client_API_handler.py:WGClientAPIHandler.send_error` — wg_client_API_handler.py:308
+- `{error: ‹wg_client_API_handler.py:WGClientAPIHandler.send_error(message)›∈{'Bad Request'|'Controller error'|'Unauthorized'}, message: ‹wg_client_API_handler.py:WGClientAPIHandler.send_error(explain)›…` — `wg_client_API_handler.py:WGClientAPIHandler.send_error` — wg_client_API_handler.py:310
 - `{interface: 'if' | ‹wg_manager.py:main.c›, ok: True, peers: 'if' | ‹wg_manager.py:main.c›}` — `wg_manager.py:reply` — wg_manager.py:152
 - `{ok: True, operation: 'remove_peer', public_key: '/v1/peers/' | ‹in socket.recv›('0'|'\r\n'|'content-length')}` — `wg_manager.py:reply` — wg_manager.py:147
 - `{ok: True, response: ‹in http.server.rfile.read›('pub'|'username')}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:62
 - `{ok: True}` — `wg_auth_API_handler.py:WGAuthAPIHandler._send_json` — wg_auth_API_handler.py:217
 - `{protocol_version: ‹wg_auth_IPC.py:PROTOCOL_VERSION›∈{1}, type: 'STOP'}` — `wg_auth_IPC.py:WGAuthIPC.send_packet` — wg_auth_IPC.py:197
 - `{protocol_version: ‹wg_client_IPC.py:PROTOCOL_VERSION›∈{1}, type: 'STOP'}` — `wg_client_IPC.py:WGClientIPC._notify_stop` — wg_client_IPC.py:205
-- `{status: 'ok'}` — `wg_client_API_handler.py:WGClientAPIHandler.send_json` — wg_client_API_handler.py:415
+- `{status: 'ok'}` — `wg_client_API_handler.py:WGClientAPIHandler.send_json` — wg_client_API_handler.py:417
 
 ## Cosa accettano i parametri (valori costanti che possono assumere)
 
@@ -160,39 +160,39 @@
 - costanti dirette: 'NOTIFY_SOCKET', 'READY=1', 'STATUS=session_id=', 'STOPPING=1', '\x00', 'k_session', 'listen_path', 'session_id', 1
 - esterni: os.environ, socket.AF_UNIX, socket.SOCK_DGRAM, socket.SOCK_STREAM, sys.stdin
 
-### `wg_client_API_handler.py:WGClientAPIHandler.api_path` — http.server.path@L129
+### `wg_client_API_handler.py:WGClientAPIHandler.api_path` — http.server.path@L131
 
-### `wg_client_API_handler.py:WGClientAPIHandler.api_target` — http.server.path@L148
+### `wg_client_API_handler.py:WGClientAPIHandler.api_target` — http.server.path@L150
 
-### `wg_client_API_handler.py:WGClientAPIHandler.authenticate_request` — http.server.command@L238, http.server.send_error@L230, http.server.send_error@L242, http.server.send_error@L247
+### `wg_client_API_handler.py:WGClientAPIHandler.authenticate_request` — http.server.command@L240, http.server.send_error@L232, http.server.send_error@L244, http.server.send_error@L249
 - costanti dirette: 'Bad Request', 'Unauthorized', 'invalid secure-session authentication', 'secure-session authentication failed', 400, 401, 404
 
-### `wg_client_API_handler.py:WGClientAPIHandler.do_CONNECT` — http.server.path@L444, http.server.send_error@L445
+### `wg_client_API_handler.py:WGClientAPIHandler.do_CONNECT` — http.server.path@L446, http.server.send_error@L447
 - costanti dirette: 405
 
-### `wg_client_API_handler.py:WGClientAPIHandler.do_DELETE` — http.server.path@L418, http.server.send_error@L427, http.server.send_error@L434
+### `wg_client_API_handler.py:WGClientAPIHandler.do_DELETE` — http.server.path@L420, http.server.send_error@L429, http.server.send_error@L436
 - costanti dirette: 'Controller error', 404
 
-### `wg_client_API_handler.py:WGClientAPIHandler.do_GET` — http.server.path@L376, http.server.send_error@L383, http.server.send_error@L390, http.server.send_error@L399
+### `wg_client_API_handler.py:WGClientAPIHandler.do_GET` — http.server.path@L378, http.server.send_error@L385, http.server.send_error@L392, http.server.send_error@L401
 - costanti dirette: 'Controller error', 'controller interface mismatch', 404, 502
 
-### `wg_client_API_handler.py:WGClientAPIHandler.do_PATCH` — http.server.path@L448, http.server.send_error@L449
+### `wg_client_API_handler.py:WGClientAPIHandler.do_PATCH` — http.server.path@L450, http.server.send_error@L451
 - costanti dirette: 405
 
-### `wg_client_API_handler.py:WGClientAPIHandler.do_POST` — http.server.path@L409
+### `wg_client_API_handler.py:WGClientAPIHandler.do_POST` — http.server.path@L411
 
-### `wg_client_API_handler.py:WGClientAPIHandler.do_PUT` — http.server.headers@L455, http.server.path@L452, http.server.rfile.read@L461, http.server.send_error@L464, http.server.send_error@L476, http.server.send_error@L484
+### `wg_client_API_handler.py:WGClientAPIHandler.do_PUT` — http.server.headers@L457, http.server.path@L454, http.server.rfile.read@L463, http.server.send_error@L466, http.server.send_error@L478, http.server.send_error@L486
 - costanti dirette: 'Bad Request', 'Content-Length', 'Controller error', 'Invalid peer request', 'invalid Content-Length', 0, 400, 404
 - dalla rete: http.server.headers
 
-### `wg_client_API_handler.py:WGClientAPIHandler.request_auth_headers` — http.server.headers@L187, http.server.headers@L188, http.server.headers@L189, http.server.headers@L190
+### `wg_client_API_handler.py:WGClientAPIHandler.request_auth_headers` — http.server.headers@L189, http.server.headers@L190, http.server.headers@L191, http.server.headers@L192
 
-### `wg_client_API_handler.py:WGClientAPIHandler.send_error` — http.server.command@L338, http.server.end_headers@L336, http.server.path@L313, http.server.send_header@L327, http.server.send_header@L330, http.server.send_header@L333
+### `wg_client_API_handler.py:WGClientAPIHandler.send_error` — http.server.command@L340, http.server.end_headers@L338, http.server.path@L315, http.server.send_header@L329, http.server.send_header@L332, http.server.send_header@L335
 - via: json.dumps
 - costanti dirette: 'Bad Request', 'Connection', 'Content-Length', 'Content-Type', 'Controller error', 'Unauthorized', 'application/json', 'close', 'utf-8', 400, 401, 404 (+2)
 - forme: 3 (vedi sopra)
 
-### `wg_client_API_handler.py:WGClientAPIHandler.send_json` — http.server.command@L355, http.server.end_headers@L353, http.server.send_header@L349, http.server.send_header@L351, http.server.send_header@L352, http.server.send_response@L346
+### `wg_client_API_handler.py:WGClientAPIHandler.send_json` — http.server.command@L357, http.server.end_headers@L355, http.server.send_header@L351, http.server.send_header@L353, http.server.send_header@L354, http.server.send_response@L348
 - via: .add_peer, .remove_peer, .status, json.dumps, json.loads, urllib.parse.unquote, urllib.parse.urlsplit
 - costanti dirette: '/v1/peers/', 'Content-Length', 'Content-Type', 'allowed_ip', 'application/json', 'utf-8', 200
 - dalla rete: http.server.path, http.server.rfile.read

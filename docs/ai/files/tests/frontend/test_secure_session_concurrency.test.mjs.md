@@ -4,8 +4,8 @@
 
 - Path: `tests/frontend/test_secure_session_concurrency.test.mjs`
 - Language: `javascript`
-- Lines: 66
-- SHA256: `58c53cc91b7c69dfab75e584c45b4faecb9e63bdeea675407ce06e9bc506b0ff`
+- Lines: 113
+- SHA256: `d7576d572e88294fb6c06665e87bfff5d7cfeaadb67857702327454652051f82`
 - Imports:
   - `../../src/wg_frontend/wg_secure_session.js`
   - `node:assert`
@@ -46,7 +46,6 @@ async function newSession() {
 }
 
 test("createRequestAuth concorrenti non duplicano il contatore",
-    { todo: "bug noto: tutte le chiamate concorrenti leggono lo stesso contatore (misurato: 20 volte il valore 1)" },
     async () => {
         const s = await newSession();
         const auths = await Promise.all(
@@ -66,7 +65,6 @@ test("createRequestAuth sequenziali: contatori consecutivi", async () => {
 });
 
 test("verifyResponse concorrente della stessa risposta accettata una sola volta",
-    { todo: "bug noto: check-then-await-then-set (misurato: 8 accettate su 8)" },
     async () => {
         const tx = await newSession();
         const rx = await newSession();
@@ -81,4 +79,53 @@ test("verifyResponse concorrente della stessa risposta accettata una sola volta"
         const ok = results.filter((r) => r.status === "fulfilled").length;
         assert.strictEqual(ok, 1, `accettate: ${ok}`);
     });
+
+
+test("verifyRequest accetta richieste concorrenti fuori ordine nella replay window", async () => {
+    const tx = await newSession();
+    const rx = await newSession();
+
+    const auths = await Promise.all(
+        Array.from({ length: 20 }, (_, i) =>
+            tx.createRequestAuth("GET", `/v1/status/${i}`)
+        ),
+    );
+
+    for (const auth of [...auths].reverse()) {
+        const i = auth.counter - 1;
+        assert.strictEqual(
+            await rx.verifyRequest(auth, "GET", `/v1/status/${i}`),
+            true,
+        );
+    }
+});
+
+test("verifyResponse accetta risposte concorrenti fuori ordine", async () => {
+    const tx = await newSession();
+    const rx = await newSession();
+
+    const requests = await Promise.all(
+        Array.from({ length: 20 }, (_, i) =>
+            tx.createRequestAuth("GET", `/v1/status/${i}`)
+        ),
+    );
+
+    await Promise.all(
+        requests.map((auth, i) =>
+            rx.verifyRequest(auth, "GET", `/v1/status/${i}`)
+        ),
+    );
+
+    const responses = await Promise.all(
+        requests.map((auth) => rx.createResponseAuth(auth, 200)),
+    );
+
+    for (const response of [...responses].reverse()) {
+        const request = requests[response.counter - 1];
+        assert.strictEqual(
+            await tx.verifyResponse(response, request, 200),
+            true,
+        );
+    }
+});
 ```

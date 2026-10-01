@@ -11,16 +11,16 @@ This file is generated automatically.
 | `mock` | 1 |
 | `src` | 1 |
 | `src/wg_auth` | 8 |
-| `src/wg_client` | 11 |
+| `src/wg_client` | 12 |
 | `src/wg_frontend` | 8 |
 | `src/wg_manager` | 1 |
 | `systemd` | 6 |
 | `systemd/install` | 2 |
-| `tests` | 2 |
+| `tests` | 3 |
 | `tests/auth` | 4 |
 | `tests/auth/js` | 6 |
-| `tests/client` | 7 |
-| `tests/frontend` | 3 |
+| `tests/client` | 10 |
+| `tests/frontend` | 4 |
 
 ## Contents
 
@@ -97,6 +97,7 @@ This file is generated automatically.
 - `wg_client_IPC.py`
 - `wg_client_activator.py`
 - `wg_client_config.py`
+- `wg_client_errors.js`
 - `wg_client_errors.py`
 - `wg_client_lifecycle.py`
 - `wg_controller_client.py`
@@ -135,6 +136,7 @@ This file is generated automatically.
 
 - `__init__.py`
 - `test_http_handler.py`
+- `test_mock.py`
 
 ### `tests/auth`
 
@@ -159,6 +161,9 @@ This file is generated automatically.
 - `test_client.py`
 - `test_client_API.py`
 - `test_secure_session.py`
+- `test_secure_session_concurrency.py`
+- `test_secure_session_policy.py`
+- `test_secure_session_threadsefety.py`
 - `test_wg_client_activator.py`
 - `test_wg_client_integration.py`
 
@@ -166,4 +171,5 @@ This file is generated automatically.
 
 - `__init__.py`
 - `test_cross_language_vector.py`
+- `test_secure_session_concurrency.test.mjs`
 - `wg_secure_session_gen_vectors.py`
