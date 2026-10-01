@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+"""
+Concurrency / ordering characterization tests for WGSecureSession as used
+by the real WGClientAPIHandler.
+
+Destinazione suggerita: tests/client/test_secure_session_concurrency.py
+
+Nessun systemd, nessun TLS, nessuna rete esterna: WGClientHTTPServer viene
+istanziato direttamente su 127.0.0.1:<porta libera> con un controller finto.
+
+Convenzione:
+  * i test "guard" passano oggi e devono continuare a passare dopo la
+    finestra di contatori validi;
+  * i test marcati xfail(strict=True) documentano il comportamento ATTUALE
+    che si vuole cambiare: quando implementi la finestra diventeranno XPASS
+    e strict=True li fara' fallire, ricordandoti di togliere il marker e di
+    invertire l'asserzione.
+
+Per vedere il "report" dei risultati concorrenti:
+    pytest tests/client/test_secure_session_concurrency.py -s -v
+"""
+
+import http.client
+import threading
+from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+
+import pytest
+
+from src.wg_client.wg_client_API_handler import (
+    AUTH_COUNTER_HEADER,
+    AUTH_MAC_HEADER,
+    AUTH_NONCE_HEADER,
+    AUTH_SESSION_ID_HEADER,
+    WGClientAPIHandler,
+    WGClientHTTPServer,
+)
+from src.wg_client.wg_secure_session import WGSecureSession
+
+CFG = {
+    "secure_session": {
+        "session_id_size": 16,
+        "nonce_size": 32,
+        "session_key_size": 32,
+        "counter_min": 1,
+        "counter_max": 0xFFFFFFFF,
+    }
+}
+K_SESSION = bytes(range(32))
+SESSION_ID = bytes(16)
+LISTEN_PATH = "/vpn-test"
+INTERFACE = "wg0"
+
+
+class FakeController:
+    def status(self):
+        return {"interface": INTERFACE, "peers": []}
+
+    def add_peer(self, public_key, allowed_ip):
+        return {"ok": True}
+
+    def remove_peer(self, public_key):
+        return {"ok": True}
+
+
+@pytest.fixture
+def server():
+    session = WGSecureSession(CFG, K_SESSION, SESSION_ID)
+    srv = WGClientHTTPServer(
+        ("127.0.0.1", 0),
+        WGClientAPIHandler,
+        FakeController(),
+        LISTEN_PATH,
+        INTERFACE,
+        None,  # lifecycle: non usato da GET/PUT/DELETE
+        session,
+    )
+    thread = threading.Thread(target=srv.serve_forever, daemon=True)
+    thread.start()
+    yield srv
+    srv.shutdown()
+    srv.server_close()
+
+
+def new_sender():
+    """Lato 'browser': stesso k_session e session_id del server."""
+    return WGSecureSession(CFG, K_SESSION, SESSION_ID)
+
+
+def sign(sender, method="GET", path="/v1/status", body=b""):
+    return sender.create_request_auth(method, path, body)
+
+
+def send(srv, auth, method="GET", path="/v1/status", body=b""):
+    """Invia una richiesta gia' firmata; ritorna lo status HTTP."""
+    port = srv.server_address[1]
+    headers = {
+        AUTH_SESSION_ID_HEADER: auth["session_id"],
+        AUTH_COUNTER_HEADER: str(auth["counter"]),
+        AUTH_NONCE_HEADER: auth["nonce"],
+        AUTH_MAC_HEADER: auth["mac"],
+    }
+    if body:
+        headers["Content-Length"] = str(len(body))
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    try:
+        conn.request(method, LISTEN_PATH + path, body=body or None, headers=headers)
+        response = conn.getresponse()
+        response.read()
+        return response.status
+    finally:
+        conn.close()
+
+
+# ----------------------------------------------------------------------
+# Baseline
+# ----------------------------------------------------------------------
+
+def test_sequential_requests_all_succeed(server):
+    sender = new_sender()
+    codes = [send(server, sign(sender)) for _ in range(20)]
+    assert codes == [200] * 20
+
+
+# ----------------------------------------------------------------------
+# Guard: devono restare veri dopo la finestra
+# ----------------------------------------------------------------------
+
+def test_lost_request_does_not_desync(server):
+    sender = new_sender()
+    sign(sender)  # "persa": mai inviata
+    assert send(server, sign(sender)) == 200
+
+
+@pytest.mark.parametrize("round_", range(20))
+def test_same_signed_request_sent_concurrently_accepted_once(server, round_):
+    sender = new_sender()
+    auth = sign(sender)
+    barrier = threading.Barrier(8)
+
+    def worker(_):
+        barrier.wait()
+        return send(server, auth)
+
+    with ThreadPoolExecutor(8) as ex:
+        codes = list(ex.map(worker, range(8)))
+
+    assert codes.count(200) == 1, Counter(codes)
+
+
+def test_retry_with_same_counter_after_lost_response_is_rejected(server):
+    sender = new_sender()
+    auth = sign(sender)
+    assert send(server, auth) == 200       # eseguita, ma "risposta persa"
+    assert send(server, auth) == 401       # il retry deve usare un contatore nuovo
+    assert send(server, sign(sender)) == 200
+
+
+def test_python_sender_counters_unique_under_threads():
+    """create_request_auth condiviso tra thread non deve duplicare contatori."""
+    sender = new_sender()
+    with ThreadPoolExecutor(16) as ex:
+        auths = list(ex.map(lambda _: sign(sender), range(2000)))
+    counters = [a["counter"] for a in auths]
+    assert len(set(counters)) == len(counters)
+
+
+# ----------------------------------------------------------------------
+# Caratterizzazione: comportamento attuale che la finestra deve cambiare
+# ----------------------------------------------------------------------
+
+def test_reordered_pair_rejects_the_older_request(server):
+    """Documenta il comportamento attuale (vedi il test xfail sotto)."""
+    sender = new_sender()
+    older = sign(sender)
+    newer = sign(sender)
+    assert send(server, newer) == 200
+    assert send(server, older) == 401      # oggi: counter <= ultimo accettato
+
+
+@pytest.mark.xfail(strict=True, reason="senza finestra, il riordino scarta la richiesta piu' vecchia")
+def test_reordered_pair_both_accepted_with_window(server):
+    sender = new_sender()
+    older = sign(sender)
+    newer = sign(sender)
+    assert send(server, newer) == 200
+    assert send(server, older) == 200      # target dopo la finestra
+
+
+def test_concurrent_requests_report(server):
+    """Non asserisce un esito: stampa quante richieste concorrenti falliscono."""
+    sender = new_sender()
+    with ThreadPoolExecutor(16) as ex:
+        codes = list(ex.map(lambda _: send(server, sign(sender)), range(64)))
+    print("\nconcurrent signed requests ->", dict(Counter(codes)))
+    assert codes.count(200) >= 1
+    assert set(codes) <= {200, 401}
+
+
+@pytest.mark.xfail(strict=False, reason="dipende dallo scheduling: oggi di solito alcune risposte sono 401")
+def test_concurrent_requests_all_succeed(server):
+    sender = new_sender()
+    with ThreadPoolExecutor(16) as ex:
+        codes = list(ex.map(lambda _: send(server, sign(sender)), range(64)))
+    assert set(codes) == {200}, Counter(codes)
