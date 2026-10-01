@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import base64
 import getpass
+import json
 import os
 import sys
 
@@ -64,14 +66,20 @@ def main():
         )
         return 1
 
-    with open(path, "xb") as f:
-        f.write(record)
+    user_record = {
+        "opaque_record": base64.b64encode(record).decode("ascii"),
+        "peers": [],
+    }
+
+    with open(path, "x", encoding="utf-8") as f:
+        json.dump(user_record, f, indent=2)
+        f.write("\n")
 
     os.chmod(path, 0o600)
 
-    print(f"created OPAQUE login record for '{USERNAME}'")
+    print(f"created user record for '{USERNAME}'")
     print(f"path: {path}")
-    print(f"size: {len(record)} bytes")
+    print(f"OPAQUE record size: {len(record)} bytes")
 
     return 0
 

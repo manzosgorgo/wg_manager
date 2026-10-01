@@ -1,10 +1,12 @@
 import ssl
+import json
 import logging
 import threading
 from http.server import ThreadingHTTPServer
 
 from src.wg_auth.wg_auth_IPC import WGAuthIPC
 from src.wg_auth.wg_auth_errors import WGAuthSessionError, WGAuthAuthenticationError
+from src.wg_auth.wg_auth_user_store import WGAuthUserStore
 
 log = logging.getLogger("wg_auth.API")
 
@@ -18,6 +20,7 @@ class WGAuthAPI:
     def __init__(self, config, lifecycle):
         self.config = config
         self.lifecycle = lifecycle
+        self.user_store = WGAuthUserStore(config["auth"]["login_dir"])
 
         self.session = None
         self.ipc = None
@@ -80,28 +83,16 @@ class WGAuthAPI:
                     "session already active"
                 )
 
-            record_path = (
-                    self.config["auth"]["login_dir"]
-                    + "/"
-                    + username
-            )
-
             try:
-                with open(record_path, "rb") as f:
-                    credential_record = f.read()
-            except FileNotFoundError:
-                raise WGAuthAuthenticationError(
-                    "authentication failed"
-                )
-
-            if len(credential_record) != 256:
+                user = self.user_store.load(username)
+            except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError):
                 raise WGAuthAuthenticationError(
                     "authentication failed"
                 )
 
             session = WGAuthSession(
-                username=username,
-                credential_record=credential_record,
+                username=user.username,
+                credential_record=user.credential_record,
                 context=b"wg-manager",
             )
 
