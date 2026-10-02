@@ -19,10 +19,14 @@ const peerList = document.querySelector("#peer-list");
 const peerStatus = document.querySelector("#peer-status");
 const peerForm = document.querySelector("#peer-form");
 const peerPublicKeyInput = document.querySelector("#peer-public-key");
+const peerGenerateKeysButton = document.querySelector("#peer-generate-keys");
+const peerCreateButton = document.querySelector("#peer-create-button");
 const peerAllowedIpInput = document.querySelector("#peer-allowed-ip");
 const peerRoutingModeInput = document.querySelector("#peer-routing-mode");
 const peerKeepaliveInput = document.querySelector("#peer-keepalive");
 const peerConfigPreview = document.querySelector("#peer-config-preview");
+const peerDownloadConfigButton = document.querySelector("#peer-download-config");
+const peerNewProvisioningButton = document.querySelector("#peer-new-provisioning");
 const peerShowQrButton = document.querySelector("#peer-show-qr");
 const peerQrStatus = document.querySelector("#peer-qr-status");
 const peerQrCode = document.querySelector("#peer-qr-code");
@@ -30,6 +34,8 @@ const peerCreateStatus = document.querySelector("#peer-create-status");
 const provisioningDebug = document.querySelector("#provisioning-debug");
 
 let provisioningState = null;
+let generatedKeyPair = null;
+let provisionedPeer = false;
 
 const adminNavButton = document.querySelector("#admin-nav-button");
 const adminPeerList = document.querySelector("#admin-peer-list");
@@ -200,6 +206,41 @@ function clientAllowedIpsForMode(data, mode) {
         : [];
 }
 
+function base64UrlToWireGuard(value) {
+    const normalized = value
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+    const padding = "=".repeat((4 - normalized.length % 4) % 4);
+    return normalized + padding;
+}
+
+async function generateWireGuardKeyPair() {
+    const keyPair = await crypto.subtle.generateKey(
+        { name: "X25519" },
+        true,
+        ["deriveBits"],
+    );
+
+    const [privateJwk, publicJwk] = await Promise.all([
+        crypto.subtle.exportKey("jwk", keyPair.privateKey),
+        crypto.subtle.exportKey("jwk", keyPair.publicKey),
+    ]);
+
+    if (
+        privateJwk.crv !== "X25519"
+        || publicJwk.crv !== "X25519"
+        || typeof privateJwk.d !== "string"
+        || typeof publicJwk.x !== "string"
+    ) {
+        throw new Error("browser returned an invalid X25519 key pair");
+    }
+
+    return {
+        privateKey: base64UrlToWireGuard(privateJwk.d),
+        publicKey: base64UrlToWireGuard(publicJwk.x),
+    };
+}
+
 function configIsComplete(text) {
     return (
         typeof text === "string"
@@ -211,9 +252,10 @@ function configIsComplete(text) {
 
 function updateQrAvailability() {
     const configText = peerConfigPreview.textContent ?? "";
-    const ready = configIsComplete(configText);
+    const ready = provisionedPeer && configIsComplete(configText);
 
     peerShowQrButton.disabled = !ready;
+    peerDownloadConfigButton.disabled = !ready;
     peerQrStatus.textContent = ready
         ? "Configurazione completa: QR pronto per l'importazione."
         : "Il QR sarà disponibile quando la configurazione sarà completa.";
@@ -230,6 +272,13 @@ function renderClientConfigPreview() {
     const routingMode = peerRoutingModeInput.value;
     const keepalive = Number(peerKeepaliveInput.value);
 
+    if (!generatedKeyPair) {
+        peerConfigPreview.textContent =
+            "Genera le chiavi per creare la configurazione.";
+        updateQrAvailability();
+        return;
+    }
+
     if (!address) {
         peerConfigPreview.textContent =
             "Seleziona un IP per generare la preview.";
@@ -244,7 +293,7 @@ function renderClientConfigPreview() {
 
     peerConfigPreview.textContent = [
         "[Interface]",
-        "PrivateKey = <generata nel browser>",
+        `PrivateKey = ${generatedKeyPair.privateKey}`,
         `Address = ${address}`,
         "",
         "[Peer]",
@@ -602,6 +651,8 @@ logoutButton.addEventListener("click", async () => {
         }
     } finally {
         window.wgFrontend.client = null;
+        generatedKeyPair = null;
+        provisionedPeer = false;
         auth.clear();
         connectionStatus.textContent = "Offline";
         showAuthView();
@@ -620,7 +671,13 @@ peerForm.addEventListener("submit", async (event) => {
 
     const publicKey = peerPublicKeyInput.value.trim();
     const allowedIp = peerAllowedIpInput.value.trim();
-    const submitButton = peerForm.querySelector('button[type="submit"]');
+    const submitButton = peerCreateButton;
+
+    if (!generatedKeyPair || !publicKey) {
+        peerCreateStatus.className = "operation-status error";
+        peerCreateStatus.textContent = "Genera prima una coppia di chiavi.";
+        return;
+    }
 
     submitButton.disabled = true;
     peerCreateStatus.className = "operation-status";
@@ -637,12 +694,22 @@ peerForm.addEventListener("submit", async (event) => {
             );
         }
 
-        peerForm.reset();
+        provisionedPeer = true;
+
+        peerPublicKeyInput.disabled = true;
+        peerAllowedIpInput.disabled = true;
+        peerRoutingModeInput.disabled = true;
+        peerKeepaliveInput.disabled = true;
+        peerGenerateKeysButton.disabled = true;
+        peerCreateButton.disabled = true;
+        peerNewProvisioningButton.hidden = false;
+
+        renderClientConfigPreview();
         await refreshPeers();
-        await refreshProvisioning();
 
         peerCreateStatus.className = "operation-status success";
-        peerCreateStatus.textContent = "Peer creato.";
+        peerCreateStatus.textContent =
+            "Peer creato. Scarica ora la configurazione o acquisisci il QR.";
 
     } catch (error) {
         peerCreateStatus.className = "operation-status error";
@@ -650,6 +717,74 @@ peerForm.addEventListener("submit", async (event) => {
     } finally {
         submitButton.disabled = false;
     }
+});
+
+peerGenerateKeysButton.addEventListener("click", async () => {
+    peerGenerateKeysButton.disabled = true;
+    peerCreateStatus.className = "operation-status";
+    peerCreateStatus.textContent = "Generazione chiavi X25519…";
+
+    try {
+        generatedKeyPair = await generateWireGuardKeyPair();
+        peerPublicKeyInput.value = generatedKeyPair.publicKey;
+        renderClientConfigPreview();
+
+        peerCreateStatus.className = "operation-status success";
+        peerCreateStatus.textContent =
+            "Chiavi generate nel browser. La private key non verrà inviata al server.";
+    } catch (error) {
+        generatedKeyPair = null;
+        peerPublicKeyInput.value = "";
+        peerCreateStatus.className = "operation-status error";
+        peerCreateStatus.textContent =
+            error.message ?? "Generazione X25519 non supportata dal browser.";
+        peerGenerateKeysButton.disabled = false;
+    }
+});
+
+peerDownloadConfigButton.addEventListener("click", () => {
+    const configText = peerConfigPreview.textContent ?? "";
+
+    if (!provisionedPeer || !configIsComplete(configText)) {
+        updateQrAvailability();
+        return;
+    }
+
+    const blob = new Blob(
+        [configText + "\n"],
+        { type: "text/plain;charset=utf-8" },
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "wg-client.conf";
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+});
+
+peerNewProvisioningButton.addEventListener("click", async () => {
+    generatedKeyPair = null;
+    provisionedPeer = false;
+
+    peerForm.reset();
+    peerPublicKeyInput.value = "";
+    peerPublicKeyInput.disabled = false;
+    peerAllowedIpInput.disabled = false;
+    peerRoutingModeInput.disabled = false;
+    peerKeepaliveInput.disabled = false;
+    peerGenerateKeysButton.disabled = false;
+    peerCreateButton.disabled = false;
+    peerNewProvisioningButton.hidden = true;
+
+    peerQrCode.hidden = true;
+    peerQrCode.replaceChildren();
+    peerCreateStatus.className = "operation-status";
+    peerCreateStatus.textContent = "";
+
+    await refreshProvisioning();
+    renderClientConfigPreview();
 });
 
 peerShowQrButton.addEventListener("click", () => {
