@@ -7,7 +7,7 @@ This file is generated automatically.
 | `/` | 5 |
 | `cert.old-20260930-145739` | 15 |
 | `config` | 6 |
-| `docs` | 8 |
+| `docs` | 5 |
 | `mock` | 1 |
 | `src` | 1 |
 | `src/wg_auth` | 12 |
@@ -65,11 +65,8 @@ This file is generated automatically.
 - `README.md`
 - `_config.yml`
 - `comm-callgraph.md`
-- `gestione_permessi_uid_gid.md`
 - `protocol-flow.md`
 - `static-analysis.md`
-- `wg-client-api.md`
-- `wg-secure-session-docs.md`
 
 ### `mock`
 

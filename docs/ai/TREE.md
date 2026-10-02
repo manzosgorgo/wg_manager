@@ -27,11 +27,8 @@
 │   ├── README.md
 │   ├── _config.yml
 │   ├── comm-callgraph.md
-│   ├── gestione_permessi_uid_gid.md
 │   ├── protocol-flow.md
-│   ├── static-analysis.md
-│   ├── wg-client-api.md
-│   └── wg-secure-session-docs.md
+│   └── static-analysis.md
 ├── mock
 │   └── mock
 ├── src

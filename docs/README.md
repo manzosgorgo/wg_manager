@@ -2,12 +2,9 @@
 
 Automatically generated documentation for the `wg_manager` project.
 
-> This directory contains generated documentation and analysis artifacts.
+> This repository contains generated documentation and analysis artifacts.
 > It is observational documentation of the current project tree, not a
 > normative architecture specification.
->
-> For the maintained high-level description of the current architecture,
-> protocols and test surface, see the project-root `README.md`.
 
 ## Project analysis
 

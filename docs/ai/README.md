@@ -5,10 +5,10 @@
 ## Repository
 
 - Root: `/home/main/Desktop/wg_manager`
-- Commit: `fb054a4f42748b5a8efe640f2d2357baed22a14b`
+- Commit: `b112f8cff68a505fb94b81cd3a16ccd285c80321`
 - Branch: `protocol-review`
-- Files in inventory: 107
-- Text files indexed: 87
+- Files in inventory: 104
+- Text files indexed: 84
 
 ### Working tree
 
@@ -45,11 +45,8 @@ The working tree contains uncommitted changes.
 - `docs/README.md` → [files/docs/README.md.md](files/docs/README.md.md)
 - `docs/_config.yml` → [files/docs/_config.yml.md](files/docs/_config.yml.md)
 - `docs/comm-callgraph.md` → [files/docs/comm-callgraph.md.md](files/docs/comm-callgraph.md.md)
-- `docs/gestione_permessi_uid_gid.md` → [files/docs/gestione_permessi_uid_gid.md.md](files/docs/gestione_permessi_uid_gid.md.md)
 - `docs/protocol-flow.md` → [files/docs/protocol-flow.md.md](files/docs/protocol-flow.md.md)
 - `docs/static-analysis.md` → [files/docs/static-analysis.md.md](files/docs/static-analysis.md.md)
-- `docs/wg-client-api.md` → [files/docs/wg-client-api.md.md](files/docs/wg-client-api.md.md)
-- `docs/wg-secure-session-docs.md` → [files/docs/wg-secure-session-docs.md.md](files/docs/wg-secure-session-docs.md.md)
 - `mock/mock` → [files/mock/mock.md](files/mock/mock.md)
 - `pyproject.toml` → [files/pyproject.toml.md](files/pyproject.toml.md)
 - `src/__init__.py` → [files/src/__init__.py.md](files/src/__init__.py.md)

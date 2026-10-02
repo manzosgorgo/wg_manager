@@ -4,8 +4,8 @@
 
 - Path: `docs/README.md`
 - Language: `markdown`
-- Lines: 39
-- SHA256: `3c30f36c2d66d90ca80cc057dd3736a03f93b90979397080ec0004b2267054cc`
+- Lines: 42
+- SHA256: `83f746206b35e859f5899878b6807447cd4825a70721eaba8362bd56d67cb4ad`
 
 ## Source
 
@@ -14,9 +14,12 @@
 
 Automatically generated documentation for the `wg_manager` project.
 
-> This repository contains generated documentation and analysis artifacts.
+> This directory contains generated documentation and analysis artifacts.
 > It is observational documentation of the current project tree, not a
 > normative architecture specification.
+>
+> For the maintained high-level description of the current architecture,
+> protocols and test surface, see the project-root `README.md`.
 
 ## Project analysis
 
