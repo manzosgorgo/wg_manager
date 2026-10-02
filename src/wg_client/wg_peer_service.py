@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import ipaddress
 import logging
 
 from src.wg_client.wg_client_errors import (
@@ -77,6 +78,53 @@ class WGPeerService:
         ]
 
         return filtered
+
+    def provisioning(self):
+        try:
+            controller = self.controller.provisioning()
+        except WGControllerError as exc:
+            raise WGPeerError(exc.status, exc.message) from exc
+
+        if not isinstance(controller, dict):
+            raise WGPeerError(502, "controller returned invalid provisioning state")
+
+        try:
+            registry = self.ipc.provisioning_state()
+        except WGPeerPersistenceError as exc:
+            raise WGPeerError(exc.status, exc.message) from exc
+        except WGProtocolError as exc:
+            raise WGPeerError(502, "failed to read provisioning state") from exc
+
+        try:
+            network = ipaddress.ip_network(
+                controller["vpn_network"],
+                strict=False,
+            )
+        except (KeyError, ValueError, TypeError) as exc:
+            raise WGPeerError(502, "controller returned invalid VPN network") from exc
+
+        occupied = set(controller.get("used_ips", []))
+        if isinstance(registry, dict):
+            occupied.update(registry.get("reserved_ips", []))
+
+        server_address = controller.get("server_address")
+        if server_address:
+            try:
+                occupied.add(str(ipaddress.ip_interface(server_address)))
+            except ValueError as exc:
+                raise WGPeerError(502, "controller returned invalid server address") from exc
+
+        available = []
+        prefix = network.max_prefixlen
+        for host in network.hosts():
+            candidate = f"{host}/{prefix}"
+            if candidate not in occupied:
+                available.append(candidate)
+
+        result = dict(controller)
+        result["reserved_ips"] = sorted(occupied)
+        result["available_ips"] = available
+        return result
 
     def add_peer(self, public_key, allowed_ip):
         current = self._controller_status()

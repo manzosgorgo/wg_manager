@@ -70,7 +70,7 @@ class WGClientIPC:
                     self.lifecycle.request_shutdown(notify_shutdown=False)
                     return
 
-                if command in ("PEER_RESULT", "OWNERSHIP_RESULT", "ACCOUNT_RESULT"):
+                if command in ("PEER_RESULT", "OWNERSHIP_RESULT", "ACCOUNT_RESULT", "PROVISIONING_RESULT"):
                     self._complete_pending(request)
                     continue
 
@@ -420,6 +420,56 @@ class WGClientIPC:
             raise WGProtocolError(
                 f"ownership IPC request failed: {exc}"
             ) from exc
+
+        finally:
+            with self._pending_lock:
+                self._pending.pop(request_id, None)
+
+    def provisioning_state(self):
+        event = threading.Event()
+
+        with self._pending_lock:
+            request_id = self._next_request_id
+            self._next_request_id += 1
+            self._pending[request_id] = {
+                "event": event,
+                "response": None,
+                "error": None,
+            }
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "PROVISIONING_STATE",
+            "request_id": request_id,
+        }
+
+        try:
+            with self._send_lock:
+                self.sock.sendall(self._encode_packet(packet))
+
+            if not event.wait(IPC_RESPONSE_TIMEOUT):
+                raise WGProtocolError("provisioning IPC request timed out")
+
+            with self._pending_lock:
+                pending = self._pending.get(request_id)
+
+            if pending is None:
+                raise WGProtocolError("provisioning IPC request disappeared")
+
+            if pending["error"] is not None:
+                raise WGProtocolError(pending["error"])
+
+            response = pending["response"]
+            if not isinstance(response, dict):
+                raise WGProtocolError("missing PROVISIONING_RESULT")
+
+            if response.get("status") != "OK":
+                raise WGPeerPersistenceError(
+                    response.get("status_code", 502),
+                    response.get("error", "provisioning request failed"),
+                )
+
+            return response.get("result")
 
         finally:
             with self._pending_lock:

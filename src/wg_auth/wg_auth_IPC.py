@@ -25,6 +25,7 @@ class WGAuthIPC:
         peer_register=None,
         peer_unregister=None,
         state_reconcile=None,
+        provisioning_state=None,
         ownership_state=None,
         ownership_reassign=None,
         account_create=None,
@@ -39,6 +40,7 @@ class WGAuthIPC:
         self.peer_register = peer_register
         self.peer_unregister = peer_unregister
         self.state_reconcile = state_reconcile
+        self.provisioning_state = provisioning_state
         self.ownership_state = ownership_state
         self.ownership_reassign = ownership_reassign
         self.account_create = account_create
@@ -86,6 +88,10 @@ class WGAuthIPC:
 
                 if command in ("PEER_REGISTER", "PEER_UNREGISTER"):
                     self._handle_peer_request(request)
+                    continue
+
+                if command == "PROVISIONING_STATE":
+                    self._handle_provisioning_request(request)
                     continue
 
                 if command in ("OWNERSHIP_STATE", "OWNERSHIP_REASSIGN"):
@@ -204,6 +210,36 @@ class WGAuthIPC:
             "type": "PEER_RESULT",
             "request_id": request_id,
             "status": "OK",
+        })
+
+    def _handle_provisioning_request(self, request):
+        request_id = request.get("request_id")
+
+        if type(request_id) is not int or request_id < 1:
+            raise WGAuthProtocolError("invalid request_id")
+
+        try:
+            if self.provisioning_state is None:
+                raise RuntimeError("provisioning state callback is unavailable")
+            result = self.provisioning_state()
+        except Exception as exc:
+            log.exception("provisioning request failed")
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "PROVISIONING_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 500,
+                "error": str(exc),
+            })
+            return
+
+        self.send_packet({
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "PROVISIONING_RESULT",
+            "request_id": request_id,
+            "status": "OK",
+            "result": result,
         })
 
     def _handle_ownership_request(self, request):

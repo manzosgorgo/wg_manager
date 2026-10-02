@@ -169,6 +169,7 @@ class WGAuthAPI:
                 peer_register=self._register_peer,
                 peer_unregister=self._unregister_peer,
                 state_reconcile=self._reconcile_peer_state,
+                provisioning_state=self._provisioning_state,
                 ownership_state=self._ownership_state,
                 ownership_reassign=self._reassign_ownership,
                 account_create=self._create_account,
@@ -262,6 +263,13 @@ class WGAuthAPI:
             manager_peers,
             owners,
         )
+
+    def _provisioning_state(self):
+        return {
+            "reserved_ips": sorted(
+                self.peer_registry.snapshot_ips().keys()
+            ),
+        }
 
     def _ownership_state(self):
         return self.ownership_service.admin_state()

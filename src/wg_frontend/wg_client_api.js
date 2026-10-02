@@ -147,6 +147,10 @@ export class WGClientAPI {
         return this.request("GET", "/v1/heartbeat");
     }
 
+    provisioning() {
+        return this.request("GET", "/v1/provisioning");
+    }
+
     logout() {
         this.discardPreparedLogout();
         return this.request("DELETE", "/v1/session");

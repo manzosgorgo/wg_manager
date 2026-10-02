@@ -32,6 +32,7 @@ ADMIN_USERS_PATH = "/v1/admin/users"
 ADMIN_USERS_PREFIX = "/v1/admin/users/"
 SESSION_PATH = "/v1/session"
 HEARTBEAT_PATH = "/v1/heartbeat"
+PROVISIONING_PATH = "/v1/provisioning"
 
 # Headers used to carry WGSecureSession authentication over HTTPS.
 # Not frozen yet as part of the wire protocol: convenient for this
@@ -442,6 +443,8 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             try:
                 if path == "/v1/status":
                     result = self.peer_service.status()
+                elif path == PROVISIONING_PATH:
+                    result = self.peer_service.provisioning()
                 elif path == ADMIN_PEERS_PATH:
                     result = self.peer_service.admin_status()
                 else:

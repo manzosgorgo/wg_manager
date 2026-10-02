@@ -78,6 +78,10 @@ class WGControllerClient:
 
         return obj
 
+    def provisioning(self):
+        status, obj = self._request("GET", "/v1/provisioning")
+        return obj
+
     def add_peer(self, public_key, allowed_ip):
         status, obj = self._request(
             "POST",
