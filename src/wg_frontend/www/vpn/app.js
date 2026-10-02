@@ -22,6 +22,14 @@ const peerPublicKeyInput = document.querySelector("#peer-public-key");
 const peerAllowedIpInput = document.querySelector("#peer-allowed-ip");
 const peerCreateStatus = document.querySelector("#peer-create-status");
 
+const adminNavButton = document.querySelector("#admin-nav-button");
+const adminPeerList = document.querySelector("#admin-peer-list");
+const adminUserList = document.querySelector("#admin-user-list");
+const adminStatus = document.querySelector("#admin-status");
+const userForm = document.querySelector("#user-form");
+const newUsernameInput = document.querySelector("#new-username");
+const newPasswordInput = document.querySelector("#new-password");
+
 const auth = new WGAuthSession("");
 
 window.wgFrontend = {
@@ -177,6 +185,157 @@ async function refreshPeers() {
     return result;
 }
 
+
+function renderAdminState(result) {
+    const data = result?.data ?? {};
+    const users = Array.isArray(data.users) ? data.users : [];
+    const peers = Array.isArray(data.peers) ? data.peers : [];
+
+    adminPeerList.innerHTML = "";
+    adminUserList.innerHTML = "";
+
+    if (peers.length === 0) {
+        adminPeerList.innerHTML =
+            '<article class="placeholder-card"><strong>Nessun peer</strong><span>Nessun record ownership disponibile.</span></article>';
+    } else {
+        for (const peer of peers) {
+            const card = document.createElement("article");
+            card.className = "placeholder-card";
+
+            const key = document.createElement("strong");
+            key.textContent = peer.public_key ?? "peer senza public key";
+
+            const details = document.createElement("span");
+            details.textContent =
+                `owner: ${peer.username ?? "nessuno"} · ip: ${peer.allowed_ip ?? "?"} · stato: ${peer.ownership_state ?? "?"}`;
+
+            const form = document.createElement("form");
+            form.className = "inline-admin-form";
+
+            const select = document.createElement("select");
+            for (const username of users) {
+                const option = document.createElement("option");
+                option.value = username;
+                option.textContent = username;
+                option.selected = username === peer.username;
+                select.append(option);
+            }
+
+            const button = document.createElement("button");
+            button.type = "submit";
+            button.textContent = "Assegna owner";
+
+            form.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                button.disabled = true;
+
+                try {
+                    const result = await window.wgFrontend.client.reassignOwner(
+                        peer.public_key,
+                        select.value,
+                    );
+
+                    if (!result.ok || !result.data?.ok) {
+                        throw new Error(
+                            result.data?.message
+                                ?? result.data?.error
+                                ?? `wg-client returned HTTP ${result.status}`
+                        );
+                    }
+
+                    await refreshAdmin();
+                    adminStatus.className = "operation-status success";
+                    adminStatus.textContent = "Ownership aggiornata.";
+
+                } catch (error) {
+                    adminStatus.className = "operation-status error";
+                    adminStatus.textContent = error.message ?? String(error);
+                    button.disabled = false;
+                }
+            });
+
+            form.append(select, button);
+            card.append(key, details, form);
+            adminPeerList.append(card);
+        }
+    }
+
+    if (users.length === 0) {
+        adminUserList.innerHTML =
+            '<article class="placeholder-card"><strong>Nessun utente</strong></article>';
+    } else {
+        for (const username of users) {
+            const card = document.createElement("article");
+            card.className = "placeholder-card";
+
+            const name = document.createElement("strong");
+            name.textContent = username;
+
+            const actions = document.createElement("div");
+            actions.className = "card-actions";
+
+            const removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.textContent = "Elimina";
+            removeButton.disabled = username === auth.username;
+
+            removeButton.addEventListener("click", async () => {
+                if (!window.confirm(`Eliminare l'utente ${username}?`)) {
+                    return;
+                }
+
+                removeButton.disabled = true;
+
+                try {
+                    const result = await window.wgFrontend.client.deleteUser(username);
+
+                    if (!result.ok || !result.data?.ok) {
+                        throw new Error(
+                            result.data?.message
+                                ?? result.data?.error
+                                ?? `wg-client returned HTTP ${result.status}`
+                        );
+                    }
+
+                    await refreshAdmin();
+                    adminStatus.className = "operation-status success";
+                    adminStatus.textContent = "Utente eliminato.";
+
+                } catch (error) {
+                    adminStatus.className = "operation-status error";
+                    adminStatus.textContent = error.message ?? String(error);
+                    removeButton.disabled = false;
+                }
+            });
+
+            actions.append(removeButton);
+            card.append(name, actions);
+            adminUserList.append(card);
+        }
+    }
+}
+
+async function refreshAdmin() {
+    const client = window.wgFrontend.client;
+    if (!client) {
+        throw new Error("wg-client session is not initialized");
+    }
+
+    const result = await client.adminStatus();
+
+    if (!result.ok || !result.data?.ok) {
+        throw new Error(
+            result.data?.message
+                ?? result.data?.error
+                ?? `wg-client returned HTTP ${result.status}`
+        );
+    }
+
+    renderAdminState(result);
+    return result;
+}
+
+
 async function refreshAuthStatus() {
     try {
         const result = await auth.status();
@@ -231,6 +390,18 @@ form.addEventListener("submit", async (event) => {
 
         passwordInput.value = "";
         renderPeers(clientStatus);
+
+        const isAdmin = auth.username === "admin";
+        adminNavButton.hidden = !isAdmin;
+
+        if (isAdmin) {
+            try {
+                await refreshAdmin();
+            } catch (error) {
+                adminStatus.className = "operation-status error";
+                adminStatus.textContent = error.message ?? String(error);
+            }
+        }
         await client.prepareFastLogout();
         showPostauthView();
         startHeartbeat();
@@ -324,6 +495,47 @@ peerForm.addEventListener("submit", async (event) => {
     }
 });
 
+userForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const client = window.wgFrontend.client;
+    if (!client) {
+        return;
+    }
+
+    const username = newUsernameInput.value.trim();
+    const password = newPasswordInput.value;
+    const submitButton = userForm.querySelector('button[type="submit"]');
+
+    submitButton.disabled = true;
+    adminStatus.className = "operation-status";
+    adminStatus.textContent = "Creazione utente in corso…";
+
+    try {
+        const result = await client.createUser(username, password);
+
+        if (!result.ok || !result.data?.ok) {
+            throw new Error(
+                result.data?.message
+                    ?? result.data?.error
+                    ?? `wg-client returned HTTP ${result.status}`
+            );
+        }
+
+        userForm.reset();
+        await refreshAdmin();
+
+        adminStatus.className = "operation-status success";
+        adminStatus.textContent = "Utente creato.";
+
+    } catch (error) {
+        adminStatus.className = "operation-status error";
+        adminStatus.textContent = error.message ?? String(error);
+    } finally {
+        submitButton.disabled = false;
+    }
+});
+
 refreshPeersButton.addEventListener("click", async () => {
     refreshPeersButton.disabled = true;
 
@@ -346,11 +558,20 @@ const panels = {
 };
 
 for (const viewButton of viewButtons) {
-    viewButton.addEventListener("click", () => {
+    viewButton.addEventListener("click", async () => {
         const selected = viewButton.dataset.view;
 
         for (const [name, panel] of Object.entries(panels)) {
             panel.hidden = name !== selected;
+        }
+
+        if (selected === "admin" && !adminNavButton.hidden) {
+            try {
+                await refreshAdmin();
+            } catch (error) {
+                adminStatus.className = "operation-status error";
+                adminStatus.textContent = error.message ?? String(error);
+            }
         }
     });
 }

@@ -78,7 +78,7 @@
             <nav class="postauth-nav" aria-label="Sezioni VPN">
                 <button type="button" data-view="peers">Peer</button>
                 <button type="button" data-view="new-peer">Nuovo peer</button>
-                <button type="button" data-view="admin">Admin</button>
+                <button id="admin-nav-button" type="button" data-view="admin" hidden>Admin</button>
             </nav>
 
             <section id="view-peers" class="postauth-panel">
@@ -134,9 +134,7 @@
                 <div class="admin-grid">
                     <section>
                         <h3>Ownership / stato globale</h3>
-                        <div id="admin-peer-list" class="placeholder-card">
-                            GET /v1/admin/peers
-                        </div>
+                        <div id="admin-peer-list" class="placeholder-list"></div>
                     </section>
 
                     <section>
@@ -155,9 +153,8 @@
                             <button type="submit">Crea utente</button>
                         </form>
 
-                        <div id="admin-user-list" class="placeholder-card">
-                            Lista utenti / delete account.
-                        </div>
+                        <div id="admin-user-list" class="placeholder-list"></div>
+                        <div id="admin-status" class="operation-status" aria-live="polite"></div>
                     </section>
                 </div>
             </section>
