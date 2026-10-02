@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_config.py`
 - Language: `python`
-- Lines: 196
-- SHA256: `43663f5e49fab720ee15000c581fe844b3163a1f93df4710446914085684f09e`
+- Lines: 203
+- SHA256: `ca43a813a550a0c55a322af4e9550c635d1187a421ff995d11842151d2a19349`
 - Imports:
   - `configparser`
   - `math`
@@ -85,6 +85,12 @@ def load_config():
 
     if controller_timeout <= 0:
         raise RuntimeError("invalid controller timeout")
+
+    wireguard_endpoint = config.get(
+        "wireguard",
+        "endpoint",
+        fallback="",
+    ).strip()
 
     # Secure Session configuration.
     # The whole section is optional; defaults are used when absent.
@@ -197,6 +203,7 @@ def load_config():
         },
         "wireguard": {
             "interface": config["wireguard"]["interface"].strip(),
+            "endpoint": wireguard_endpoint or None,
         },
         "secure_session": {
             "enabled": secure_session_enabled,

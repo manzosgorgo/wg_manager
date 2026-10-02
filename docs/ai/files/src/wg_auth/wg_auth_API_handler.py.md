@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_API_handler.py`
 - Language: `python`
-- Lines: 236
-- SHA256: `2b424bd89eb720feb6d5749be27a29068bc2698c69bc285de143a46c9def5d82`
+- Lines: 237
+- SHA256: `f420d3cab20aba24d070085a8d3d962e9a2551aed7bdb590f7a380cf3b4a90a8`
 - Imports:
   - `http.server`
   - `json`
@@ -227,11 +227,12 @@ class WGAuthAPIHandler(BaseHTTPRequestHandler):
             )
             return
 
-        self.api.lifecycle.request_session_shutdown()
-
         self._send_json(
-            200,
-            {"ok": True},
+            405,
+            {
+                "ok": False,
+                "error": "logout requires authenticated wg-client session",
+            },
         )
 
     def do_GET(self):

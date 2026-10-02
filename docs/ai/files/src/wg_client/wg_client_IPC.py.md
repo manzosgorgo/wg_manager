@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_IPC.py`
 - Language: `python`
-- Lines: 613
-- SHA256: `424978e3178a48e7a52ae980512c132c707a077c0263ba7a2021a82fbec31fc8`
+- Lines: 687
+- SHA256: `f81f4f2be98c6343bff48b1479e1f339e4b6ad1fb9086afe1c2b1edb6c152973`
 - Imports:
   - `json`
   - `logging`
@@ -52,6 +52,7 @@ class WGClientIPC:
         self.lifecycle = lifecycle
 
         self._send_lock = threading.Lock()
+        self._recv_buffer = bytearray()
         self._pending_lock = threading.Lock()
         self._pending = {}
         self._next_request_id = 1
@@ -89,7 +90,7 @@ class WGClientIPC:
                     self.lifecycle.request_shutdown(notify_shutdown=False)
                     return
 
-                if command in ("PEER_RESULT", "OWNERSHIP_RESULT", "ACCOUNT_RESULT"):
+                if command in ("PEER_RESULT", "OWNERSHIP_RESULT", "ACCOUNT_RESULT", "PROVISIONING_RESULT"):
                     self._complete_pending(request)
                     continue
 
@@ -111,26 +112,31 @@ class WGClientIPC:
 
 
     def receive_packet(self):
-        data = bytearray()
-
         while True:
+            newline = self._recv_buffer.find(b"\n")
+
+            if newline >= 0:
+                if newline > MAX_PACKET_SIZE:
+                    raise WGProtocolError("packet too large")
+
+                packet = bytes(self._recv_buffer[:newline])
+                del self._recv_buffer[:newline + 1]
+                return packet
+
+            if len(self._recv_buffer) > MAX_PACKET_SIZE:
+                raise WGProtocolError("packet too large")
+
             chunk = self.sock.recv(4096)
 
             if not chunk:
-                break
+                if not self._recv_buffer:
+                    raise WGProtocolError("empty packet")
 
-            data.extend(chunk)
+                packet = bytes(self._recv_buffer)
+                self._recv_buffer.clear()
+                return packet
 
-            if len(data) > MAX_PACKET_SIZE:
-                raise WGProtocolError("packet too large")
-
-            if b"\n" in data:
-                break
-
-        if not data:
-            raise WGProtocolError("empty packet")
-
-        return bytes(data).split(b"\n", 1)[0]
+            self._recv_buffer.extend(chunk)
 
 
     def parse_packet(self,packet):
@@ -439,6 +445,56 @@ class WGClientIPC:
             with self._pending_lock:
                 self._pending.pop(request_id, None)
 
+    def provisioning_state(self):
+        event = threading.Event()
+
+        with self._pending_lock:
+            request_id = self._next_request_id
+            self._next_request_id += 1
+            self._pending[request_id] = {
+                "event": event,
+                "response": None,
+                "error": None,
+            }
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "PROVISIONING_STATE",
+            "request_id": request_id,
+        }
+
+        try:
+            with self._send_lock:
+                self.sock.sendall(self._encode_packet(packet))
+
+            if not event.wait(IPC_RESPONSE_TIMEOUT):
+                raise WGProtocolError("provisioning IPC request timed out")
+
+            with self._pending_lock:
+                pending = self._pending.get(request_id)
+
+            if pending is None:
+                raise WGProtocolError("provisioning IPC request disappeared")
+
+            if pending["error"] is not None:
+                raise WGProtocolError(pending["error"])
+
+            response = pending["response"]
+            if not isinstance(response, dict):
+                raise WGProtocolError("missing PROVISIONING_RESULT")
+
+            if response.get("status") != "OK":
+                raise WGPeerPersistenceError(
+                    response.get("status_code", 502),
+                    response.get("error", "provisioning request failed"),
+                )
+
+            return response.get("result")
+
+        finally:
+            with self._pending_lock:
+                self._pending.pop(request_id, None)
+
     def ownership_state(self):
         return self._ownership_request("OWNERSHIP_STATE")
 
@@ -591,6 +647,24 @@ class WGClientIPC:
 
         with self._send_lock:
             self.sock.sendall(self._encode_packet(response))
+
+    def keepalive(self):
+        sock = self.sock
+        if sock is None:
+            raise WGProtocolError("IPC connection is closed")
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "KEEPALIVE",
+        }
+
+        try:
+            with self._send_lock:
+                sock.sendall(self._encode_packet(packet))
+        except OSError as exc:
+            raise WGProtocolError(
+                f"IPC keepalive failed: {exc}"
+            ) from exc
 
     def _notify_stop(self):
         if self.sock is None:

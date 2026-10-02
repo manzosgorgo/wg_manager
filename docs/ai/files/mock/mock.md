@@ -4,8 +4,8 @@
 
 - Path: `mock/mock`
 - Language: `unknown`
-- Lines: 596
-- SHA256: `88301cb28b5a3571047b57f302c09abbdda3e677f450b1529b0094b42b627ef2`
+- Lines: 601
+- SHA256: `e1d3c901727da3fe73f2d880b3539a57e689edfbc9e90cdff063670e01f8d0fa`
 
 ## Source
 
@@ -41,6 +41,10 @@ LOG_FILE = os.environ.get(
 
 INTERFACE_PRIVATE_KEY = (
     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+)
+
+INTERFACE_PUBLIC_KEY = (
+    "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
 )
 
 LISTEN_PORT = "51820"
@@ -244,6 +248,7 @@ def show(interface):
 
     print(
         f"{INTERFACE_PRIVATE_KEY}\t"
+        f"{INTERFACE_PUBLIC_KEY}\t"
         f"{LISTEN_PORT}\t"
         f"{FWMARK}"
     )

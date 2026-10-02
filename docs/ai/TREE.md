@@ -1,5 +1,9 @@
 # Project Tree
 
+├── apache
+│   ├── install
+│   │   └── install-apache.sh
+│   └── wg-manager.conf
 ├── cert.old-20260930-145739
 │   ├── auth.crt
 │   ├── auth.csr
@@ -31,6 +35,14 @@
 │   └── static-analysis.md
 ├── mock
 │   └── mock
+├── pkg
+│   ├── wg-manager-auth-client
+│   │   └── DEBIAN
+│   │       └── control
+│   ├── wg-manager-controller
+│   │   └── DEBIAN
+│   │       └── control
+│   └── README.md
 ├── src
 │   ├── wg_auth
 │   │   ├── __init__.py
@@ -60,12 +72,24 @@
 │   │   ├── wg_peer_service.py
 │   │   └── wg_secure_session.py
 │   ├── wg_frontend
+│   │   ├── vendor
+│   │   │   └── LICENSE.libopaque
+│   │   ├── www
+│   │   │   └── vpn
+│   │   │       ├── vendor
+│   │   │       │   ├── qrcode.LICENSE
+│   │   │       │   └── qrcode.min.js
+│   │   │       ├── app.js
+│   │   │       ├── index.html
+│   │   │       └── style.css
 │   │   ├── __init__.py
 │   │   ├── check_vectors.mjs
 │   │   ├── package.json
 │   │   ├── test_wg_secure_session_vectors.json
 │   │   ├── wg_auth_session.js
+│   │   ├── wg_client_api.js
 │   │   ├── wg_client_errors.js
+│   │   ├── wg_opaque_client.js
 │   │   ├── wg_secure_session.js
 │   │   └── wg_secure_session_vector_input.json
 │   ├── wg_manager
@@ -73,8 +97,16 @@
 │   └── __init__.py
 ├── systemd
 │   ├── install
+│   │   ├── install-auth-service.sh
 │   │   ├── install-client-service.sh
 │   │   └── install-server-service.sh
+│   ├── production
+│   │   ├── wg-auth.service
+│   │   ├── wg-client.socket
+│   │   ├── wg-client@.service
+│   │   ├── wg-manager.socket
+│   │   └── wg-manager@.service
+│   ├── wg-auth.service
 │   ├── wg-client-test.socket
 │   ├── wg-client-test@.service
 │   ├── wg-client-test@.service.bak

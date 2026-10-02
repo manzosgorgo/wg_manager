@@ -5,17 +5,26 @@ This file is generated automatically.
 | Directory | Files |
 |---|---:|
 | `/` | 5 |
+| `apache` | 1 |
+| `apache/install` | 1 |
 | `cert.old-20260930-145739` | 15 |
 | `config` | 6 |
 | `docs` | 5 |
 | `mock` | 1 |
+| `pkg` | 1 |
+| `pkg/wg-manager-auth-client/DEBIAN` | 1 |
+| `pkg/wg-manager-controller/DEBIAN` | 1 |
 | `src` | 1 |
 | `src/wg_auth` | 12 |
 | `src/wg_client` | 13 |
-| `src/wg_frontend` | 8 |
+| `src/wg_frontend` | 10 |
+| `src/wg_frontend/vendor` | 1 |
+| `src/wg_frontend/www/vpn` | 3 |
+| `src/wg_frontend/www/vpn/vendor` | 2 |
 | `src/wg_manager` | 1 |
-| `systemd` | 6 |
-| `systemd/install` | 2 |
+| `systemd` | 7 |
+| `systemd/install` | 3 |
+| `systemd/production` | 5 |
 | `tests` | 2 |
 | `tests/auth` | 6 |
 | `tests/auth/js` | 6 |
@@ -32,6 +41,14 @@ This file is generated automatically.
 - `TODO.md`
 - `compile_commands.json`
 - `pyproject.toml`
+
+### `apache`
+
+- `wg-manager.conf`
+
+### `apache/install`
+
+- `install-apache.sh`
 
 ### `cert.old-20260930-145739`
 
@@ -71,6 +88,18 @@ This file is generated automatically.
 ### `mock`
 
 - `mock`
+
+### `pkg`
+
+- `README.md`
+
+### `pkg/wg-manager-auth-client/DEBIAN`
+
+- `control`
+
+### `pkg/wg-manager-controller/DEBIAN`
+
+- `control`
 
 ### `src`
 
@@ -114,9 +143,26 @@ This file is generated automatically.
 - `package.json`
 - `test_wg_secure_session_vectors.json`
 - `wg_auth_session.js`
+- `wg_client_api.js`
 - `wg_client_errors.js`
+- `wg_opaque_client.js`
 - `wg_secure_session.js`
 - `wg_secure_session_vector_input.json`
+
+### `src/wg_frontend/vendor`
+
+- `LICENSE.libopaque`
+
+### `src/wg_frontend/www/vpn`
+
+- `app.js`
+- `index.html`
+- `style.css`
+
+### `src/wg_frontend/www/vpn/vendor`
+
+- `qrcode.LICENSE`
+- `qrcode.min.js`
 
 ### `src/wg_manager`
 
@@ -124,6 +170,7 @@ This file is generated automatically.
 
 ### `systemd`
 
+- `wg-auth.service`
 - `wg-client-test.socket`
 - `wg-client-test@.service`
 - `wg-client-test@.service.bak`
@@ -133,8 +180,17 @@ This file is generated automatically.
 
 ### `systemd/install`
 
+- `install-auth-service.sh`
 - `install-client-service.sh`
 - `install-server-service.sh`
+
+### `systemd/production`
+
+- `wg-auth.service`
+- `wg-client.socket`
+- `wg-client@.service`
+- `wg-manager.socket`
+- `wg-manager@.service`
 
 ### `tests`
 

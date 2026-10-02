@@ -4,8 +4,8 @@
 
 - Path: `config/wg-auth.conf`
 - Language: `unknown`
-- Lines: 19
-- SHA256: `1949b56cae41e36907805e26571dba9917ba05f4ee7558617809fb14b806a5a7`
+- Lines: 20
+- SHA256: `5820f58fa12227d9b8622802929d2067bcd944b9645aed64f359028942abaa69`
 
 ## Source
 
@@ -19,7 +19,8 @@ ip_registry = /home/main/Desktop/wg_manager/login/.ip_registry.json
 [client]
 socket_path = /run/wg_manager/wg-client-test.sock
 client_id = wg-auth
-timeout = 10
+timeout = 3600
+idle_timeout = 45
 listen_path = /postauth
 
 [http]

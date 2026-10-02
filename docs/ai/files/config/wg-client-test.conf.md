@@ -4,8 +4,8 @@
 
 - Path: `config/wg-client-test.conf`
 - Language: `unknown`
-- Lines: 33
-- SHA256: `f5e223905f19dadffe2441808e6b2cbad627d8a14cb7b280da35ab937135baf4`
+- Lines: 34
+- SHA256: `0ae3e46c4eb53c55d4a0a1f114f572a49560b7856ed44fb911fc619f1ef007e7`
 
 ## Source
 
@@ -34,6 +34,7 @@ timeout = 10
 
 [wireguard]
 interface = wg0
+endpoint = 127.0.0.1:51820
 
 [secure_session]
 enabled = false

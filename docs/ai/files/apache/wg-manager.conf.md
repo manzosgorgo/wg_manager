@@ -1,0 +1,83 @@
+# `apache/wg-manager.conf`
+
+## Metadata
+
+- Path: `apache/wg-manager.conf`
+- Language: `unknown`
+- Lines: 70
+- SHA256: `b9bb7e73c6ef6ca2939b3f2e8e3c532a6e420778eb6bb46c87cab2bde9857757`
+
+## Source
+
+```
+# wg_manager development frontend + reverse proxy
+#
+# Installed by apache/install/install-apache.sh into:
+#   /etc/apache2/conf-available/wg-manager.conf
+#
+# The browser talks only to Apache:
+#   /vpn/      -> static frontend
+#   /auth      -> wg-auth 127.0.0.1:9445
+#   /status    -> wg-auth 127.0.0.1:9445
+#   /postauth/ -> per-session wg-client 127.0.0.1:9444
+
+<VirtualHost *:80>
+ServerName localhost
+DocumentRoot /home/main/Desktop/wg_manager/src/wg_frontend/www/vpn
+
+<Directory /home/main/Desktop/wg_manager/src/wg_frontend/www/vpn>
+    Options FollowSymLinks
+    AllowOverride None
+    Require all granted
+    DirectoryIndex index.html
+</Directory>
+
+# Browser-side frontend modules kept outside the public document root.
+Alias /js/wg_auth_session.js /home/main/Desktop/wg_manager/src/wg_frontend/wg_auth_session.js
+Alias /js/wg_opaque_client.js /home/main/Desktop/wg_manager/src/wg_frontend/wg_opaque_client.js
+Alias /js/wg_client_api.js /home/main/Desktop/wg_manager/src/wg_frontend/wg_client_api.js
+Alias /js/wg_secure_session.js /home/main/Desktop/wg_manager/src/wg_frontend/wg_secure_session.js
+Alias /js/wg_client_errors.js /home/main/Desktop/wg_manager/src/wg_frontend/wg_client_errors.js
+Alias /js/vendor/libopaque.js /home/main/Desktop/wg_manager/vendor/libopaque/libopaque.js
+
+<Directory /home/main/Desktop/wg_manager/src/wg_frontend>
+    Options FollowSymLinks
+    AllowOverride None
+    Require all granted
+</Directory>
+
+<Directory /home/main/Desktop/wg_manager/vendor/libopaque>
+    Options FollowSymLinks
+    AllowOverride None
+    Require all granted
+</Directory>
+
+SSLProxyEngine On
+
+# Both backend services use the project CA.
+SSLProxyVerify require
+SSLProxyCACertificateFile /home/main/Desktop/wg_manager/cert/ca.crt
+
+# Development certificates may not carry a hostname/SAN matching 127.0.0.1.
+# Certificate trust is still checked against the project CA.
+SSLProxyCheckPeerName Off
+
+# Authentication API.
+ProxyPass        /auth/verify https://127.0.0.1:9445/auth/verify
+ProxyPassReverse /auth/verify https://127.0.0.1:9445/auth/verify
+
+ProxyPass        /auth https://127.0.0.1:9445/auth
+ProxyPassReverse /auth https://127.0.0.1:9445/auth
+
+ProxyPass        /status https://127.0.0.1:9445/status
+ProxyPassReverse /status https://127.0.0.1:9445/status
+
+# Session API. wg-client requires a client certificate from Apache.
+SSLProxyMachineCertificateFile /etc/apache2/wg-manager-proxy-client.pem
+
+ProxyPass        /postauth/ https://127.0.0.1:9444/postauth/
+ProxyPassReverse /postauth/ https://127.0.0.1:9444/postauth/
+
+
+</VirtualHost>
+```

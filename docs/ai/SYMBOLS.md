@@ -4,10 +4,10 @@ Structural symbol index extracted mechanically from source files.
 
 ## `src/wg_auth/wg_auth.py`
 
-- **variable** `log` — line 11
-- **variable** `config_path` — line 12
-- **function** `def load_config(path)` — line 13
-- **function** `def main()` — line 19
+- **variable** `log` — line 12
+- **variable** `config_path` — line 13
+- **function** `def load_config(path)` — line 18
+- **function** `def main()` — line 24
 
 ## `src/wg_auth/wg_auth_API.py`
 
@@ -21,17 +21,18 @@ Structural symbol index extracted mechanically from source files.
   - **method** `def get_session_status(self)` — line 80
   - **method** `def start_authentication(self, username, pubU)` — line 97
   - **method** `def finish_authentication(self, authU)` — line 135
-  - **method** `def _register_peer(self, username, public_key, allowed_ip)` — line 231
-  - **method** `def _unregister_peer(self, username, public_key)` — line 244
-  - **method** `def _reconcile_peer_state(self, manager_peers)` — line 259
-  - **method** `def _ownership_state(self)` — line 266
-  - **method** `def _reassign_ownership(self, public_key, username)` — line 269
-  - **method** `def _create_account(self, username, password)` — line 275
-  - **method** `def _delete_account(self, username)` — line 281
-  - **method** `def _activation_failed(self, session, ipc)` — line 290
-  - **method** `def logout(self, notify_client = True)` — line 313
-  - **method** `def _finish_shutdown(self, session, ipc, notify_client = True)` — line 358
-  - **method** `def _create_server(self)` — line 389
+  - **method** `def _register_peer(self, username, public_key, allowed_ip)` — line 232
+  - **method** `def _unregister_peer(self, username, public_key)` — line 245
+  - **method** `def _reconcile_peer_state(self, manager_peers)` — line 260
+  - **method** `def _provisioning_state(self)` — line 267
+  - **method** `def _ownership_state(self)` — line 274
+  - **method** `def _reassign_ownership(self, public_key, username)` — line 277
+  - **method** `def _create_account(self, username, password)` — line 283
+  - **method** `def _delete_account(self, username)` — line 289
+  - **method** `def _activation_failed(self, session, ipc)` — line 298
+  - **method** `def logout(self, notify_client = True)` — line 321
+  - **method** `def _finish_shutdown(self, session, ipc, notify_client = True)` — line 366
+  - **method** `def _create_server(self)` — line 397
 
 ## `src/wg_auth/wg_auth_API_handler.py`
 
@@ -43,7 +44,7 @@ Structural symbol index extracted mechanically from source files.
   - **method** `def _handle_auth_verify(self)` — line 118
   - **method** `def do_POST(self)` — line 188
   - **method** `def do_DELETE(self)` — line 202
-  - **method** `def do_GET(self)` — line 220
+  - **method** `def do_GET(self)` — line 221
 
 ## `src/wg_auth/wg_auth_IPC.py`
 
@@ -51,19 +52,20 @@ Structural symbol index extracted mechanically from source files.
 - **variable** `MAX_PACKET_SIZE` — line 11
 - **variable** `PROTOCOL_VERSION` — line 12
 - **class** `WGAuthIPC` — line 15
-  - **method** `def __init__(self, socket_path, client_id, timeout, listen_path, lifecycle, principal = None, peer_register = None, peer_unregister = None, state_reconcile = None, ownership_state = None, ownership_reassign = None, account_create = None, account_delete = None)` — line 17
-  - **method** `def active(self)` — line 49
-  - **method** `def control_loop(self)` — line 52
-  - **method** `def _handle_peer_request(self, request)` — line 131
-  - **method** `def _handle_ownership_request(self, request)` — line 204
-  - **method** `def _handle_account_request(self, request)` — line 291
-  - **method** `def receive_packet(self)` — line 385
-  - **method** `def parse_packet(self, packet)` — line 414
-  - **method** `def activate(self, session_id, k_session)` — line 441
-  - **method** `def deactivate(self)` — line 507
-  - **method** `def _encode_packet(self, packet)` — line 518
-  - **method** `def send_packet(self, packet)` — line 531
-  - **method** `def close(self)` — line 534
+  - **method** `def __init__(self, socket_path, client_id, timeout, listen_path, lifecycle, principal = None, peer_register = None, peer_unregister = None, state_reconcile = None, provisioning_state = None, ownership_state = None, ownership_reassign = None, account_create = None, account_delete = None)` — line 17
+  - **method** `def active(self)` — line 52
+  - **method** `def control_loop(self)` — line 55
+  - **method** `def _handle_peer_request(self, request)` — line 142
+  - **method** `def _handle_provisioning_request(self, request)` — line 215
+  - **method** `def _handle_ownership_request(self, request)` — line 245
+  - **method** `def _handle_account_request(self, request)` — line 332
+  - **method** `def receive_packet(self)` — line 426
+  - **method** `def parse_packet(self, packet)` — line 461
+  - **method** `def activate(self, session_id, k_session)` — line 488
+  - **method** `def deactivate(self)` — line 556
+  - **method** `def _encode_packet(self, packet)` — line 567
+  - **method** `def send_packet(self, packet)` — line 580
+  - **method** `def close(self)` — line 583
 
 ## `src/wg_auth/wg_auth_account_service.py`
 
@@ -85,11 +87,15 @@ Structural symbol index extracted mechanically from source files.
 ## `src/wg_auth/wg_auth_lifecycle.py`
 
 - **variable** `log` — line 4
-- **class** `WGAuthLifecycle` — line 5
-  - **method** `def __init__(self, api = None, ipc = None)` — line 7
-  - **method** `def request_shutdown(self)` — line 15
-  - **method** `def request_session_shutdown(self, notify_client = True)` — line 30
-  - **method** `def request_session_start(self)` — line 42
+- **class** `WGAuthLifecycle` — line 7
+  - **method** `def __init__(self, api = None, ipc = None, idle_timeout = 45)` — line 9
+  - **method** `def _cancel_idle_timer_locked(self)` — line 20
+  - **method** `def _arm_idle_timer_locked(self)` — line 27
+  - **method** `def _idle_timeout_expired(self)` — line 41
+  - **method** `def touch_session(self)` — line 45
+  - **method** `def request_shutdown(self)` — line 54
+  - **method** `def request_session_shutdown(self, notify_client = True)` — line 70
+  - **method** `def request_session_start(self)` — line 83
 
 ## `src/wg_auth/wg_auth_ownership_service.py`
 
@@ -158,11 +164,11 @@ Structural symbol index extracted mechanically from source files.
 - **variable** `log` — line 13
 - **class** `WGClientAPI` — line 17
   - **method** `def __init__(self, config, listen_path, session, lifecycle = None)` — line 18
-  - **method** `def start(self)` — line 72
-  - **method** `def bind(self)` — line 77
-  - **method** `def serve(self)` — line 116
-  - **method** `def stop(self)` — line 129
-  - **method** `def close(self)` — line 143
+  - **method** `def start(self)` — line 74
+  - **method** `def bind(self)` — line 79
+  - **method** `def serve(self)` — line 119
+  - **method** `def stop(self)` — line 132
+  - **method** `def close(self)` — line 146
 
 ## `src/wg_client/wg_client_API_handler.py`
 
@@ -173,35 +179,39 @@ Structural symbol index extracted mechanically from source files.
 - **variable** `ADMIN_PEERS_PREFIX` — line 30
 - **variable** `ADMIN_USERS_PATH` — line 31
 - **variable** `ADMIN_USERS_PREFIX` — line 32
-- **variable** `AUTH_SESSION_ID_HEADER` — line 37
-- **variable** `AUTH_COUNTER_HEADER` — line 38
-- **variable** `AUTH_NONCE_HEADER` — line 39
-- **variable** `AUTH_MAC_HEADER` — line 40
-- **variable** `_AUTH_MALFORMED_ERRORS` — line 45
-- **variable** `_AUTH_REJECTED_ERRORS` — line 53
-- **class** `WGClientHTTPServer` (http.server.ThreadingHTTPServer) — line 62
-  - **method** `def __init__(self, server_address, handler_class, peer_service, listen_path, session)` — line 63
-- **class** `WGClientAPIHandler` (http.server.BaseHTTPRequestHandler) — line 88
-  - **method** `def handle_one_request(self)` — line 98
-  - **method** `def peer_service(self)` — line 109
-  - **method** `def session(self)` — line 116
-  - **method** `def session_lock(self)` — line 123
-  - **method** `def api_path(self)` — line 126
-  - **method** `def api_target(self)` — line 143
-  - **method** `def peer_key(self, path)` — line 168
-  - **method** `def admin_owner_key(self, path)` — line 177
-  - **method** `def log_message(self, format, *args)` — line 192
-  - **method** `def request_auth_headers(self)` — line 199
-  - **method** `def authenticate_request(self, body)` — line 228
-  - **method** `def _authenticated_headers(self, code, body)` — line 269
-  - **method** `def send_error(self, code, message = None, explain = None)` — line 297
-  - **method** `def send_json(self, code, obj)` — line 357
-  - **method** `def do_GET(self)` — line 391
-  - **method** `def do_POST(self)` — line 419
-  - **method** `def do_DELETE(self)` — line 476
-  - **method** `def do_CONNECT(self)` — line 521
-  - **method** `def do_PATCH(self)` — line 525
-  - **method** `def do_PUT(self)` — line 529
+- **variable** `SESSION_PATH` — line 33
+- **variable** `HEARTBEAT_PATH` — line 34
+- **variable** `PROVISIONING_PATH` — line 35
+- **variable** `AUTH_SESSION_ID_HEADER` — line 40
+- **variable** `AUTH_COUNTER_HEADER` — line 41
+- **variable** `AUTH_NONCE_HEADER` — line 42
+- **variable** `AUTH_MAC_HEADER` — line 43
+- **variable** `_AUTH_MALFORMED_ERRORS` — line 48
+- **variable** `_AUTH_REJECTED_ERRORS` — line 56
+- **class** `WGClientHTTPServer` (http.server.ThreadingHTTPServer) — line 65
+  - **method** `def __init__(self, server_address, handler_class, peer_service, listen_path, session, lifecycle)` — line 66
+- **class** `WGClientAPIHandler` (http.server.BaseHTTPRequestHandler) — line 93
+  - **method** `def handle_one_request(self)` — line 103
+  - **method** `def peer_service(self)` — line 114
+  - **method** `def session(self)` — line 121
+  - **method** `def session_lock(self)` — line 128
+  - **method** `def api_path(self)` — line 131
+  - **method** `def _decode_peer_component(value)` — line 149
+  - **method** `def api_target(self)` — line 161
+  - **method** `def peer_key(self, path)` — line 210
+  - **method** `def admin_owner_key(self, path)` — line 221
+  - **method** `def log_message(self, format, *args)` — line 236
+  - **method** `def request_auth_headers(self)` — line 243
+  - **method** `def authenticate_request(self, body)` — line 272
+  - **method** `def _authenticated_headers(self, code, body)` — line 318
+  - **method** `def send_error(self, code, message = None, explain = None)` — line 346
+  - **method** `def send_json(self, code, obj)` — line 406
+  - **method** `def do_GET(self)` — line 440
+  - **method** `def do_POST(self)` — line 481
+  - **method** `def do_DELETE(self)` — line 538
+  - **method** `def do_CONNECT(self)` — line 588
+  - **method** `def do_PATCH(self)` — line 592
+  - **method** `def do_PUT(self)` — line 596
 
 ## `src/wg_client/wg_client_IPC.py`
 
@@ -215,28 +225,30 @@ Structural symbol index extracted mechanically from source files.
 - **variable** `IPC_RESPONSE_TIMEOUT` — line 25
 - **class** `WGClientIPC` — line 28
   - **method** `def __init__(self, sock, lifecycle)` — line 30
-  - **method** `def control_loop(self)` — line 40
-  - **method** `def receive_packet(self)` — line 93
-  - **method** `def parse_packet(self, packet)` — line 116
-  - **method** `def _int_field(self, obj, name)` — line 136
-  - **method** `def _hex_field(self, obj, name)` — line 146
-  - **method** `def parse_activation(self, obj, now = None)` — line 158
-  - **method** `def _complete_pending(self, response)` — line 241
-  - **method** `def _fail_pending(self, error)` — line 256
-  - **method** `def _peer_request(self, command, public_key, allowed_ip = None)` — line 264
-  - **method** `def register_peer(self, public_key, allowed_ip)` — line 344
-  - **method** `def unregister_peer(self, public_key)` — line 351
-  - **method** `def _ownership_request(self, command, **fields)` — line 354
-  - **method** `def ownership_state(self)` — line 422
-  - **method** `def reassign_owner(self, public_key, username)` — line 425
-  - **method** `def _account_request(self, command, **fields)` — line 437
-  - **method** `def create_user(self, username, password)` — line 503
-  - **method** `def delete_user(self, username)` — line 510
-  - **method** `def reconcile_state(self, peers)` — line 516
-  - **method** `def _encode_packet(self, packet)` — line 549
-  - **method** `def send_result(self, status, **fields)` — line 561
-  - **method** `def _notify_stop(self)` — line 575
-  - **method** `def stop(self, notify_shutdown = True)` — line 586
+  - **method** `def control_loop(self)` — line 41
+  - **method** `def receive_packet(self)` — line 94
+  - **method** `def parse_packet(self, packet)` — line 122
+  - **method** `def _int_field(self, obj, name)` — line 142
+  - **method** `def _hex_field(self, obj, name)` — line 152
+  - **method** `def parse_activation(self, obj, now = None)` — line 164
+  - **method** `def _complete_pending(self, response)` — line 247
+  - **method** `def _fail_pending(self, error)` — line 262
+  - **method** `def _peer_request(self, command, public_key, allowed_ip = None)` — line 270
+  - **method** `def register_peer(self, public_key, allowed_ip)` — line 350
+  - **method** `def unregister_peer(self, public_key)` — line 357
+  - **method** `def _ownership_request(self, command, **fields)` — line 360
+  - **method** `def provisioning_state(self)` — line 428
+  - **method** `def ownership_state(self)` — line 478
+  - **method** `def reassign_owner(self, public_key, username)` — line 481
+  - **method** `def _account_request(self, command, **fields)` — line 493
+  - **method** `def create_user(self, username, password)` — line 559
+  - **method** `def delete_user(self, username)` — line 566
+  - **method** `def reconcile_state(self, peers)` — line 572
+  - **method** `def _encode_packet(self, packet)` — line 605
+  - **method** `def send_result(self, status, **fields)` — line 617
+  - **method** `def keepalive(self)` — line 631
+  - **method** `def _notify_stop(self)` — line 649
+  - **method** `def stop(self, notify_shutdown = True)` — line 660
 
 ## `src/wg_client/wg_client_activator.py`
 
@@ -308,7 +320,8 @@ Structural symbol index extracted mechanically from source files.
 - **variable** `log` — line 4
 - **class** `WGClientLifecycle` — line 5
   - **method** `def __init__(self, api = None, ipc = None)` — line 6
-  - **method** `def request_shutdown(self, notify_shutdown = True)` — line 13
+  - **method** `def notify_activity(self)` — line 13
+  - **method** `def request_shutdown(self, notify_shutdown = True)` — line 20
 
 ## `src/wg_client/wg_controller_client.py`
 
@@ -316,29 +329,31 @@ Structural symbol index extracted mechanically from source files.
   - **method** `def __init__(self, host, port, ca, cert, key, timeout = 10)` — line 14
   - **method** `def _request(self, method, path, body = None)` — line 24
   - **method** `def status(self)` — line 76
-  - **method** `def add_peer(self, public_key, allowed_ip)` — line 81
-  - **method** `def remove_peer(self, public_key)` — line 93
-- **class** `WGClientClient` — line 101
-  - **method** `def __init__(self, host, port, ca, cert, key, timeout = 10, listen_path = None, secure_session = None)` — line 102
-  - **method** `def _request(self, method, path, body = None)` — line 118
-  - **method** `def status(self)` — line 193
-  - **method** `def add_peer(self, public_key, allowed_ip)` — line 198
-  - **method** `def remove_peer(self, public_key)` — line 210
+  - **method** `def provisioning(self)` — line 81
+  - **method** `def add_peer(self, public_key, allowed_ip)` — line 85
+  - **method** `def remove_peer(self, public_key)` — line 97
+- **class** `WGClientClient` — line 105
+  - **method** `def __init__(self, host, port, ca, cert, key, timeout = 10, listen_path = None, secure_session = None)` — line 106
+  - **method** `def _request(self, method, path, body = None)` — line 122
+  - **method** `def status(self)` — line 197
+  - **method** `def add_peer(self, public_key, allowed_ip)` — line 202
+  - **method** `def remove_peer(self, public_key)` — line 214
 
 ## `src/wg_client/wg_peer_service.py`
 
-- **variable** `log` — line 12
-- **class** `WGPeerService` — line 15
-  - **method** `def __init__(self, controller, session, lifecycle, interface)` — line 18
-  - **method** `def ipc(self)` — line 31
-  - **method** `def _controller_status(self)` — line 40
-  - **method** `def status(self)` — line 57
-  - **method** `def add_peer(self, public_key, allowed_ip)` — line 81
-  - **method** `def remove_peer(self, public_key)` — line 144
-  - **method** `def admin_status(self)` — line 175
-  - **method** `def reassign_owner(self, public_key, username)` — line 212
-  - **method** `def create_user(self, username, password)` — line 227
-  - **method** `def delete_user(self, username)` — line 238
+- **variable** `log` — line 13
+- **class** `WGPeerService` — line 16
+  - **method** `def __init__(self, controller, session, lifecycle, interface, endpoint = None)` — line 19
+  - **method** `def ipc(self)` — line 33
+  - **method** `def _controller_status(self)` — line 42
+  - **method** `def status(self)` — line 59
+  - **method** `def provisioning(self)` — line 83
+  - **method** `def add_peer(self, public_key, allowed_ip)` — line 131
+  - **method** `def remove_peer(self, public_key)` — line 194
+  - **method** `def admin_status(self)` — line 225
+  - **method** `def reassign_owner(self, public_key, username)` — line 262
+  - **method** `def create_user(self, username, password)` — line 277
+  - **method** `def delete_user(self, username)` — line 288
 
 ## `src/wg_client/wg_secure_session.py`
 
@@ -385,7 +400,11 @@ Structural symbol index extracted mechanically from source files.
 
 ## `src/wg_frontend/wg_auth_session.js`
 
-- **class** `WGAuthSession` — line 1
+- **class** `WGAuthSession` — line 2
+
+## `src/wg_frontend/wg_client_api.js`
+
+- **class** `WGClientAPI` — line 17
 
 ## `src/wg_frontend/wg_client_errors.js`
 
@@ -405,6 +424,11 @@ Structural symbol index extracted mechanically from source files.
 - **class** `WGRequestRateExceededError` (WGSessionError) — line 109
 - **class** `WGReplayError` (WGProtocolError) — line 116
 
+## `src/wg_frontend/wg_opaque_client.js`
+
+- **function** `opaqueLibrary` — line 1
+- **class** `WGOPAQUEClient` — line 12
+
 ## `src/wg_frontend/wg_secure_session.js`
 
 - **function** `getSubtle` — line 57
@@ -416,7 +440,30 @@ Structural symbol index extracted mechanically from source files.
 - **function** `b64decode` — line 115
 - **function** `sha256` — line 136
 - **class** `WGSecureSession` — line 152
-- **function** `bytesEqual` — line 669
+- **function** `bytesEqual` — line 679
+
+## `src/wg_frontend/www/vpn/app.js`
+
+- **function** `setConfigPendingExport` — line 42
+- **function** `confirmDiscardPendingConfig` — line 46
+- **function** `stopHeartbeat` — line 84
+- **function** `startHeartbeat` — line 91
+- **function** `showAuthView` — line 126
+- **function** `showPeerView` — line 132
+- **function** `showPostauthView` — line 138
+- **function** `renderPeers` — line 147
+- **function** `clientAllowedIpsForMode` — line 373
+- **function** `base64UrlToWireGuard` — line 383
+- **function** `generateWireGuardKeyPair` — line 391
+- **function** `configIsComplete` — line 418
+- **function** `updateQrAvailability` — line 427
+- **function** `renderClientConfigPreview` — line 443
+- **function** `refreshProvisioning` — line 477
+- **function** `refreshPeers` — line 538
+- **function** `renderAdminState` — line 559
+- **function** `refreshAdmin` — line 689
+- **function** `refreshAuthStatus` — line 709
+- **function** `renderQrCode` — line 986
 
 ## `src/wg_manager/wg_manager.py`
 
@@ -426,17 +473,18 @@ Structural symbol index extracted mechanically from source files.
 - **class** `E` (Exception) — line 17
   - **method** `def __init__(self, code, msg)` — line 18
 - **function** `def cfg()` — line 22
-- **function** `def reply(s, code, obj)` — line 35
-- **function** `def request(s)` — line 43
-- **function** `def wg(args)` — line 78
-- **function** `def key(k)` — line 93
-- **function** `def peers(interface)` — line 103
-- **function** `def add(c, o)` — line 122
-- **function** `def remove(c, pk)` — line 142
-- **function** `def dispatch(c, m, t, b)` — line 150
-- **function** `def systemd_socket()` — line 165
-- **function** `def tls(c)` — line 178
-- **function** `def main()` — line 191
+- **function** `def reply(s, code, obj)` — line 36
+- **function** `def request(s)` — line 44
+- **function** `def wg(args)` — line 79
+- **function** `def key(k)` — line 94
+- **function** `def peers(interface)` — line 104
+- **function** `def provisioning(c)` — line 123
+- **function** `def add(c, o)` — line 160
+- **function** `def remove(c, pk)` — line 180
+- **function** `def dispatch(c, m, t, b)` — line 188
+- **function** `def systemd_socket()` — line 205
+- **function** `def tls(c)` — line 218
+- **function** `def main()` — line 231
 
 ## `tests/auth/js/client_cli.js`
 

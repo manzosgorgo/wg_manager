@@ -5,10 +5,10 @@
 ## Repository
 
 - Root: `/home/main/Desktop/wg_manager`
-- Commit: `c7de3eb7523f978ea952d6c66da0e47bbef324b5`
+- Commit: `0664c149128574157d953ab784335c0f628d39cc`
 - Branch: `master`
-- Files in inventory: 104
-- Text files indexed: 84
+- Files in inventory: 124
+- Text files indexed: 96
 
 ### Working tree
 
@@ -35,6 +35,8 @@ The working tree contains uncommitted changes.
 - `.gitignore` → [files/.gitignore.md](files/.gitignore.md)
 - `README.md` → [files/README.md.md](files/README.md.md)
 - `TODO.md` → [files/TODO.md.md](files/TODO.md.md)
+- `apache/install/install-apache.sh` → [files/apache/install/install-apache.sh.md](files/apache/install/install-apache.sh.md)
+- `apache/wg-manager.conf` → [files/apache/wg-manager.conf.md](files/apache/wg-manager.conf.md)
 - `compile_commands.json` → [files/compile_commands.json.md](files/compile_commands.json.md)
 - `config/wg-auth.conf` → [files/config/wg-auth.conf.md](files/config/wg-auth.conf.md)
 - `config/wg-client-test-auth.conf` → [files/config/wg-client-test-auth.conf.md](files/config/wg-client-test-auth.conf.md)
@@ -48,6 +50,9 @@ The working tree contains uncommitted changes.
 - `docs/protocol-flow.md` → [files/docs/protocol-flow.md.md](files/docs/protocol-flow.md.md)
 - `docs/static-analysis.md` → [files/docs/static-analysis.md.md](files/docs/static-analysis.md.md)
 - `mock/mock` → [files/mock/mock.md](files/mock/mock.md)
+- `pkg/README.md` → [files/pkg/README.md.md](files/pkg/README.md.md)
+- `pkg/wg-manager-auth-client/DEBIAN/control` → [files/pkg/wg-manager-auth-client/DEBIAN/control.md](files/pkg/wg-manager-auth-client/DEBIAN/control.md)
+- `pkg/wg-manager-controller/DEBIAN/control` → [files/pkg/wg-manager-controller/DEBIAN/control.md](files/pkg/wg-manager-controller/DEBIAN/control.md)
 - `pyproject.toml` → [files/pyproject.toml.md](files/pyproject.toml.md)
 - `src/__init__.py` → [files/src/__init__.py.md](files/src/__init__.py.md)
 - `src/wg_auth/__init__.py` → [files/src/wg_auth/__init__.py.md](files/src/wg_auth/__init__.py.md)
@@ -80,10 +85,17 @@ The working tree contains uncommitted changes.
 - `src/wg_frontend/package.json` → [files/src/wg_frontend/package.json.md](files/src/wg_frontend/package.json.md)
 - `src/wg_frontend/test_wg_secure_session_vectors.json` → [files/src/wg_frontend/test_wg_secure_session_vectors.json.md](files/src/wg_frontend/test_wg_secure_session_vectors.json.md)
 - `src/wg_frontend/wg_auth_session.js` → [files/src/wg_frontend/wg_auth_session.js.md](files/src/wg_frontend/wg_auth_session.js.md)
+- `src/wg_frontend/wg_client_api.js` → [files/src/wg_frontend/wg_client_api.js.md](files/src/wg_frontend/wg_client_api.js.md)
 - `src/wg_frontend/wg_client_errors.js` → [files/src/wg_frontend/wg_client_errors.js.md](files/src/wg_frontend/wg_client_errors.js.md)
+- `src/wg_frontend/wg_opaque_client.js` → [files/src/wg_frontend/wg_opaque_client.js.md](files/src/wg_frontend/wg_opaque_client.js.md)
 - `src/wg_frontend/wg_secure_session.js` → [files/src/wg_frontend/wg_secure_session.js.md](files/src/wg_frontend/wg_secure_session.js.md)
 - `src/wg_frontend/wg_secure_session_vector_input.json` → [files/src/wg_frontend/wg_secure_session_vector_input.json.md](files/src/wg_frontend/wg_secure_session_vector_input.json.md)
+- `src/wg_frontend/www/vpn/app.js` → [files/src/wg_frontend/www/vpn/app.js.md](files/src/wg_frontend/www/vpn/app.js.md)
+- `src/wg_frontend/www/vpn/index.html` → [files/src/wg_frontend/www/vpn/index.html.md](files/src/wg_frontend/www/vpn/index.html.md)
+- `src/wg_frontend/www/vpn/style.css` → [files/src/wg_frontend/www/vpn/style.css.md](files/src/wg_frontend/www/vpn/style.css.md)
+- `src/wg_frontend/www/vpn/vendor/qrcode.min.js` → [files/src/wg_frontend/www/vpn/vendor/qrcode.min.js.md](files/src/wg_frontend/www/vpn/vendor/qrcode.min.js.md)
 - `src/wg_manager/wg_manager.py` → [files/src/wg_manager/wg_manager.py.md](files/src/wg_manager/wg_manager.py.md)
+- `systemd/install/install-auth-service.sh` → [files/systemd/install/install-auth-service.sh.md](files/systemd/install/install-auth-service.sh.md)
 - `systemd/install/install-client-service.sh` → [files/systemd/install/install-client-service.sh.md](files/systemd/install/install-client-service.sh.md)
 - `systemd/install/install-server-service.sh` → [files/systemd/install/install-server-service.sh.md](files/systemd/install/install-server-service.sh.md)
 - `systemd/wg_client.conf` → [files/systemd/wg_client.conf.md](files/systemd/wg_client.conf.md)

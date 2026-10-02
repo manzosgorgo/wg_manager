@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_API_handler.py`
 - Language: `python`
-- Lines: 622
-- SHA256: `2f0b15fe685ec802ad0ff119c2c483712e50020fd80ec95a5342e6d9d983ffb9`
+- Lines: 689
+- SHA256: `56adf7b8cdadb48266bfd92d0803318a914da9fcfaeb48c420d638fd7701c56d`
 - Imports:
   - `datetime`
   - `http`
@@ -26,7 +26,7 @@ import json
 import logging
 import threading
 from http import HTTPStatus
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 import src.wg_client.wg_client_errors
 from src.wg_client.wg_client_errors import (
@@ -51,6 +51,9 @@ ADMIN_PEERS_PATH = "/v1/admin/peers"
 ADMIN_PEERS_PREFIX = "/v1/admin/peers/"
 ADMIN_USERS_PATH = "/v1/admin/users"
 ADMIN_USERS_PREFIX = "/v1/admin/users/"
+SESSION_PATH = "/v1/session"
+HEARTBEAT_PATH = "/v1/heartbeat"
+PROVISIONING_PATH = "/v1/provisioning"
 
 # Headers used to carry WGSecureSession authentication over HTTPS.
 # Not frozen yet as part of the wire protocol: convenient for this
@@ -88,10 +91,12 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
             peer_service,
             listen_path,
             session,
+            lifecycle,
     ):
         super().__init__(server_address, handler_class)
         self.peer_service = peer_service
         self.listen_path = listen_path
+        self.lifecycle = lifecycle
 
         if session is None:
             raise RuntimeError("WGClientHTTPServer requires a secure session")
@@ -161,16 +166,29 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
 
         return path[len(prefix) :]
 
+    @staticmethod
+    def _decode_peer_component(value):
+        """
+        Decode a peer path component as transported through Apache.
+
+        Apache may require an encoded slash to be double-escaped
+        (%2F -> %252F) before proxying the request. Peer public keys are
+        standard base64 and cannot contain a literal '%' character, so
+        decoding twice is unambiguous for this field while still working
+        for directly encoded requests.
+        """
+        return unquote(unquote(value))
+
     def api_target(self):
         """
-        Return the request target relative to listen_path, including
-        the query string if present, or None if the request is outside
-        listen_path.
+        Return the canonical request target authenticated by
+        WGSecureSession.
 
-        This is the exact string that must be authenticated: the query
-        string can carry application-level meaning, so it has to be
-        part of what create_request_auth()/verify_request() sign, even
-        though routing (api_path()) ignores it.
+        Reverse proxies are allowed to normalize percent-encoding in the
+        request path (for example "%3D" -> "="). Dynamic path components
+        are therefore decoded and re-encoded here before MAC verification,
+        so direct clients and proxied browser requests authenticate the
+        same logical target.
         """
         parsed = urlsplit(self.path)
         path = parsed.path
@@ -180,6 +198,30 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             return None
 
         target = path[len(prefix):]
+
+        if target.startswith(PEERS_PREFIX):
+            public_key = self._decode_peer_component(
+                target[len(PEERS_PREFIX):]
+            )
+            target = PEERS_PREFIX + quote(public_key, safe="")
+
+        elif (
+            target.startswith(ADMIN_PEERS_PREFIX)
+            and target.endswith("/owner")
+        ):
+            encoded = target[
+                len(ADMIN_PEERS_PREFIX):-len("/owner")
+            ]
+            public_key = self._decode_peer_component(encoded)
+            target = (
+                ADMIN_PEERS_PREFIX
+                + quote(public_key, safe="")
+                + "/owner"
+            )
+
+        elif target.startswith(ADMIN_USERS_PREFIX):
+            username = unquote(target[len(ADMIN_USERS_PREFIX):])
+            target = ADMIN_USERS_PREFIX + quote(username, safe="")
 
         if parsed.query:
             target += "?" + parsed.query
@@ -191,7 +233,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
         if path is None or not path.startswith(PEERS_PREFIX):
             return None
 
-        public_key = unquote(path[len(PEERS_PREFIX) :])
+        public_key = self._decode_peer_component(
+            path[len(PEERS_PREFIX) :]
+        )
 
         return public_key or None
 
@@ -207,7 +251,7 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             len(ADMIN_PEERS_PREFIX):-len("/owner")
         ]
 
-        public_key = unquote(encoded)
+        public_key = self._decode_peer_component(encoded)
         return public_key or None
 
     def log_message(self, format, *args):
@@ -285,6 +329,11 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             return False
 
         self.request_auth = auth
+
+        # Only a successfully authenticated browser request proves that
+        # the holder of K_session is still attached to this session.
+        self.server.lifecycle.notify_activity()
+
         return True
 
     def _authenticated_headers(self, code, body):
@@ -412,15 +461,28 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         log.info("Received HTTP GET request: %s", self.path)
 
+        path = self.api_path()
+
+        # Heartbeat is intentionally independent from the application
+        # transaction lock. WGSecureSession protects its own counters,
+        # replay window and MAC state internally, and authenticate_request()
+        # already refreshes the auth-side idle timer.
+        if path == HEARTBEAT_PATH:
+            if not self.authenticate_request(b""):
+                return
+
+            self.send_json(200, {"ok": True})
+            return
+
         with self.session_lock:
             if not self.authenticate_request(b""):
                 return
 
-            path = self.api_path()
-
             try:
                 if path == "/v1/status":
                     result = self.peer_service.status()
+                elif path == PROVISIONING_PATH:
+                    result = self.peer_service.provisioning()
                 elif path == ADMIN_PEERS_PATH:
                     result = self.peer_service.admin_status()
                 else:
@@ -502,6 +564,11 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             path = self.api_path()
+
+            if path == SESSION_PATH:
+                self.send_json(200, {"ok": True})
+                self.server.lifecycle.request_shutdown()
+                return
 
             if path is not None and path.startswith(ADMIN_USERS_PREFIX):
                 username = unquote(path[len(ADMIN_USERS_PREFIX):])

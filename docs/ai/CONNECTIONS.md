@@ -36,7 +36,7 @@ Generated mechanically by `tools/project_index.py`.
 - `WGAuthAPI._create_server`
 
 **Evidence:**
-- `src/wg_auth/wg_auth_API.py:394` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
+- `src/wg_auth/wg_auth_API.py:402` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
 
 **Message surfaces:**
 - **HTTP**
@@ -47,7 +47,7 @@ Generated mechanically by `tools/project_index.py`.
     - **Inputs:** `request.auth`
     - **Outputs:** `{ok, authenticated, session_id, k_session, activation}`, `{ok, error}`
   - `WGAuthAPIHandler.do_DELETE()`
-    - **Outputs:** `{ok}`, `{ok, error}`
+    - **Outputs:** `{ok, error}`
   - `WGAuthAPIHandler.do_GET()`
     - **Outputs:** `{ok}`, `{ok, error}`
   - `WGAuthAPIHandler.do_POST()`
@@ -69,7 +69,7 @@ Generated mechanically by `tools/project_index.py`.
 - `WGAuthIPC.activate`
 
 **Evidence:**
-- `src/wg_auth/wg_auth_IPC.py:446` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
+- `src/wg_auth/wg_auth_IPC.py:495` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
 
 **Message surfaces:**
 - **IPC**
@@ -198,8 +198,8 @@ Generated mechanically by `tools/project_index.py`.
 - `WGClientClient._request`
 
 **Evidence:**
-- `src/wg_client/wg_controller_client.py:126` HTTP_CLIENT `http.client.HTTPSConnection(self.host, self.port, context=self.tls, timeout=self.timeout)`
-- `src/wg_client/wg_controller_client.py:191` CLOSE `conn.close()`
+- `src/wg_client/wg_controller_client.py:130` HTTP_CLIENT `http.client.HTTPSConnection(self.host, self.port, context=self.tls, timeout=self.timeout)`
+- `src/wg_client/wg_controller_client.py:195` CLOSE `conn.close()`
 
 ## Test connections
 

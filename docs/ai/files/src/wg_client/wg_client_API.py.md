@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_API.py`
 - Language: `python`
-- Lines: 149
-- SHA256: `bf88bfa4011640b546f5cb7e6a1d02941d5e6acf1e99a17c1b5ffc892491f9c1`
+- Lines: 152
+- SHA256: `9b86283dc767a18bd6d5d609e7f7ff44e29bb9bf1c860648fe5d6ebc8c8c4064`
 - Imports:
   - `logging`
   - `src.wg_client.wg_client_API_handler`
@@ -51,6 +51,7 @@ class WGClientAPI:
         self.cafile = config["api"]["ca"]
         log.debug("interface")
         self.interface = config["wireguard"]["interface"]
+        self.endpoint = config["wireguard"].get("endpoint")
 
         # Every endpoint lives below listen_path, e.g.
         # <listen_path>/v1/status.
@@ -87,6 +88,7 @@ class WGClientAPI:
             self.session,
             self.lifecycle,
             self.interface,
+            self.endpoint,
         )
 
     def start(self):
@@ -110,6 +112,7 @@ class WGClientAPI:
                 self.peer_service,
                 self.listen_path,
                 self.session,
+                self.lifecycle,
             )
 
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
