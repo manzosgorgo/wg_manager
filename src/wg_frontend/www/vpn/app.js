@@ -79,7 +79,14 @@ function showAuthView() {
     document.title = "Malandrino · Accesso";
 }
 
+function showPeerView() {
+    for (const [name, panel] of Object.entries(panels)) {
+        panel.hidden = name !== "peers";
+    }
+}
+
 function showPostauthView() {
+    showPeerView();
     authView.hidden = true;
     postauthView.hidden = false;
     sessionUser.textContent = auth.username ?? "";
@@ -140,7 +147,7 @@ function renderPeers(result) {
                 const client = window.wgFrontend.client;
                 const result = await client.removePeer(publicKey);
 
-                if (!result.ok || !result.data?.ok) {
+                if (!result.ok) {
                     throw new Error(
                         result.data?.message
                             ?? result.data?.error
@@ -173,7 +180,7 @@ async function refreshPeers() {
 
     const result = await client.status();
 
-    if (!result.ok || !result.data?.ok) {
+    if (!result.ok) {
         throw new Error(
             result.data?.message
                 ?? result.data?.error
@@ -235,7 +242,7 @@ function renderAdminState(result) {
                         select.value,
                     );
 
-                    if (!result.ok || !result.data?.ok) {
+                    if (!result.ok) {
                         throw new Error(
                             result.data?.message
                                 ?? result.data?.error
@@ -289,7 +296,7 @@ function renderAdminState(result) {
                 try {
                     const result = await window.wgFrontend.client.deleteUser(username);
 
-                    if (!result.ok || !result.data?.ok) {
+                    if (!result.ok) {
                         throw new Error(
                             result.data?.message
                                 ?? result.data?.error
@@ -323,7 +330,7 @@ async function refreshAdmin() {
 
     const result = await client.adminStatus();
 
-    if (!result.ok || !result.data?.ok) {
+    if (!result.ok) {
         throw new Error(
             result.data?.message
                 ?? result.data?.error
@@ -473,7 +480,7 @@ peerForm.addEventListener("submit", async (event) => {
     try {
         const result = await client.addPeer(publicKey, allowedIp);
 
-        if (!result.ok || !result.data?.ok) {
+        if (!result.ok) {
             throw new Error(
                 result.data?.message
                     ?? result.data?.error
@@ -514,7 +521,7 @@ userForm.addEventListener("submit", async (event) => {
     try {
         const result = await client.createUser(username, password);
 
-        if (!result.ok || !result.data?.ok) {
+        if (!result.ok) {
             throw new Error(
                 result.data?.message
                     ?? result.data?.error
