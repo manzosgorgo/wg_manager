@@ -14,7 +14,7 @@ log.setLevel(logging.DEBUG)
 
 
 class WGClientAPI:
-    def __init__(self, config, listen_path, session=None, lifecycle=None):
+    def __init__(self, config, listen_path, session, lifecycle=None):
         self.server = None
         log.debug("Initializing WGClientAPI")
 
@@ -35,8 +35,9 @@ class WGClientAPI:
         # <listen_path>/v1/status.
         self.listen_path = listen_path
 
-        # WGSecureSession built from the activation packet.
-        # Not used to authenticate requests yet.
+        if session is None:
+            raise RuntimeError("WGClientAPI requires an authenticated secure session")
+
         self.session = session
 
         if lifecycle is None:

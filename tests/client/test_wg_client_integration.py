@@ -268,12 +268,48 @@ class FakeController:
         return {"ok": True, "public_key": public_key}
 
 
+class FakeSecureSession:
+    def __init__(self):
+        self.principal = {"username": "admin", "peers": []}
+        self.is_admin = True
+
+    def verify_request(self, auth, method, path, body):
+        return None
+
+    def create_response_auth(self, request_auth, status, body):
+        return {
+            "session_id": request_auth["session_id"],
+            "counter": request_auth["counter"],
+            "mac": "test-mac",
+        }
+
+    def can_access_peer(self, public_key):
+        return True
+
+    def register_peer(self, public_key):
+        return None
+
+    def unregister_peer(self, public_key):
+        return None
+
+
+class FakeIPC:
+    def register_peer(self, public_key):
+        return {"status": "OK"}
+
+    def unregister_peer(self, public_key):
+        return {"status": "OK"}
+
+
 @pytest.fixture
 def api(lifecycle):
+    lifecycle.ipc = FakeIPC()
     api = WGClientAPI(
         make_config(),
         LISTEN_PATH,
-        lifecycle=lifecycle)
+        FakeSecureSession(),
+        lifecycle=lifecycle,
+    )
     api.controller = FakeController()
     api.bind()
 
@@ -291,6 +327,12 @@ def api(lifecycle):
 
 
 def request(api, method, path, body=None, headers=None):
+    headers = dict(headers or {})
+    headers.setdefault("X-WG-Session-ID", "test-session")
+    headers.setdefault("X-WG-Counter", "1")
+    headers.setdefault("X-WG-Nonce", "test-nonce")
+    headers.setdefault("X-WG-MAC", "test-mac")
+
     ctx = ssl.create_default_context(cafile=str(CERT / "ca.crt"))
     ctx.load_cert_chain(str(CERT / "client.crt"), str(CERT / "client.key"))
 
@@ -298,7 +340,7 @@ def request(api, method, path, body=None, headers=None):
     conn = http.client.HTTPSConnection("127.0.0.1", port, context=ctx, timeout=5)
 
     try:
-        conn.request(method, path, body=body, headers=headers or {})
+        conn.request(method, path, body=body, headers=headers)
         response = conn.getresponse()
         return response.status, response.read()
     finally:
@@ -360,7 +402,7 @@ def test_trace_not_supported(api):
 
 
 def test_stop_before_serve_loop_does_not_hang():
-    api = WGClientAPI(make_config(), LISTEN_PATH)
+    api = WGClientAPI(make_config(), LISTEN_PATH, FakeSecureSession())
     api.bind()
 
     # Like the session timer firing immediately.
@@ -398,9 +440,14 @@ def test_controller_unreachable_is_502():
 
 
 def test_controller_timeout_from_config():
-    api = WGClientAPI(make_config(), LISTEN_PATH)
+    api = WGClientAPI(make_config(), LISTEN_PATH, FakeSecureSession())
 
     assert api.controller.timeout == 2
+
+
+def test_api_rejects_missing_secure_session():
+    with pytest.raises(RuntimeError, match="requires an authenticated secure session"):
+        WGClientAPI(make_config(), LISTEN_PATH, None)
 
 
 # ----------------------------------------------------------------------

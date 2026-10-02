@@ -63,7 +63,7 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
             listen_path,
             interface,
             lifecycle,
-            session=None,
+            session,
     ):
         super().__init__(server_address, handler_class)
         self.controller = controller
@@ -71,9 +71,9 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
         self.interface = interface
         self.lifecycle = lifecycle
 
-        # WGSecureSession used to authenticate requests/responses on this
-        # server, or None to run unauthenticated (e.g. in tests that don't
-        # care about transport authentication).
+        if session is None:
+            raise RuntimeError("WGClientHTTPServer requires a secure session")
+
         self.session = session
 
         # ThreadingHTTPServer hands each request to its own thread, but
@@ -113,34 +113,25 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
 
     @property
     def session(self):
-        return self.server.session
+        session = self.server.session
+        if session is None:
+            raise RuntimeError("secure session invariant violated")
+        return session
 
     @property
     def session_lock(self):
         return self.server.session_lock
 
     def principal_required(self):
-        if self.session is None:
-            return True
-
         if self.session.principal is None:
-            self.send_error(
-                403,
-                "Forbidden",
-                "authenticated session has no principal",
-            )
-            return False
-
+            raise RuntimeError("authenticated secure session has no principal")
         return True
 
     def can_access_peer(self, public_key):
-        return (
-            self.session is None
-            or self.session.can_access_peer(public_key)
-        )
+        return self.session.can_access_peer(public_key)
 
     def filter_status_for_principal(self, result):
-        if self.session is None or self.session.is_admin:
+        if self.session.is_admin:
             return result
 
         filtered = dict(result)
@@ -259,9 +250,7 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
         response MAC to) and returns False. The caller must simply
         return without doing anything else.
 
-        If self.session is None (secure session disabled/not wired for
-        this server, e.g. in tests), authentication is skipped entirely
-        and the request is treated as trusted.
+        The server cannot exist without a secure session.
         """
         self.request_auth = None
 
@@ -270,9 +259,6 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
         if target is None:
             self.send_error(404)
             return False
-
-        if self.session is None:
-            return True
 
         try:
             auth = self.request_auth_headers()
@@ -300,7 +286,7 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
         an unauthenticated request never gets an authenticated response,
         authenticated or not (see point 12 of the integration notes).
         """
-        if self.session is None or self.request_auth is None:
+        if self.request_auth is None:
             return {}
 
         response_auth = self.session.create_response_auth(
