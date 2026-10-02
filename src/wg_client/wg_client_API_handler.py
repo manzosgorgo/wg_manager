@@ -145,6 +145,19 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
 
         return path[len(prefix) :]
 
+    @staticmethod
+    def _decode_peer_component(value):
+        """
+        Decode a peer path component as transported through Apache.
+
+        Apache may require an encoded slash to be double-escaped
+        (%2F -> %252F) before proxying the request. Peer public keys are
+        standard base64 and cannot contain a literal '%' character, so
+        decoding twice is unambiguous for this field while still working
+        for directly encoded requests.
+        """
+        return unquote(unquote(value))
+
     def api_target(self):
         """
         Return the canonical request target authenticated by
@@ -166,7 +179,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
         target = path[len(prefix):]
 
         if target.startswith(PEERS_PREFIX):
-            public_key = unquote(target[len(PEERS_PREFIX):])
+            public_key = self._decode_peer_component(
+                target[len(PEERS_PREFIX):]
+            )
             target = PEERS_PREFIX + quote(public_key, safe="")
 
         elif (
@@ -176,7 +191,7 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             encoded = target[
                 len(ADMIN_PEERS_PREFIX):-len("/owner")
             ]
-            public_key = unquote(encoded)
+            public_key = self._decode_peer_component(encoded)
             target = (
                 ADMIN_PEERS_PREFIX
                 + quote(public_key, safe="")
@@ -197,7 +212,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
         if path is None or not path.startswith(PEERS_PREFIX):
             return None
 
-        public_key = unquote(path[len(PEERS_PREFIX) :])
+        public_key = self._decode_peer_component(
+            path[len(PEERS_PREFIX) :]
+        )
 
         return public_key or None
 
@@ -213,7 +230,7 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             len(ADMIN_PEERS_PREFIX):-len("/owner")
         ]
 
-        public_key = unquote(encoded)
+        public_key = self._decode_peer_component(encoded)
         return public_key or None
 
     def log_message(self, format, *args):
