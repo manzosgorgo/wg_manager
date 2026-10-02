@@ -152,11 +152,24 @@ def test_parse_activation_rejects(overrides,ipc):
         ipc.parse_activation(make_packet(**overrides), now=NOW)
 
 
-def run_activation(packet, cfg, monkeypatch,lifecycle):
+def run_activation(
+    packet,
+    cfg,
+    monkeypatch,
+    lifecycle,
+    *,
+    patch_load_config=True,
+):
     """Drive wg_client.activate() over a socketpair like systemd would."""
-    monkeypatch.setattr(wg_client, "load_config", lambda: cfg)
+    if patch_load_config:
+        monkeypatch.setattr(wg_client, "load_config", lambda: cfg)
+
     monkeypatch.setattr(wg_client, "_manager_peer_snapshot", lambda api: [])
-    monkeypatch.setattr(WGClientIPC, "reconcile_state", lambda self, peers: {"status": "OK"})
+    monkeypatch.setattr(
+        WGClientIPC,
+        "reconcile_state",
+        lambda self, peers: {"status": "OK"},
+    )
 
     auth, client = socket.socketpair()
 
@@ -240,6 +253,7 @@ def test_activation_reports_unexpected_exception(monkeypatch, lifecycle):
         make_config(),
         monkeypatch,
         lifecycle,
+        patch_load_config=False,
     )
 
     assert result is None
