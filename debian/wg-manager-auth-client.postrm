@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge)
+        if command -v a2disconf >/dev/null 2>&1; then
+            a2disconf wg-manager >/dev/null 2>&1 || true
+        fi
+        ;;
+esac
+
+# debhelper inserts generated cleanup here.
+#DEBHELPER#
+
+exit 0
