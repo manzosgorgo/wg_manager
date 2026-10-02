@@ -108,6 +108,7 @@ body {
 }
 
 
+.auth-card input[type="text"],
 .auth-card input[type="password"] {
   width: 100%;
 
@@ -130,10 +131,12 @@ body {
     box-shadow .16s ease;
 }
 
+.auth-card input[type="text"]:hover,
 .auth-card input[type="password"]:hover {
   border-color: #334154;
 }
 
+.auth-card input[type="text"]:focus,
 .auth-card input[type="password"]:focus {
   border-color: var(--accent);
 
@@ -370,4 +373,8 @@ body {
   .postauth-nav {
     flex-wrap: wrap;
   }
+}
+
+.auth-card input + .auth-label {
+  margin-top: 14px;
 }
