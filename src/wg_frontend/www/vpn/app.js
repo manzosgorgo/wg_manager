@@ -10,6 +10,7 @@ const passwordInput = document.querySelector("#password");
 const button = document.querySelector("#login-button");
 const status = document.querySelector("#auth-status");
 const authConnectionStatus = document.querySelector("#auth-connection-status");
+const resetSessionButton = document.querySelector("#reset-session-button");
 
 const sessionUser = document.querySelector("#session-user");
 const connectionStatus = document.querySelector("#connection-status");
@@ -28,6 +29,16 @@ function showAuthView() {
     postauthView.hidden = true;
     authView.hidden = false;
     document.title = "Malandrino · Accesso";
+}
+
+function showResetSession(message = "Sessione server già attiva.") {
+    status.className = "auth-status";
+    status.textContent = message;
+    resetSessionButton.hidden = false;
+}
+
+function hideResetSession() {
+    resetSessionButton.hidden = true;
 }
 
 function showPostauthView() {
@@ -96,9 +107,20 @@ async function refreshAuthStatus() {
         const result = await auth.status();
 
         if (result.ok && result.data?.ok) {
-            authConnectionStatus.textContent = result.data.authenticated
+            const serverSessionActive =
+                result.data.authenticated || result.data.client_active;
+
+            authConnectionStatus.textContent = serverSessionActive
                 ? "Sessione auth già attiva"
                 : "Auth online";
+
+            if (serverSessionActive && !auth.sessionId) {
+                showResetSession(
+                    "Esiste una sessione server attiva, ma questa pagina non possiede più la chiave di sessione."
+                );
+            } else {
+                hideResetSession();
+            }
         }
     } catch {
         authConnectionStatus.textContent = "Auth non raggiungibile";
@@ -112,11 +134,16 @@ form.addEventListener("submit", async (event) => {
     status.className = "auth-status";
     status.textContent = "Autenticazione in corso…";
 
+    let authenticatedHere = false;
+
     try {
+        hideResetSession();
+
         await auth.authenticate(
             usernameInput.value,
             passwordInput.value,
         );
+        authenticatedHere = true;
 
         const client = await WGClientAPI.fromAuthSession(auth);
         window.wgFrontend.client = client;
@@ -136,11 +163,56 @@ form.addEventListener("submit", async (event) => {
         showPostauthView();
 
     } catch (error) {
+        const originalMessage = error.message ?? String(error);
+
+        if (authenticatedHere) {
+            try {
+                await auth.logout();
+            } catch {
+                // Best-effort rollback. The original frontend error is primary.
+            }
+
+            window.wgFrontend.client = null;
+        }
+
         status.className = "auth-status error";
-        status.textContent = error.message ?? String(error);
+        status.textContent = originalMessage;
         authConnectionStatus.textContent = "Offline";
+
+        if (!authenticatedHere && /session already active/i.test(originalMessage)) {
+            showResetSession(
+                "Una sessione precedente è ancora attiva sul server."
+            );
+        }
     } finally {
         button.disabled = false;
+    }
+});
+
+resetSessionButton.addEventListener("click", async () => {
+    resetSessionButton.disabled = true;
+    status.className = "auth-status";
+    status.textContent = "Chiusura della sessione precedente…";
+
+    try {
+        const result = await auth.resetServerSession();
+
+        if (!result.ok || !result.data?.ok) {
+            throw new Error(
+                result.data?.error
+                    ?? `reset session failed (${result.status})`
+            );
+        }
+
+        window.wgFrontend.client = null;
+        hideResetSession();
+        status.textContent = "Sessione precedente chiusa. Puoi autenticarti.";
+        authConnectionStatus.textContent = "Auth online";
+    } catch (error) {
+        status.className = "auth-status error";
+        status.textContent = error.message ?? String(error);
+    } finally {
+        resetSessionButton.disabled = false;
     }
 });
 

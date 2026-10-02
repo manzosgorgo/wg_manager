@@ -83,6 +83,12 @@ export class WGAuthSession {
         }
 
         if (finish.data.k_session !== credentials.sessionKey) {
+            try {
+                await this._request("DELETE", "/auth");
+            } catch {
+                // Best-effort rollback: preserve the original mismatch error.
+            }
+
             throw new Error("OPAQUE client/server session key mismatch");
         }
 
@@ -99,13 +105,17 @@ export class WGAuthSession {
     }
 
     async logout() {
-        const result = await this._request("DELETE", "/auth");
+        try {
+            return await this._request("DELETE", "/auth");
+        } finally {
+            this.username = null;
+            this.sessionId = null;
+            this.kSession = null;
+            this.activation = null;
+        }
+    }
 
-        this.username = null;
-        this.sessionId = null;
-        this.kSession = null;
-        this.activation = null;
-
-        return result;
+    async resetServerSession() {
+        return this.logout();
     }
 }
