@@ -20,6 +20,7 @@ def activation_params():
         "principal": {"username": "pytest-user", "peers": []},
         "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
         "listen_path": "/api/7f3a91c2e8b44d17/9c71e4a2f6b83d10",
+        "state_reconcile": lambda peers: None,
     }
 def systemd_client_instances():
     result = subprocess.run(

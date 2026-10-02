@@ -26,6 +26,7 @@ def activate_client(
         session_id,
         listen_path,
         principal,
+        state_reconcile=None,
 ):
     packet = {
         "protocol_version": 1,
@@ -53,27 +54,63 @@ def activate_client(
         # connect to the socket and send the payload
         sock.connect(socket_path)
         sock.sendall(payload)
-        #read response
-        with sock.makefile("rb") as response_file:
+        response_file = sock.makefile("rb")
+
+        while True:
             response = response_file.readline()
-        #check for empty or non-terminated response
-        if not response:
-            raise ConnectionError(
-                "activation socket closed without response"
+
+            if not response:
+                raise ConnectionError(
+                    "activation socket closed without response"
+                )
+
+            response = json.loads(
+                response.decode("utf-8", "replace").strip()
             )
 
-        response = json.loads(response.decode('utf-8', 'replace').strip())
+            if not isinstance(response, dict):
+                raise ValueError(
+                    "activation response must be a JSON object"
+                )
 
-        if not isinstance(response, dict):
-            raise ValueError("activation response must be a JSON object")
-        if response.get("protocol_version") != 1:
-            raise ValueError("unsupported activation response protocol_version")
-        if response.get("type") != "ACTIVATION_RESULT":
-            raise ValueError("invalid activation response type")
-        if response.get("status") not in {"OK", "ERROR"}:
-            raise ValueError("invalid activation response status")
+            if response.get("protocol_version") != 1:
+                raise ValueError(
+                    "unsupported activation response protocol_version"
+                )
 
-        return WGClientActivation(sock, response)
+            if response.get("type") == "STATE_SNAPSHOT":
+                if state_reconcile is None:
+                    raise ValueError(
+                        "activation requires state reconciliation"
+                    )
+
+                peers = response.get("peers")
+                state_reconcile(peers)
+
+                state_result = {
+                    "protocol_version": 1,
+                    "type": "STATE_RESULT",
+                    "status": "OK",
+                }
+
+                sock.sendall(
+                    (
+                        json.dumps(
+                            state_result,
+                            separators=(",", ":"),
+                        )
+                        + "\n"
+                    ).encode("utf-8")
+                )
+                continue
+
+            if response.get("type") != "ACTIVATION_RESULT":
+                raise ValueError("invalid activation response type")
+
+            if response.get("status") not in {"OK", "ERROR"}:
+                raise ValueError("invalid activation response status")
+
+            return WGClientActivation(sock, response)
     except Exception as e:
         if sock is not None:
             sock.close()

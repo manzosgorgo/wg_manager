@@ -13,18 +13,29 @@ if (typeof globalThis.crypto === "undefined") {
 }
 
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT = path.resolve(__dirname, "../..");
+
 const require = createRequire(import.meta.url);
-const { OpaqueClient } = require("../auth/js/opaque_client.js");
-const { WGAuthHTTPClient } = require("../auth/js/wg_auth_client.js");
+const OPAQUE_HELPER = path.join(ROOT, "tests/auth/js/opaque_client.js");
+const AUTH_HELPER = path.join(ROOT, "tests/auth/js/wg_auth_client.js");
+
+for (const helper of [OPAQUE_HELPER, AUTH_HELPER]) {
+  if (!fs.existsSync(helper)) {
+    throw new Error(
+      `missing E2E helper: ${helper}; restore tests/auth/js before running this test`
+    );
+  }
+}
+
+const { OpaqueClient } = require(OPAQUE_HELPER);
+const { WGAuthHTTPClient } = require(AUTH_HELPER);
 
 const {
   WGSecureSession,
   hexToBytes,
 } = await import("../../src/wg_frontend/wg_secure_session.js");
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT = path.resolve(__dirname, "../..");
 
 const AUTH_CONF = path.join(ROOT, "tests/auth/js/test_auth.conf");
 const CLIENT_CONF = path.join(ROOT, "config/wg-client-test-auth.conf");
