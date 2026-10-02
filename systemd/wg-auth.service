@@ -25,6 +25,7 @@ StandardError=journal
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
+ReadWritePaths=/home/main/Desktop/wg_manager/login
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectKernelLogs=yes

@@ -1,0 +1,40 @@
+[Unit]
+Description=WG Manager controller connection %i
+
+[Service]
+Type=simple
+
+User=wg-manager
+Group=wg-manager
+
+Environment="PYTHONPATH=/usr/lib/wg-manager"
+Environment="WG_CONFIG=/etc/wg-manager/wg-manager.conf"
+
+ExecStart=/usr/bin/python3 /usr/lib/wg-manager/src/wg_manager/wg_manager.py
+
+StandardInput=socket
+StandardOutput=journal
+StandardError=journal
+
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+NoNewPrivileges=yes
+
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+SystemCallArchitectures=native
+
+UMask=0077

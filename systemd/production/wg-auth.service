@@ -1,0 +1,50 @@
+[Unit]
+Description=WG Manager authentication service
+After=network.target wg-client.socket
+Requires=wg-client.socket
+
+[Service]
+Type=simple
+
+User=wg-auth
+Group=wg-auth
+SupplementaryGroups=wg-client
+
+Environment="PYTHONPATH=/usr/lib/wg-manager"
+Environment="WG_AUTH_CONFIG=/etc/wg-manager/wg-auth.conf"
+
+ExecStart=/usr/bin/python3 /usr/lib/wg-manager/src/wg_auth/wg_auth.py
+
+Restart=on-failure
+RestartSec=2
+
+StandardOutput=journal
+StandardError=journal
+
+StateDirectory=wg-manager/auth
+StateDirectoryMode=0700
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
