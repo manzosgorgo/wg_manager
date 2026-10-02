@@ -22,3 +22,6 @@ systemd/production/wg-client@.service usr/lib/systemd/system/
 config/production/wg-auth.conf etc/wg-manager/
 config/production/wg-client.conf etc/wg-manager/
 apache/production/wg-manager.conf etc/apache2/conf-available/
+tools/manage_users.py usr/lib/wg-manager/tools/
+debian/wg-manager-users usr/sbin/
+debian/certificates.README usr/share/doc/wg-manager-auth-client/
