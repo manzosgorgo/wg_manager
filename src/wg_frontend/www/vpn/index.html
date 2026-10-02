@@ -159,7 +159,14 @@
                 </details>
 
                 <div class="placeholder-card">
-                    QR code e download della configurazione verranno aggiunti qui.
+                    <strong>QR WireGuard</strong>
+                    <span id="peer-qr-status">
+                        Il QR sarà disponibile quando la configurazione sarà completa.
+                    </span>
+                    <div class="card-actions">
+                        <button id="peer-show-qr" type="button" disabled>Mostra QR</button>
+                    </div>
+                    <div id="peer-qr-code" class="peer-qr-code" hidden></div>
                 </div>
             </section>
 
@@ -207,6 +214,7 @@
     </div>
 
     <script src="/js/vendor/libopaque.js"></script>
+    <script src="/vendor/qrcode.min.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>

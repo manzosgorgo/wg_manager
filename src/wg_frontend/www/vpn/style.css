@@ -498,3 +498,20 @@ body {
 .advanced-info[open] summary {
   margin-bottom: 10px;
 }
+
+
+.peer-qr-code {
+  width: fit-content;
+  max-width: 100%;
+  margin: 16px auto 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.peer-qr-code img,
+.peer-qr-code canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}

@@ -23,6 +23,9 @@ const peerAllowedIpInput = document.querySelector("#peer-allowed-ip");
 const peerRoutingModeInput = document.querySelector("#peer-routing-mode");
 const peerKeepaliveInput = document.querySelector("#peer-keepalive");
 const peerConfigPreview = document.querySelector("#peer-config-preview");
+const peerShowQrButton = document.querySelector("#peer-show-qr");
+const peerQrStatus = document.querySelector("#peer-qr-status");
+const peerQrCode = document.querySelector("#peer-qr-code");
 const peerCreateStatus = document.querySelector("#peer-create-status");
 const provisioningDebug = document.querySelector("#provisioning-debug");
 
@@ -197,6 +200,30 @@ function clientAllowedIpsForMode(data, mode) {
         : [];
 }
 
+function configIsComplete(text) {
+    return (
+        typeof text === "string"
+        && text.length > 0
+        && !text.includes("<")
+        && !text.includes(">")
+    );
+}
+
+function updateQrAvailability() {
+    const configText = peerConfigPreview.textContent ?? "";
+    const ready = configIsComplete(configText);
+
+    peerShowQrButton.disabled = !ready;
+    peerQrStatus.textContent = ready
+        ? "Configurazione completa: QR pronto per l'importazione."
+        : "Il QR sarà disponibile quando la configurazione sarà completa.";
+
+    if (!ready) {
+        peerQrCode.hidden = true;
+        peerQrCode.replaceChildren();
+    }
+}
+
 function renderClientConfigPreview() {
     const data = provisioningState ?? {};
     const address = peerAllowedIpInput.value;
@@ -206,6 +233,7 @@ function renderClientConfigPreview() {
     if (!address) {
         peerConfigPreview.textContent =
             "Seleziona un IP per generare la preview.";
+        updateQrAvailability();
         return;
     }
 
@@ -227,6 +255,8 @@ function renderClientConfigPreview() {
             ? [`PersistentKeepalive = ${keepalive}`]
             : []),
     ].join("\n");
+
+    updateQrAvailability();
 }
 
 async function refreshProvisioning() {
@@ -619,6 +649,25 @@ peerForm.addEventListener("submit", async (event) => {
     } finally {
         submitButton.disabled = false;
     }
+});
+
+peerShowQrButton.addEventListener("click", () => {
+    const configText = peerConfigPreview.textContent ?? "";
+
+    if (!configIsComplete(configText)) {
+        updateQrAvailability();
+        return;
+    }
+
+    peerQrCode.replaceChildren();
+    peerQrCode.hidden = false;
+
+    new window.QRCode(peerQrCode, {
+        text: configText,
+        width: 280,
+        height: 280,
+        correctLevel: window.QRCode.CorrectLevel.M,
+    });
 });
 
 peerAllowedIpInput.addEventListener("change", renderClientConfigPreview);
