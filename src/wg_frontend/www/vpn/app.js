@@ -715,7 +715,9 @@ peerForm.addEventListener("submit", async (event) => {
         peerCreateStatus.className = "operation-status error";
         peerCreateStatus.textContent = error.message ?? String(error);
     } finally {
-        submitButton.disabled = false;
+        if (!provisionedPeer) {
+            submitButton.disabled = false;
+        }
     }
 });
 
