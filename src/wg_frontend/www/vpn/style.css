@@ -458,3 +458,43 @@ body {
   opacity: .55;
   cursor: wait;
 }
+
+
+.key-warning {
+  border: 1px solid var(--unknown);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin: 14px 0;
+  background: rgba(213, 168, 79, .08);
+}
+
+.key-warning strong,
+.key-warning span {
+  display: block;
+}
+
+.key-warning strong {
+  color: #f3d58d;
+  margin-bottom: 6px;
+}
+
+.key-warning span {
+  color: #d8c79e;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.advanced-info {
+  margin: 14px 0;
+}
+
+.advanced-info summary {
+  cursor: pointer;
+  color: #b9c3d0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.advanced-info[open] summary {
+  margin-bottom: 10px;
+}

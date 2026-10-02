@@ -127,7 +127,9 @@
                         Persistent keepalive
                         <select id="peer-keepalive" name="persistent_keepalive">
                             <option value="0">Off</option>
+                            <option value="10">10 secondi</option>
                             <option value="25" selected>25 secondi</option>
+                            <option value="60">60 secondi</option>
                         </select>
                     </label>
 
@@ -136,15 +138,25 @@
 
                 <div id="peer-create-status" class="operation-status" aria-live="polite"></div>
 
+                <div class="key-warning" role="alert">
+                    <strong>Private key non recuperabile</strong>
+                    <span>
+                        Quando verrà generata la configurazione, la private key resterà solo in questo browser e solo per questa sessione.
+                        Scarica subito la configurazione o acquisisci il QR: chiudendo o ricaricando la pagina non potrà essere recuperata.
+                    </span>
+                </div>
+
                 <div class="placeholder-card">
                     <strong>Config client preview</strong>
                     <pre id="peer-config-preview">Seleziona un IP per generare la preview.</pre>
                 </div>
 
-                <div class="placeholder-card">
-                    <strong>Provisioning debug</strong>
-                    <pre id="provisioning-debug">Caricamento…</pre>
-                </div>
+                <details class="advanced-info">
+                    <summary>Info avanzate / provisioning</summary>
+                    <div class="placeholder-card">
+                        <pre id="provisioning-debug">Caricamento…</pre>
+                    </div>
+                </details>
 
                 <div class="placeholder-card">
                     QR code e download della configurazione verranno aggiunti qui.
