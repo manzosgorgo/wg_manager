@@ -25,3 +25,4 @@ apache/production/wg-manager.conf etc/apache2/conf-available/
 tools/manage_users.py usr/lib/wg-manager/tools/
 debian/wg-manager-users usr/sbin/
 debian/certificates.README usr/share/doc/wg-manager-auth-client/
+debian/sysusers/wg-manager-auth-client.conf usr/lib/sysusers.d/
