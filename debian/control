@@ -17,7 +17,7 @@ Description: authentication, session client and web frontend for wg_manager
 
 Package: wg-manager-controller
 Architecture: all
-Depends: ${misc:Depends}, python3, wireguard-tools, systemd
+Depends: ${misc:Depends}, python3, wireguard-tools, systemd, util-linux
 Description: privileged WireGuard controller for wg_manager
  Provides the controller service that applies peer changes to a local
  WireGuard interface. It is intended for the host that owns the WireGuard
