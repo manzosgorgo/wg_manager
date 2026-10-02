@@ -848,6 +848,8 @@ peerForm.addEventListener("submit", async (event) => {
         }
 
         provisionedPeer = true;
+        peerDownloadConfigButton.hidden = false;
+        peerQrPanel.hidden = false;
 
         peerPublicKeyInput.disabled = true;
         peerAllowedIpInput.disabled = true;
