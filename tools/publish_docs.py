@@ -261,6 +261,11 @@ The protocol snapshots are generated independently for:
 - `src/wg_client`
 - `src/wg_manager`
 """
+    readme+="""
+# Documentazione Principale di wg_manager
+"""
+    with open(PROJECT_ROOT / "README.md", "r", encoding="utf-8") as f:
+        readme+=f.read()
 
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
