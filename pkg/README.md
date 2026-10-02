@@ -1,16 +1,14 @@
-# Package staging roots
+# Debian packaging
 
-This directory contains the filesystem roots used to build the two Debian
-packages for wg_manager.
+Debian packaging metadata lives in the repository-level `debian/` directory.
 
-- `wg-manager-auth-client/`: authentication service, per-session client,
-  frontend and Apache integration. This package is installed on the web/auth
-  host.
-- `wg-manager-controller/`: privileged WireGuard controller. This package is
-  installed on the WireGuard host.
+The source package builds two binary packages:
 
-Each package root follows the raw `dpkg-deb` layout. Package metadata lives in
-`DEBIAN/control`; runtime files will be added under `etc/`, `usr/` and
-`var/` as the production layout is finalized.
+- `wg-manager-auth-client`: authentication service, per-session client,
+  frontend and Apache integration.
+- `wg-manager-controller`: privileged WireGuard controller for the host that
+  owns the WireGuard interface.
 
-These directories are staging trees, not source-install locations.
+The old raw `dpkg-deb` staging roots were removed once the project switched
+to debhelper. The `debian/*.install` files are the authoritative file
+manifests for the two binary packages.

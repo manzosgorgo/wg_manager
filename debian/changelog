@@ -1,0 +1,5 @@
+wg-manager (0.1.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging for the split auth/client and controller runtime.
+
+ -- wg_manager local package <root@localhost>  Fri, 02 Oct 2026 23:55:00 +0200
