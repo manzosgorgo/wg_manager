@@ -295,6 +295,25 @@ python3 tools/manage_users.py --login-dir login delete USER
 python3 tools/manage_users.py --login-dir login claim-peer USER PUBLIC_KEY
 ```
 
+## Deployment production
+
+Il deployment Debian e la configurazione production sono documentati
+separatamente dalla documentazione generata:
+
+- [Guida deployment Debian](docs/deployment.md)
+- [Reference configurazione production](docs/configuration.md)
+- [Note sul packaging](pkg/README.md)
+
+I package installano inoltre checker read-only:
+
+```bash
+sudo wg-manager-check-auth-client
+sudo wg-manager-check-controller
+```
+
+I servizi production non vengono abilitati o avviati automaticamente durante
+l'installazione: prima vanno configurati rete e certificati.
+
 ## Test
 
 La suite corrente copre:
