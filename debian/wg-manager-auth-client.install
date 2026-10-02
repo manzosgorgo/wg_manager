@@ -10,14 +10,13 @@ src/wg_frontend/wg_opaque_client.js usr/share/wg-manager/js/
 src/wg_frontend/wg_client_api.js usr/share/wg-manager/js/
 src/wg_frontend/wg_secure_session.js usr/share/wg-manager/js/
 src/wg_frontend/wg_client_errors.js usr/share/wg-manager/js/
+vendor/libopaque.js usr/share/wg-manager/js/vendor/
+src/wg_frontend/vendor/LICENSE.libopaque usr/share/doc/wg-manager-auth-client/
 
 # Production systemd units.
 systemd/production/wg-auth.service usr/lib/systemd/system/
 systemd/production/wg-client.socket usr/lib/systemd/system/
 systemd/production/wg-client@.service usr/lib/systemd/system/
 
-# NOTE: libopaque.js is intentionally not listed yet.
-# vendor/libopaque is currently an absolute development symlink and must be
-# replaced by a real vendored runtime file before the package is buildable.
 # Production config and Apache files will be added once their final paths are
 # committed.
