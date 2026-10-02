@@ -22,6 +22,20 @@ Automatically generated documentation for the `wg_manager` project.
 - [wg-manager protocol](ai/wg_manager_proto.md)
 - [wg-all protocol](ai/wg_all_proto.md)
 
+## Python API documentation
+
+- [pydoc API index](ai/pydoc/index.html)
+
+Generate or refresh it from the repository root with:
+
+```bash
+python3 tools/build_pydoc.py
+```
+
+The generator discovers Python modules under `src/wg_auth`, `src/wg_client`
+and `src/wg_manager`, writes the HTML under `docs/ai/pydoc/`, and reports
+modules that pydoc could not import.
+
 ## Source documentation
 
 The [`ai/files/`](ai/files/) directory contains generated documentation
