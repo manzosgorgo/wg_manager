@@ -275,12 +275,13 @@ function renderPeers(result) {
                 peerQrScannedButton.hidden = true;
 
                 renderClientConfigPreview();
-                renderQrCode();
-                await refreshPeers();
 
                 for (const [name, panel] of Object.entries(panels)) {
                     panel.hidden = name !== "new-peer";
                 }
+
+                renderQrCode();
+                await refreshPeers();
 
                 peerCreateStatus.className = "operation-status success";
                 peerCreateStatus.textContent =
