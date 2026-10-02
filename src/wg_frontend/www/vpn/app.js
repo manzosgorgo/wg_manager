@@ -216,6 +216,29 @@ function renderPeers(result) {
                     throw new Error("wg-client session is not initialized");
                 }
 
+                const provisioningResult = await client.provisioning();
+                if (!provisioningResult.ok) {
+                    throw new Error(
+                        provisioningResult.data?.message
+                            ?? provisioningResult.data?.error
+                            ?? `wg-client returned HTTP ${provisioningResult.status}`
+                    );
+                }
+
+                provisioningState = provisioningResult.data ?? {};
+
+                provisioningDebug.textContent = [
+                    `interface: ${provisioningState.interface ?? "?"}`,
+                    `vpn_network: ${provisioningState.vpn_network ?? "?"}`,
+                    `server_address: ${provisioningState.server_address ?? "(non configurato)"}`,
+                    `server_public_key: ${provisioningState.server_public_key ?? "?"}`,
+                    `listen_port: ${provisioningState.listen_port ?? "?"}`,
+                    `endpoint: ${provisioningState.endpoint ?? "(non configurato)"}`,
+                    `used_ips: ${Array.isArray(provisioningState.used_ips) ? provisioningState.used_ips.join(", ") : ""}`,
+                    `reserved_ips: ${Array.isArray(provisioningState.reserved_ips) ? provisioningState.reserved_ips.join(", ") : ""}`,
+                    `available_ips: ${Array.isArray(provisioningState.available_ips) ? provisioningState.available_ips.join(", ") : ""}`,
+                ].join("\n");
+
                 const newKeyPair = await generateWireGuardKeyPair();
 
                 const removeResult = await client.removePeer(publicKey);
@@ -272,6 +295,7 @@ function renderPeers(result) {
                 peerNewProvisioningButton.hidden = false;
 
                 peerQrCode.replaceChildren();
+                peerQrCode.hidden = true;
                 peerQrScannedButton.hidden = true;
 
                 renderClientConfigPreview();
@@ -412,6 +436,7 @@ function updateQrAvailability() {
 
     if (!ready) {
         peerQrCode.replaceChildren();
+        peerQrCode.hidden = true;
         peerQrScannedButton.hidden = true;
     }
 }
@@ -950,6 +975,7 @@ peerNewProvisioningButton.addEventListener("click", async () => {
     peerQrPanel.hidden = true;
 
     peerQrCode.replaceChildren();
+    peerQrCode.hidden = true;
     peerQrScannedButton.hidden = true;
     peerCreateStatus.className = "operation-status";
     peerCreateStatus.textContent = "";
@@ -967,6 +993,7 @@ function renderQrCode() {
     }
 
     peerQrCode.replaceChildren();
+    peerQrCode.hidden = false;
 
     new window.QRCode(peerQrCode, {
         text: configText,
