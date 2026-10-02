@@ -314,7 +314,11 @@ async function main() {
     );
     assert.deepEqual(
       registryEntry(publicKey),
-      { username, allowed_ip: allowedIp },
+      {
+        username,
+        allowed_ip: allowedIp,
+        ownership_state: "consistent",
+      },
       "peer reservation was not persisted",
     );
 

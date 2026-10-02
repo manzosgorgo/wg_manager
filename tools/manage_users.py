@@ -13,6 +13,8 @@ if str(ROOT) not in sys.path:
 import opaque
 
 from src.wg_auth.wg_auth_user_store import WGAuthUserStore
+from src.wg_auth.wg_auth_peer_registry import WGAuthPeerRegistry
+from src.wg_auth.wg_auth_ownership_service import WGAuthOwnershipService
 
 
 SERVER_ID = b"wg-auth"
@@ -79,11 +81,30 @@ def main():
     delete = sub.add_parser("delete")
     delete.add_argument("username")
 
+    claim = sub.add_parser("claim-peer")
+    claim.add_argument("username")
+    claim.add_argument("public_key")
+
+    parser.add_argument(
+        "--peer-registry",
+        default=None,
+        help="peer registry path (defaults to <login-dir>/.peer_registry.json)",
+    )
+
     args = parser.parse_args()
 
     store = WGAuthUserStore(
         args.login_dir,
         opaque_record_len=opaque.OPAQUE_USER_RECORD_LEN,
+    )
+
+    registry = WGAuthPeerRegistry(
+        args.peer_registry
+        or str(Path(args.login_dir) / ".peer_registry.json")
+    )
+    ownership = WGAuthOwnershipService(
+        store,
+        registry,
     )
 
     try:
@@ -104,8 +125,19 @@ def main():
             print(f"created user '{args.username}'")
             return 0
 
-        store.delete_user(args.username)
-        print(f"deleted user '{args.username}'")
+        if args.command == "delete":
+            store.delete_user(args.username)
+            print(f"deleted user '{args.username}'")
+            return 0
+
+        result = ownership.reassign(
+            args.public_key,
+            args.username,
+        )
+        print(
+            f"peer '{result['public_key']}' assigned to "
+            f"'{result['owner']}'"
+        )
         return 0
 
     except (FileExistsError, FileNotFoundError, OSError, ValueError) as exc:

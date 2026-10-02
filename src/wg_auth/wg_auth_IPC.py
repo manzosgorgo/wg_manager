@@ -25,6 +25,8 @@ class WGAuthIPC:
         peer_register=None,
         peer_unregister=None,
         state_reconcile=None,
+        ownership_state=None,
+        ownership_reassign=None,
     ):
         self.socket_path = socket_path
         self.client_id = client_id
@@ -35,6 +37,8 @@ class WGAuthIPC:
         self.peer_register = peer_register
         self.peer_unregister = peer_unregister
         self.state_reconcile = state_reconcile
+        self.ownership_state = ownership_state
+        self.ownership_reassign = ownership_reassign
 
         self.sock = None
     @property
@@ -71,6 +75,10 @@ class WGAuthIPC:
 
                 if command in ("PEER_REGISTER", "PEER_UNREGISTER"):
                     self._handle_peer_request(request)
+                    continue
+
+                if command in ("OWNERSHIP_STATE", "OWNERSHIP_REASSIGN"):
+                    self._handle_ownership_request(request)
                     continue
 
                 log.error(
@@ -181,6 +189,93 @@ class WGAuthIPC:
             "type": "PEER_RESULT",
             "request_id": request_id,
             "status": "OK",
+        })
+
+    def _handle_ownership_request(self, request):
+        request_id = request.get("request_id")
+
+        if type(request_id) is not int or request_id < 1:
+            raise WGAuthProtocolError("invalid request_id")
+
+        username = None
+        if isinstance(self.principal, dict):
+            username = self.principal.get("username")
+
+        if username != "admin":
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "OWNERSHIP_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 403,
+                "error": "admin principal required",
+            })
+            return
+
+        try:
+            if request["type"] == "OWNERSHIP_STATE":
+                if self.ownership_state is None:
+                    raise RuntimeError("ownership state callback is unavailable")
+                result = self.ownership_state()
+
+            else:
+                public_key = request.get("public_key")
+                target_username = request.get("username")
+
+                if not isinstance(public_key, str) or not public_key:
+                    raise WGAuthProtocolError("invalid public_key")
+                if not isinstance(target_username, str) or not target_username:
+                    raise WGAuthProtocolError("invalid username")
+                if self.ownership_reassign is None:
+                    raise RuntimeError(
+                        "ownership reassign callback is unavailable"
+                    )
+
+                result = self.ownership_reassign(
+                    public_key,
+                    target_username,
+                )
+
+        except FileNotFoundError as exc:
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "OWNERSHIP_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 404,
+                "error": str(exc),
+            })
+            return
+
+        except ValueError as exc:
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "OWNERSHIP_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 409,
+                "error": str(exc),
+            })
+            return
+
+        except Exception as exc:
+            log.exception("ownership request failed")
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "OWNERSHIP_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 500,
+                "error": str(exc),
+            })
+            return
+
+        self.send_packet({
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "OWNERSHIP_RESULT",
+            "request_id": request_id,
+            "status": "OK",
+            "result": result,
         })
 
     def receive_packet(self):

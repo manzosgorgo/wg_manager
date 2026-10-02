@@ -69,7 +69,7 @@ class WGClientIPC:
                     self.lifecycle.request_shutdown(notify_shutdown=False)
                     return
 
-                if command == "PEER_RESULT":
+                if command in ("PEER_RESULT", "OWNERSHIP_RESULT"):
                     self._complete_pending(request)
                     continue
 
@@ -242,13 +242,13 @@ class WGClientIPC:
         request_id = response.get("request_id")
 
         if type(request_id) is not int:
-            raise WGProtocolError("invalid PEER_RESULT request_id")
+            raise WGProtocolError("invalid IPC result request_id")
 
         with self._pending_lock:
             pending = self._pending.get(request_id)
 
         if pending is None:
-            raise WGProtocolError("unexpected PEER_RESULT request_id")
+            raise WGProtocolError("unexpected IPC result request_id")
 
         pending["response"] = response
         pending["event"].set()
@@ -350,6 +350,89 @@ class WGClientIPC:
 
     def unregister_peer(self, public_key):
         return self._peer_request("PEER_UNREGISTER", public_key)
+
+    def _ownership_request(self, command, **fields):
+        if command not in ("OWNERSHIP_STATE", "OWNERSHIP_REASSIGN"):
+            raise WGProtocolError("invalid ownership IPC command")
+
+        event = threading.Event()
+
+        with self._pending_lock:
+            request_id = self._next_request_id
+            self._next_request_id += 1
+            self._pending[request_id] = {
+                "event": event,
+                "response": None,
+                "error": None,
+            }
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": command,
+            "request_id": request_id,
+            **fields,
+        }
+
+        try:
+            sock = self.sock
+            if sock is None:
+                raise WGProtocolError("IPC connection is closed")
+
+            with self._send_lock:
+                sock.sendall(self._encode_packet(packet))
+
+            if not event.wait(IPC_RESPONSE_TIMEOUT):
+                raise WGProtocolError("ownership IPC request timed out")
+
+            with self._pending_lock:
+                pending = self._pending.get(request_id)
+
+            if pending is None:
+                raise WGProtocolError("ownership IPC request disappeared")
+
+            if pending["error"] is not None:
+                raise WGProtocolError(pending["error"])
+
+            response = pending["response"]
+
+            if not isinstance(response, dict):
+                raise WGProtocolError("missing OWNERSHIP_RESULT")
+
+            if response.get("status") != "OK":
+                status_code = response.get("status_code", 502)
+                if type(status_code) is not int:
+                    status_code = 502
+
+                raise WGPeerPersistenceError(
+                    status_code,
+                    response.get("error", "ownership request failed"),
+                )
+
+            return response.get("result")
+
+        except OSError as exc:
+            raise WGProtocolError(
+                f"ownership IPC request failed: {exc}"
+            ) from exc
+
+        finally:
+            with self._pending_lock:
+                self._pending.pop(request_id, None)
+
+    def ownership_state(self):
+        return self._ownership_request("OWNERSHIP_STATE")
+
+    def reassign_owner(self, public_key, username):
+        if not isinstance(public_key, str) or not public_key:
+            raise WGProtocolError("public_key must be a non-empty string")
+        if not isinstance(username, str) or not username:
+            raise WGProtocolError("username must be a non-empty string")
+
+        return self._ownership_request(
+            "OWNERSHIP_REASSIGN",
+            public_key=public_key,
+            username=username,
+        )
 
     def reconcile_state(self, peers):
         if not isinstance(peers, list):

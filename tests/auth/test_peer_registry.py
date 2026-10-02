@@ -20,6 +20,7 @@ def test_reserve_and_release_peer(tmp_path):
     assert entry == {
         "username": "alice",
         "allowed_ip": "10.8.0.2/32",
+        "ownership_state": "consistent",
     }
     assert registry.get("peer-a") == entry
 
@@ -102,10 +103,12 @@ def test_reconcile_rebuilds_registry_from_live_state(tmp_path):
         "peer-a": {
             "username": "alice",
             "allowed_ip": "10.8.0.2/32",
+            "ownership_state": "consistent",
         },
         "peer-b": {
             "username": "bob",
             "allowed_ip": "10.8.0.3/32",
+            "ownership_state": "consistent",
         },
     }
 
@@ -113,18 +116,44 @@ def test_reconcile_rebuilds_registry_from_live_state(tmp_path):
     assert on_disk == result
 
 
-def test_reconcile_rejects_live_peer_without_owner(tmp_path):
+def test_reconcile_keeps_live_peer_without_owner_as_orphan(tmp_path):
     registry = WGAuthPeerRegistry(
         str(tmp_path / "peer-registry.json")
     )
 
-    with pytest.raises(ValueError, match="no persisted owner"):
-        registry.reconcile(
-            [
-                {
-                    "public_key": "peer-a",
-                    "allowed_ip": "10.8.0.2/32",
-                }
-            ],
-            {},
-        )
+    result = registry.reconcile(
+        [
+            {
+                "public_key": "peer-a",
+                "allowed_ip": "10.8.0.2/32",
+            }
+        ],
+        {},
+    )
+
+    assert result["peers"]["peer-a"] == {
+        "username": None,
+        "allowed_ip": "10.8.0.2/32",
+        "ownership_state": "orphan",
+    }
+
+
+
+def test_set_owner_repairs_orphan(tmp_path):
+    registry = WGAuthPeerRegistry(
+        str(tmp_path / "peer-registry.json")
+    )
+    registry.reconcile(
+        [
+            {
+                "public_key": "peer-a",
+                "allowed_ip": "10.8.0.2/32",
+            }
+        ],
+        {},
+    )
+
+    updated = registry.set_owner("peer-a", "alice")
+
+    assert updated["username"] == "alice"
+    assert updated["ownership_state"] == "consistent"

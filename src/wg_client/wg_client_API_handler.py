@@ -26,6 +26,8 @@ log = logging.getLogger("wg_manager.api.handler")
 MAX_BODY_SIZE = 65536
 
 PEERS_PREFIX = "/v1/peers/"
+ADMIN_PEERS_PATH = "/v1/admin/peers"
+ADMIN_PEERS_PREFIX = "/v1/admin/peers/"
 
 # Headers used to carry WGSecureSession authentication over HTTPS.
 # Not frozen yet as part of the wire protocol: convenient for this
@@ -168,6 +170,21 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
 
         public_key = unquote(path[len(PEERS_PREFIX) :])
 
+        return public_key or None
+
+    def admin_owner_key(self, path):
+        if (
+            path is None
+            or not path.startswith(ADMIN_PEERS_PREFIX)
+            or not path.endswith("/owner")
+        ):
+            return None
+
+        encoded = path[
+            len(ADMIN_PEERS_PREFIX):-len("/owner")
+        ]
+
+        public_key = unquote(encoded)
         return public_key or None
 
     def log_message(self, format, *args):
@@ -376,12 +393,17 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             if not self.authenticate_request(b""):
                 return
 
-            if self.api_path() != "/v1/status":
-                self.send_error(404)
-                return
+            path = self.api_path()
 
             try:
-                result = self.peer_service.status()
+                if path == "/v1/status":
+                    result = self.peer_service.status()
+                elif path == ADMIN_PEERS_PATH:
+                    result = self.peer_service.admin_status()
+                else:
+                    self.send_error(404)
+                    return
+
             except WGPeerError as exc:
                 self.send_error(
                     exc.status,
@@ -449,7 +471,48 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             if not self.authenticate_request(raw_body):
                 return
 
-            public_key = self.peer_key(self.api_path())
+            path = self.api_path()
+            admin_public_key = self.admin_owner_key(path)
+
+            if admin_public_key is not None:
+                try:
+                    obj = json.loads(raw_body.decode("utf-8"))
+                    username = obj["username"]
+
+                    if not isinstance(username, str) or not username:
+                        raise ValueError("invalid username")
+
+                    result = self.peer_service.reassign_owner(
+                        admin_public_key,
+                        username,
+                    )
+
+                except (
+                    UnicodeDecodeError,
+                    json.JSONDecodeError,
+                    KeyError,
+                    TypeError,
+                    ValueError,
+                ):
+                    self.send_error(
+                        400,
+                        "Bad Request",
+                        "Invalid ownership request",
+                    )
+                    return
+
+                except WGPeerError as exc:
+                    self.send_error(
+                        exc.status,
+                        "Peer service error",
+                        exc.message,
+                    )
+                    return
+
+                self.send_json(200, result)
+                return
+
+            public_key = self.peer_key(path)
             if public_key is None:
                 self.send_error(404)
                 return

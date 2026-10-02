@@ -32,12 +32,27 @@ class FakeSession:
 class FakeIPC:
     def __init__(self):
         self.calls = []
+        self.ownership = {
+            "users": ["admin", "alice"],
+            "peers": [],
+        }
 
     def register_peer(self, public_key, allowed_ip):
         self.calls.append(("register", public_key, allowed_ip))
 
     def unregister_peer(self, public_key):
         self.calls.append(("unregister", public_key))
+
+    def ownership_state(self):
+        self.calls.append(("ownership_state",))
+        return self.ownership
+
+    def reassign_owner(self, public_key, username):
+        self.calls.append(("reassign_owner", public_key, username))
+        return {
+            "public_key": public_key,
+            "owner": username,
+        }
 
 
 class FakeLifecycle:
@@ -201,3 +216,70 @@ def test_existing_owned_key_is_rejected_before_reservation():
 
     assert info.value.status == 409
     assert lifecycle.ipc.calls == []
+
+
+
+def test_admin_status_merges_runtime_and_ownership():
+    controller = FakeController()
+    controller.status_result["peers"] = [
+        {
+            "public_key": "peer-a",
+            "allowed_ips": ["10.8.0.2/32"],
+        }
+    ]
+    lifecycle = FakeLifecycle()
+    lifecycle.ipc.ownership = {
+        "users": ["admin", "alice"],
+        "peers": [
+            {
+                "public_key": "peer-a",
+                "allowed_ip": "10.8.0.2/32",
+                "owner": None,
+                "ownership_state": "orphan",
+            }
+        ],
+    }
+
+    service = WGPeerService(
+        controller,
+        FakeSession(username="admin", admin=True),
+        lifecycle,
+        "wg0",
+    )
+
+    result = service.admin_status()
+
+    assert result["users"] == ["admin", "alice"]
+    assert result["peers"][0]["ownership_state"] == "orphan"
+    assert result["peers"][0]["runtime"]["public_key"] == "peer-a"
+
+
+def test_non_admin_cannot_read_admin_status():
+    service = WGPeerService(
+        FakeController(),
+        FakeSession(username="alice"),
+        FakeLifecycle(),
+        "wg0",
+    )
+
+    with pytest.raises(WGPeerError) as info:
+        service.admin_status()
+
+    assert info.value.status == 403
+
+
+def test_admin_can_reassign_owner():
+    lifecycle = FakeLifecycle()
+    service = WGPeerService(
+        FakeController(),
+        FakeSession(username="admin", admin=True),
+        lifecycle,
+        "wg0",
+    )
+
+    result = service.reassign_owner("peer-a", "alice")
+
+    assert result["owner"] == "alice"
+    assert lifecycle.ipc.calls == [
+        ("reassign_owner", "peer-a", "alice"),
+    ]

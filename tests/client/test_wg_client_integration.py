@@ -310,11 +310,37 @@ class FakeSecureSession:
 
 
 class FakeIPC:
+    def __init__(self):
+        self.calls = []
+
     def register_peer(self, public_key, allowed_ip):
+        self.calls.append(("register_peer", public_key, allowed_ip))
         return {"status": "OK"}
 
     def unregister_peer(self, public_key):
+        self.calls.append(("unregister_peer", public_key))
         return {"status": "OK"}
+
+    def ownership_state(self):
+        self.calls.append(("ownership_state",))
+        return {
+            "users": ["admin", "alice"],
+            "peers": [
+                {
+                    "public_key": PUBLIC_KEY,
+                    "allowed_ip": "10.8.0.2/32",
+                    "owner": "alice",
+                    "ownership_state": "consistent",
+                }
+            ],
+        }
+
+    def reassign_owner(self, public_key, username):
+        self.calls.append(("reassign_owner", public_key, username))
+        return {
+            "public_key": public_key,
+            "owner": username,
+        }
 
 
 @pytest.fixture
@@ -369,6 +395,55 @@ def test_status_below_listen_path(api):
 
     assert status == 200
     assert json.loads(body)["interface"] == "wg0"
+
+
+def test_admin_peer_status(api):
+    api.controller.status_result = {
+        "ok": True,
+        "interface": "wg0",
+        "peers": [
+            {
+                "public_key": PUBLIC_KEY,
+                "allowed_ips": ["10.8.0.2/32"],
+            }
+        ],
+    }
+
+    status, body = request(
+        api,
+        "GET",
+        LISTEN_PATH + "/v1/admin/peers",
+    )
+
+    assert status == 200
+    data = json.loads(body)
+    assert data["users"] == ["admin", "alice"]
+    assert data["peers"][0]["owner"] == "alice"
+    assert data["peers"][0]["runtime"]["public_key"] == PUBLIC_KEY
+
+
+def test_admin_reassign_owner(api):
+    path = (
+        LISTEN_PATH
+        + "/v1/admin/peers/"
+        + quote(PUBLIC_KEY, safe="")
+        + "/owner"
+    )
+
+    status, body = request(
+        api,
+        "PUT",
+        path,
+        body=json.dumps({"username": "alice"}),
+    )
+
+    assert status == 200
+    assert json.loads(body)["owner"] == "alice"
+    assert (
+        "reassign_owner",
+        PUBLIC_KEY,
+        "alice",
+    ) in api.lifecycle.ipc.calls
 
 
 def test_outside_listen_path_is_404(api):

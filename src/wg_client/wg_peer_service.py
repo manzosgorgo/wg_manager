@@ -175,3 +175,54 @@ class WGPeerService:
 
         self.session.unregister_peer(public_key)
         return result
+
+
+    def admin_status(self):
+        if not self.session.is_admin:
+            raise WGPeerError(403, "admin principal required")
+
+        try:
+            ownership = self.ipc.ownership_state()
+        except WGPeerPersistenceError as exc:
+            raise WGPeerError(exc.status, exc.message) from exc
+        except WGProtocolError as exc:
+            raise WGPeerError(502, "failed to read ownership state") from exc
+
+        live = self._controller_status()
+        live_by_key = {
+            peer.get("public_key"): peer
+            for peer in live.get("peers", [])
+            if isinstance(peer, dict)
+            and isinstance(peer.get("public_key"), str)
+        }
+
+        rows = []
+
+        for entry in ownership.get("peers", []):
+            row = dict(entry)
+            live_peer = live_by_key.get(entry.get("public_key"))
+            if live_peer is not None:
+                row["runtime"] = live_peer
+            else:
+                row["runtime"] = None
+            rows.append(row)
+
+        return {
+            "ok": True,
+            "users": ownership.get("users", []),
+            "peers": rows,
+        }
+
+    def reassign_owner(self, public_key, username):
+        if not self.session.is_admin:
+            raise WGPeerError(403, "admin principal required")
+
+        try:
+            return self.ipc.reassign_owner(
+                public_key,
+                username,
+            )
+        except WGPeerPersistenceError as exc:
+            raise WGPeerError(exc.status, exc.message) from exc
+        except WGProtocolError as exc:
+            raise WGPeerError(502, "failed to update peer ownership") from exc
