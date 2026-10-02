@@ -50,7 +50,7 @@ export class WGClientAPI {
         );
     }
 
-    async request(method, apiPath, object = null) {
+    async request(method, apiPath, object = null, transportPath = apiPath) {
         const bodyText = object === null
             ? ""
             : JSON.stringify(object);
@@ -81,7 +81,7 @@ export class WGClientAPI {
         }
 
         const response = await fetch(
-            this.baseUrl + this.listenPath + apiPath,
+            this.baseUrl + this.listenPath + transportPath,
             options,
         );
 
@@ -207,23 +207,45 @@ export class WGClientAPI {
         return true;
     }
 
+    peerPath(publicKey) {
+        const canonicalPath =
+            "/v1/peers/" + encodeURIComponent(publicKey);
+
+        // Apache rejects an encoded slash (%2F) before the request reaches
+        // wg-client. Double-encode only that transport representation:
+        // wg-client canonicalizes it back to the signed %2F target.
+        const transportPath = canonicalPath.replace(/%2F/gi, "%252F");
+
+        return {
+            canonicalPath,
+            transportPath,
+        };
+    }
+
     addPeer(publicKey, allowedIp) {
-        const path = "/v1/peers/" + encodeURIComponent(publicKey);
+        const { canonicalPath, transportPath } =
+            this.peerPath(publicKey);
 
         return this.request(
             "PUT",
-            path,
+            canonicalPath,
             {
                 public_key: publicKey,
                 allowed_ip: allowedIp,
             },
+            transportPath,
         );
     }
 
     removePeer(publicKey) {
+        const { canonicalPath, transportPath } =
+            this.peerPath(publicKey);
+
         return this.request(
             "DELETE",
-            "/v1/peers/" + encodeURIComponent(publicKey),
+            canonicalPath,
+            null,
+            transportPath,
         );
     }
 
@@ -232,12 +254,18 @@ export class WGClientAPI {
     }
 
     reassignOwner(publicKey, username) {
+        const canonicalPath =
+            "/v1/admin/peers/"
+            + encodeURIComponent(publicKey)
+            + "/owner";
+        const transportPath =
+            canonicalPath.replace(/%2F/gi, "%252F");
+
         return this.request(
             "PUT",
-            "/v1/admin/peers/"
-                + encodeURIComponent(publicKey)
-                + "/owner",
+            canonicalPath,
             { username },
+            transportPath,
         );
     }
 
