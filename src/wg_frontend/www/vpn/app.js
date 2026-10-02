@@ -46,6 +46,7 @@ function startHeartbeat() {
 
         try {
             await client.status();
+            await client.prepareFastLogout();
         } catch (error) {
             stopHeartbeat();
             window.wgFrontend.client = null;
@@ -180,6 +181,7 @@ form.addEventListener("submit", async (event) => {
 
         passwordInput.value = "";
         renderPeers(clientStatus);
+        await client.prepareFastLogout();
         showPostauthView();
         startHeartbeat();
 
@@ -264,3 +266,17 @@ for (const viewButton of viewButtons) {
 
 showAuthView();
 refreshAuthStatus();
+
+
+window.addEventListener("pagehide", (event) => {
+    if (event.persisted) {
+        return;
+    }
+
+    stopHeartbeat();
+
+    const client = window.wgFrontend.client;
+    if (client) {
+        client.fastLogout();
+    }
+});

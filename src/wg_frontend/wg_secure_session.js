@@ -367,6 +367,16 @@ export class WGSecureSession {
     return auth;
   }
 
+  abandonRequest(requestAuth) {
+    const validated = this._validateRequestAuth(requestAuth);
+
+    if (!bytesEqual(validated.session_id, this._sessionId)) {
+      throw new WGSessionMismatchError("invalid request session id");
+    }
+
+    delete this._pendingRequests[validated.counter];
+  }
+
   async verifyRequest(auth, method, path, body = new Uint8Array(0)) {
     if (typeof method !== "string") throw new WGInvalidFieldError("method must be str");
     if (typeof path !== "string") throw new WGInvalidFieldError("path must be str");

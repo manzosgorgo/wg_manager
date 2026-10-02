@@ -22,6 +22,7 @@ export class WGClientAPI {
             ? listenPath.replace(/\/$/, "")
             : "/" + listenPath.replace(/\/$/, "");
         this.session = session;
+        this._preparedLogoutAuth = null;
     }
 
     static async fromAuthSession(
@@ -126,7 +127,59 @@ export class WGClientAPI {
     }
 
     logout() {
+        this.discardPreparedLogout();
         return this.request("DELETE", "/v1/session");
+    }
+
+    discardPreparedLogout() {
+        if (this._preparedLogoutAuth === null) {
+            return;
+        }
+
+        this.session.abandonRequest(this._preparedLogoutAuth);
+        this._preparedLogoutAuth = null;
+    }
+
+    async prepareFastLogout() {
+        this.discardPreparedLogout();
+
+        this._preparedLogoutAuth = await this.session.createRequestAuth(
+            "DELETE",
+            "/v1/session",
+            new Uint8Array(0),
+        );
+    }
+
+    fastLogout() {
+        const auth = this._preparedLogoutAuth;
+        if (auth === null) {
+            return false;
+        }
+
+        this._preparedLogoutAuth = null;
+
+        const headers = {
+            Accept: "application/json",
+            "X-WG-Session-ID": auth.session_id,
+            "X-WG-Counter": String(auth.counter),
+            "X-WG-Nonce": auth.nonce,
+            "X-WG-MAC": auth.mac,
+        };
+
+        try {
+            fetch(
+                this.baseUrl + this.listenPath + "/v1/session",
+                {
+                    method: "DELETE",
+                    headers,
+                    keepalive: true,
+                },
+            ).catch(() => {});
+        } catch {
+            return false;
+        }
+
+        return true;
     }
 
     addPeer(publicKey, allowedIp) {
