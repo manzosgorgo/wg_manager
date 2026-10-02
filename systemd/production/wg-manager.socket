@@ -2,7 +2,7 @@
 Description=WG Manager controller socket
 
 [Socket]
-ListenStream=127.0.0.1:9443
+ListenStream=0.0.0.0:9443
 Accept=yes
 
 [Install]
