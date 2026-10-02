@@ -12,4 +12,36 @@ esac
 # debhelper inserts sysusers/tmpfiles/systemd integration here.
 #DEBHELPER#
 
+if [ "$1" = "configure" ]; then
+    install -d -o root -g root      -m 0755 /etc/wg-manager/cert
+    install -d -o root -g wg-auth   -m 0750 /etc/wg-manager/cert/auth
+    install -d -o root -g wg-client -m 0750 /etc/wg-manager/cert/client
+    install -d -o root -g www-data  -m 0750 /etc/wg-manager/cert/apache
+
+    if [ -e /etc/wg-manager/cert/ca.crt ]; then
+        chown root:root /etc/wg-manager/cert/ca.crt
+        chmod 0644 /etc/wg-manager/cert/ca.crt
+    fi
+    if [ -e /etc/wg-manager/cert/auth/auth.crt ]; then
+        chown root:wg-auth /etc/wg-manager/cert/auth/auth.crt
+        chmod 0644 /etc/wg-manager/cert/auth/auth.crt
+    fi
+    if [ -e /etc/wg-manager/cert/auth/auth.key ]; then
+        chown root:wg-auth /etc/wg-manager/cert/auth/auth.key
+        chmod 0640 /etc/wg-manager/cert/auth/auth.key
+    fi
+    if [ -e /etc/wg-manager/cert/client/client.crt ]; then
+        chown root:wg-client /etc/wg-manager/cert/client/client.crt
+        chmod 0644 /etc/wg-manager/cert/client/client.crt
+    fi
+    if [ -e /etc/wg-manager/cert/client/client.key ]; then
+        chown root:wg-client /etc/wg-manager/cert/client/client.key
+        chmod 0640 /etc/wg-manager/cert/client/client.key
+    fi
+    if [ -e /etc/wg-manager/cert/apache/apache-client.pem ]; then
+        chown root:www-data /etc/wg-manager/cert/apache/apache-client.pem
+        chmod 0640 /etc/wg-manager/cert/apache/apache-client.pem
+    fi
+fi
+
 exit 0
