@@ -515,3 +515,35 @@ body {
   max-width: 100%;
   height: auto;
 }
+
+
+.provisioning-section {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.provisioning-section .placeholder-card + .placeholder-card {
+  margin-top: 14px;
+}
+
+.subsection-heading {
+  margin-bottom: 12px;
+}
+
+.subsection-heading .eyebrow {
+  margin-bottom: 5px;
+}
+
+.subsection-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.debug-section {
+  margin-top: 30px;
+}
+
+.debug-section .advanced-info {
+  margin: 0;
+}
