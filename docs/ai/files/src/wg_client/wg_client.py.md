@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client.py`
 - Language: `python`
-- Lines: 215
-- SHA256: `9489708382c3ade94d936d2ab200236b075b485e4265e2c56d6459af17ec9701`
+- Lines: 258
+- SHA256: `d043f98a45da0fc95c71f82415bd352f58cf36a7a5f13f8f7083f5ac91e0d124`
 - Imports:
   - `logging`
   - `os`
@@ -79,6 +79,48 @@ def systemd_notify(message):
         sock.close()
 
 
+def _manager_peer_snapshot(api):
+    status = api.controller.status()
+
+    if (
+        not isinstance(status, dict)
+        or status.get("interface") != api.interface
+    ):
+        raise RuntimeError("controller interface mismatch during activation")
+
+    peers = status.get("peers")
+    if not isinstance(peers, list):
+        raise RuntimeError("controller returned invalid peer list")
+
+    snapshot = []
+
+    for peer in peers:
+        if not isinstance(peer, dict):
+            raise RuntimeError("controller returned invalid peer entry")
+
+        public_key = peer.get("public_key")
+        allowed_ips = peer.get("allowed_ips")
+
+        if (
+            not isinstance(public_key, str)
+            or not public_key
+            or not isinstance(allowed_ips, list)
+            or len(allowed_ips) != 1
+            or not isinstance(allowed_ips[0], str)
+            or not allowed_ips[0]
+        ):
+            raise RuntimeError(
+                "controller peer state cannot be reconciled safely"
+            )
+
+        snapshot.append({
+            "public_key": public_key,
+            "allowed_ip": allowed_ips[0],
+        })
+
+    return snapshot
+
+
 def activate(ipc, lifecycle):
     """
     Read the activation packet and bring the HTTPS API up.
@@ -118,22 +160,23 @@ def activate(ipc, lifecycle):
             principal=activation["principal"],
         )
 
-        if cfg["secure_session"]["enabled"] is True:
-            log.info("wg_client using secure session")
-            api = WGClientAPI(
-                cfg,
-                activation["listen_path"],
-                session,
-                lifecycle,
-            )
-        else:
-            log.info("wg_client not using secure session")
-            api = WGClientAPI(
-                cfg,
-                activation["listen_path"],
-                None,
-                lifecycle,
-            )
+        if cfg["secure_session"]["enabled"] is not True:
+            raise RuntimeError("secure session cannot be disabled")
+
+        log.info("wg_client using secure session")
+        api = WGClientAPI(
+            cfg,
+            activation["listen_path"],
+            session,
+            lifecycle,
+        )
+
+        snapshot = _manager_peer_snapshot(api)
+        ipc.reconcile_state(snapshot)
+        log.info(
+            "reconciled %d live peer reservations",
+            len(snapshot),
+        )
 
         log.debug("api bind")
         api.bind()

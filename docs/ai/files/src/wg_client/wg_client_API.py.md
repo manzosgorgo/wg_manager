@@ -4,14 +4,15 @@
 
 - Path: `src/wg_client/wg_client_API.py`
 - Language: `python`
-- Lines: 142
-- SHA256: `7ae01b886cc2db75ffe69ff2e7b13f7c6e658ed9ab448565f4065e536568523c`
+- Lines: 149
+- SHA256: `bf88bfa4011640b546f5cb7e6a1d02941d5e6acf1e99a17c1b5ffc892491f9c1`
 - Imports:
   - `logging`
   - `src.wg_client.wg_client_API_handler`
   - `src.wg_client.wg_client_errors`
   - `src.wg_client.wg_client_lifecycle`
   - `src.wg_client.wg_controller_client`
+  - `src.wg_client.wg_peer_service`
   - `ssl`
 
 ## Source
@@ -26,6 +27,7 @@ from src.wg_client.wg_client_API_handler import WGClientAPIHandler, WGClientHTTP
 from src.wg_client.wg_client_errors import WGAPIError
 from src.wg_client.wg_client_lifecycle import WGClientLifecycle
 from src.wg_client.wg_controller_client import WGControllerClient
+from src.wg_client.wg_peer_service import WGPeerService
 
 
 log = logging.getLogger("wg_manager.api")
@@ -33,7 +35,7 @@ log.setLevel(logging.DEBUG)
 
 
 class WGClientAPI:
-    def __init__(self, config, listen_path, session=None, lifecycle=None):
+    def __init__(self, config, listen_path, session, lifecycle=None):
         self.server = None
         log.debug("Initializing WGClientAPI")
 
@@ -54,8 +56,9 @@ class WGClientAPI:
         # <listen_path>/v1/status.
         self.listen_path = listen_path
 
-        # WGSecureSession built from the activation packet.
-        # Not used to authenticate requests yet.
+        if session is None:
+            raise RuntimeError("WGClientAPI requires an authenticated secure session")
+
         self.session = session
 
         if lifecycle is None:
@@ -79,6 +82,13 @@ class WGClientAPI:
             timeout=config["controller"]["timeout"],
         )
 
+        self.peer_service = WGPeerService(
+            self.controller,
+            self.session,
+            self.lifecycle,
+            self.interface,
+        )
+
     def start(self):
         """Bind and serve until stop() is called."""
         self.bind()
@@ -97,10 +107,8 @@ class WGClientAPI:
             self.server = WGClientHTTPServer(
                 (self.host, self.port),
                 WGClientAPIHandler,
-                self.controller,
+                self.peer_service,
                 self.listen_path,
-                self.interface,
-                self.lifecycle,
                 self.session,
             )
 

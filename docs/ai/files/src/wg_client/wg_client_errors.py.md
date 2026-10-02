@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_errors.py`
 - Language: `python`
-- Lines: 109
-- SHA256: `b3cf1c755112b18852b113b6f8f80440850601503ffe39e2c78c350363fd7383`
+- Lines: 118
+- SHA256: `504d5ecf23811205c7a26b3d2482d632c1b3e5dc4024eaebd1152d232fb29018`
 
 ## Source
 
@@ -64,6 +64,15 @@ class WGConnectionClosed(WGProtocolError):
     """IPC connection to the WireGuard client was closed with an EOF."""
 
     pass
+
+
+class WGPeerPersistenceError(WGProtocolError):
+    """Semantic error returned by the auth persistence IPC."""
+
+    def __init__(self, status, message):
+        super().__init__(message)
+        self.status = status
+        self.message = message
 
 
 class WGAPIError(WGClientError):

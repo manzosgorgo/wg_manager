@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_API.py`
 - Language: `python`
-- Lines: 343
-- SHA256: `6cda9d4b88209f5f9a2f50e4a406af1a7b702d13d9f00fdca74cf0d6433927af`
+- Lines: 404
+- SHA256: `42b8b506aad054cbd488d0f9635432d48eafb582eb75adb7dbeaefa024388253`
 - Imports:
   - `http.server`
   - `json`
@@ -13,6 +13,8 @@
   - `src.wg_auth.wg_auth_API_handler`
   - `src.wg_auth.wg_auth_IPC`
   - `src.wg_auth.wg_auth_errors`
+  - `src.wg_auth.wg_auth_ownership_service`
+  - `src.wg_auth.wg_auth_peer_registry`
   - `src.wg_auth.wg_auth_session`
   - `src.wg_auth.wg_auth_user_store`
   - `ssl`
@@ -30,6 +32,8 @@ from http.server import ThreadingHTTPServer
 from src.wg_auth.wg_auth_IPC import WGAuthIPC
 from src.wg_auth.wg_auth_errors import WGAuthSessionError, WGAuthAuthenticationError
 from src.wg_auth.wg_auth_user_store import WGAuthUserStore
+from src.wg_auth.wg_auth_peer_registry import WGAuthPeerRegistry
+from src.wg_auth.wg_auth_ownership_service import WGAuthOwnershipService
 
 log = logging.getLogger("wg_auth.API")
 
@@ -44,6 +48,16 @@ class WGAuthAPI:
         self.config = config
         self.lifecycle = lifecycle
         self.user_store = WGAuthUserStore(config["auth"]["login_dir"])
+        self.peer_registry = WGAuthPeerRegistry(
+            config["auth"].get(
+                "peer_registry",
+                config["auth"]["login_dir"] + "/.peer_registry.json",
+            )
+        )
+        self.ownership_service = WGAuthOwnershipService(
+            self.user_store,
+            self.peer_registry,
+        )
 
         self.session = None
         self.ipc = None
@@ -169,6 +183,11 @@ class WGAuthAPI:
                 listen_path=self.config["client"]["listen_path"],
                 lifecycle=self.lifecycle,
                 principal=session.principal,
+                peer_register=self._register_peer,
+                peer_unregister=self._unregister_peer,
+                state_reconcile=self._reconcile_peer_state,
+                ownership_state=self._ownership_state,
+                ownership_reassign=self._reassign_ownership,
             )
 
             self.ipc = ipc
@@ -223,6 +242,50 @@ class WGAuthAPI:
         return response
 
 
+
+    def _register_peer(self, username, public_key, allowed_ip):
+        self.peer_registry.reserve(
+            username,
+            public_key,
+            allowed_ip,
+        )
+
+        try:
+            self.user_store.add_peer(username, public_key)
+        except Exception:
+            self.peer_registry.release(username, public_key)
+            raise
+
+    def _unregister_peer(self, username, public_key):
+        reservation = self.peer_registry.release(
+            username,
+            public_key,
+        )
+
+        owner = (
+            reservation["username"]
+            if reservation is not None
+            else username
+        )
+
+        if owner is not None:
+            self.user_store.remove_peer(owner, public_key)
+
+    def _reconcile_peer_state(self, manager_peers):
+        owners = self.user_store.peer_owners()
+        return self.peer_registry.reconcile(
+            manager_peers,
+            owners,
+        )
+
+    def _ownership_state(self):
+        return self.ownership_service.admin_state()
+
+    def _reassign_ownership(self, public_key, username):
+        return self.ownership_service.reassign(
+            public_key,
+            username,
+        )
 
     # ------------------------------------------------------------------
     # Activation failure

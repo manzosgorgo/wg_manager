@@ -4,8 +4,8 @@
 
 - Path: `config/wg-auth.conf`
 - Language: `unknown`
-- Lines: 17
-- SHA256: `6aa4dc8ac96cc122825a9df370c8a335eab47a1a43336bf5aa6d067c74d81e84`
+- Lines: 18
+- SHA256: `818c6e45460ae1d2d27ca4f5f1d8d7e7fd56a2d18c2940b34b57796d665cdd54`
 
 ## Source
 
@@ -13,6 +13,7 @@
 [auth]
 fake_id = admin
 login_dir = /home/main/Desktop/wg_manager/login
+peer_registry = /home/main/Desktop/wg_manager/login/.peer_registry.json
 
 [client]
 socket_path = /run/wg_manager/wg-client-test.sock

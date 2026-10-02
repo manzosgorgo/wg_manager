@@ -4,14 +4,15 @@
 
 - Path: `src/wg_client/wg_client_IPC.py`
 - Language: `python`
-- Lines: 291
-- SHA256: `d1397f1b1fb8e871e20d06d09a77fbd306bb8872241cfb0402895b1c5351f262`
+- Lines: 534
+- SHA256: `468e86fa682382931fa9a790df54476a3974d9e57b6ce2c0564aa29e3e1f5d22`
 - Imports:
   - `json`
   - `logging`
   - `re`
   - `socket`
   - `src.wg_client.wg_client_errors`
+  - `threading`
   - `time`
 
 ## Source
@@ -21,9 +22,10 @@ import json
 import logging
 import re
 import socket
+import threading
 import time
 
-from src.wg_client.wg_client_errors import WGProtocolError
+from src.wg_client.wg_client_errors import WGProtocolError, WGPeerPersistenceError
 log = logging.getLogger("wg_manager.IPC")
 
 MAX_PACKET_SIZE = 65536
@@ -40,6 +42,7 @@ MAX_SESSION_TIMEOUT = 24 * 3600
 MAX_CLOCK_SKEW = 30
 
 LISTEN_PATH_RE = re.compile(r"(/[A-Za-z0-9_-]+)+")
+IPC_RESPONSE_TIMEOUT = 10
 
 
 class WGClientIPC:
@@ -47,6 +50,11 @@ class WGClientIPC:
     def __init__(self, sock, lifecycle):
         self.sock = sock
         self.lifecycle = lifecycle
+
+        self._send_lock = threading.Lock()
+        self._pending_lock = threading.Lock()
+        self._pending = {}
+        self._next_request_id = 1
 
 
     def control_loop(self):
@@ -81,6 +89,10 @@ class WGClientIPC:
                     self.lifecycle.request_shutdown(notify_shutdown=False)
                     return
 
+                if command in ("PEER_RESULT", "OWNERSHIP_RESULT"):
+                    self._complete_pending(request)
+                    continue
+
                 log.error("unknown IPC command: %r", command)
                 self.lifecycle.request_shutdown()
                 return
@@ -94,6 +106,7 @@ class WGClientIPC:
             self.lifecycle.request_shutdown()
 
         finally:
+            self._fail_pending("IPC control loop stopped")
             log.debug("IPC control loop stopped")
 
 
@@ -245,6 +258,235 @@ class WGClientIPC:
         }
 
 
+    def _complete_pending(self, response):
+        request_id = response.get("request_id")
+
+        if type(request_id) is not int:
+            raise WGProtocolError("invalid IPC result request_id")
+
+        with self._pending_lock:
+            pending = self._pending.get(request_id)
+
+        if pending is None:
+            raise WGProtocolError("unexpected IPC result request_id")
+
+        pending["response"] = response
+        pending["event"].set()
+
+    def _fail_pending(self, error):
+        with self._pending_lock:
+            pending = list(self._pending.values())
+
+        for item in pending:
+            item["error"] = error
+            item["event"].set()
+
+    def _peer_request(self, command, public_key, allowed_ip=None):
+        if command not in ("PEER_REGISTER", "PEER_UNREGISTER"):
+            raise WGProtocolError("invalid peer IPC command")
+
+        if not isinstance(public_key, str) or not public_key:
+            raise WGProtocolError("public_key must be a non-empty string")
+
+        if command == "PEER_REGISTER":
+            if not isinstance(allowed_ip, str) or not allowed_ip:
+                raise WGProtocolError(
+                    "allowed_ip must be a non-empty string"
+                )
+
+        event = threading.Event()
+
+        with self._pending_lock:
+            request_id = self._next_request_id
+            self._next_request_id += 1
+            self._pending[request_id] = {
+                "event": event,
+                "response": None,
+                "error": None,
+            }
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": command,
+            "request_id": request_id,
+            "public_key": public_key,
+        }
+
+        if command == "PEER_REGISTER":
+            packet["allowed_ip"] = allowed_ip
+
+        try:
+            sock = self.sock
+            if sock is None:
+                raise WGProtocolError("IPC connection is closed")
+
+            try:
+                with self._send_lock:
+                    sock.sendall(self._encode_packet(packet))
+            except OSError as exc:
+                raise WGProtocolError(
+                    f"IPC peer request failed: {exc}"
+                ) from exc
+
+            if not event.wait(IPC_RESPONSE_TIMEOUT):
+                raise WGProtocolError("IPC peer request timed out")
+
+            with self._pending_lock:
+                pending = self._pending.get(request_id)
+
+            if pending is None:
+                raise WGProtocolError("IPC peer request disappeared")
+
+            if pending["error"] is not None:
+                raise WGProtocolError(pending["error"])
+
+            response = pending["response"]
+
+            if not isinstance(response, dict):
+                raise WGProtocolError("missing PEER_RESULT")
+
+            if response.get("status") != "OK":
+                status_code = response.get("status_code", 502)
+                if type(status_code) is not int:
+                    status_code = 502
+
+                raise WGPeerPersistenceError(
+                    status_code,
+                    response.get("error", "peer persistence failed"),
+                )
+
+            return response
+
+        finally:
+            with self._pending_lock:
+                self._pending.pop(request_id, None)
+
+    def register_peer(self, public_key, allowed_ip):
+        return self._peer_request(
+            "PEER_REGISTER",
+            public_key,
+            allowed_ip,
+        )
+
+    def unregister_peer(self, public_key):
+        return self._peer_request("PEER_UNREGISTER", public_key)
+
+    def _ownership_request(self, command, **fields):
+        if command not in ("OWNERSHIP_STATE", "OWNERSHIP_REASSIGN"):
+            raise WGProtocolError("invalid ownership IPC command")
+
+        event = threading.Event()
+
+        with self._pending_lock:
+            request_id = self._next_request_id
+            self._next_request_id += 1
+            self._pending[request_id] = {
+                "event": event,
+                "response": None,
+                "error": None,
+            }
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": command,
+            "request_id": request_id,
+            **fields,
+        }
+
+        try:
+            sock = self.sock
+            if sock is None:
+                raise WGProtocolError("IPC connection is closed")
+
+            with self._send_lock:
+                sock.sendall(self._encode_packet(packet))
+
+            if not event.wait(IPC_RESPONSE_TIMEOUT):
+                raise WGProtocolError("ownership IPC request timed out")
+
+            with self._pending_lock:
+                pending = self._pending.get(request_id)
+
+            if pending is None:
+                raise WGProtocolError("ownership IPC request disappeared")
+
+            if pending["error"] is not None:
+                raise WGProtocolError(pending["error"])
+
+            response = pending["response"]
+
+            if not isinstance(response, dict):
+                raise WGProtocolError("missing OWNERSHIP_RESULT")
+
+            if response.get("status") != "OK":
+                status_code = response.get("status_code", 502)
+                if type(status_code) is not int:
+                    status_code = 502
+
+                raise WGPeerPersistenceError(
+                    status_code,
+                    response.get("error", "ownership request failed"),
+                )
+
+            return response.get("result")
+
+        except OSError as exc:
+            raise WGProtocolError(
+                f"ownership IPC request failed: {exc}"
+            ) from exc
+
+        finally:
+            with self._pending_lock:
+                self._pending.pop(request_id, None)
+
+    def ownership_state(self):
+        return self._ownership_request("OWNERSHIP_STATE")
+
+    def reassign_owner(self, public_key, username):
+        if not isinstance(public_key, str) or not public_key:
+            raise WGProtocolError("public_key must be a non-empty string")
+        if not isinstance(username, str) or not username:
+            raise WGProtocolError("username must be a non-empty string")
+
+        return self._ownership_request(
+            "OWNERSHIP_REASSIGN",
+            public_key=public_key,
+            username=username,
+        )
+
+    def reconcile_state(self, peers):
+        if not isinstance(peers, list):
+            raise WGProtocolError("peer snapshot must be a list")
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "STATE_SNAPSHOT",
+            "peers": peers,
+        }
+
+        try:
+            with self._send_lock:
+                self.sock.sendall(self._encode_packet(packet))
+
+            response = self.parse_packet(
+                self.receive_packet()
+            )
+
+        except OSError as exc:
+            raise WGProtocolError(
+                f"state reconciliation IPC failed: {exc}"
+            ) from exc
+
+        if response.get("type") != "STATE_RESULT":
+            raise WGProtocolError("invalid state reconciliation response")
+
+        if response.get("status") != "OK":
+            raise WGProtocolError(
+                response.get("error", "state reconciliation failed")
+            )
+
+        return response
+
     def _encode_packet(self, packet):
         payload = (
             json.dumps(packet, separators=(",", ":")).encode("utf-8")
@@ -268,7 +510,8 @@ class WGClientIPC:
             **fields,
         }
 
-        self.sock.sendall(self._encode_packet(response))
+        with self._send_lock:
+            self.sock.sendall(self._encode_packet(response))
 
     def _notify_stop(self):
         if self.sock is None:
@@ -278,7 +521,8 @@ class WGClientIPC:
             "protocol_version": PROTOCOL_VERSION,
             "type": "STOP",
         }
-        self.sock.sendall(self._encode_packet(response))
+        with self._send_lock:
+            self.sock.sendall(self._encode_packet(response))
         log.debug("sent STOP on ipc")
     def stop(self, notify_shutdown=True):
         sock = self.sock

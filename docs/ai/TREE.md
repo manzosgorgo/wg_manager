@@ -43,6 +43,8 @@
 │   │   ├── wg_auth_IPC.py
 │   │   ├── wg_auth_errors.py
 │   │   ├── wg_auth_lifecycle.py
+│   │   ├── wg_auth_ownership_service.py
+│   │   ├── wg_auth_peer_registry.py
 │   │   ├── wg_auth_session.py
 │   │   └── wg_auth_user_store.py
 │   ├── wg_client
@@ -57,6 +59,7 @@
 │   │   ├── wg_client_errors.py
 │   │   ├── wg_client_lifecycle.py
 │   │   ├── wg_controller_client.py
+│   │   ├── wg_peer_service.py
 │   │   └── wg_secure_session.py
 │   ├── wg_frontend
 │   │   ├── __init__.py
@@ -91,6 +94,9 @@
 │   │   │   └── wg_auth_client.js
 │   │   ├── __init__.py
 │   │   ├── test_auth_races.py
+│   │   ├── test_ownership_service.py
+│   │   ├── test_peer_registry.py
+│   │   ├── test_user_store.py
 │   │   ├── test_wg_auth.js
 │   │   └── test_wg_auth.py
 │   ├── client
@@ -98,6 +104,7 @@
 │   │   ├── test_auth_client.py
 │   │   ├── test_client.py
 │   │   ├── test_client_API.py
+│   │   ├── test_peer_service.py
 │   │   ├── test_secure_session.py
 │   │   ├── test_secure_session_concurrency.py
 │   │   ├── test_secure_session_policy.py
@@ -105,7 +112,8 @@
 │   │   ├── test_wg_client_activator.py
 │   │   └── test_wg_client_integration.py
 │   ├── e2e
-│   │   └── test_js_full_flow.mjs
+│   │   ├── test_js_full_flow.mjs
+│   │   └── test_js_user_lifecycle.mjs
 │   ├── frontend
 │   │   ├── __init__.py
 │   │   ├── test_cross_language_vector.py

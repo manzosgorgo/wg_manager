@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_IPC.py`
 - Language: `python`
-- Lines: 235
-- SHA256: `edc287d3c25229c62c8186bbaff7a2c87e346995b6acd45bec28ba5bbc77ff68`
+- Lines: 442
+- SHA256: `7642df020ed13e7ce13f2514565814704a95c97f708dc6b324db68545a8185db`
 - Imports:
   - `json`
   - `logging`
@@ -40,6 +40,11 @@ class WGAuthIPC:
         listen_path,
         lifecycle,
         principal=None,
+        peer_register=None,
+        peer_unregister=None,
+        state_reconcile=None,
+        ownership_state=None,
+        ownership_reassign=None,
     ):
         self.socket_path = socket_path
         self.client_id = client_id
@@ -47,6 +52,11 @@ class WGAuthIPC:
         self.listen_path = listen_path
         self.lifecycle = lifecycle
         self.principal = principal
+        self.peer_register = peer_register
+        self.peer_unregister = peer_unregister
+        self.state_reconcile = state_reconcile
+        self.ownership_state = ownership_state
+        self.ownership_reassign = ownership_reassign
 
         self.sock = None
     @property
@@ -80,6 +90,14 @@ class WGAuthIPC:
                     )
                     self.lifecycle.request_session_shutdown(notify_client=False)
                     return
+
+                if command in ("PEER_REGISTER", "PEER_UNREGISTER"):
+                    self._handle_peer_request(request)
+                    continue
+
+                if command in ("OWNERSHIP_STATE", "OWNERSHIP_REASSIGN"):
+                    self._handle_ownership_request(request)
+                    continue
 
                 log.error(
                     "unknown IPC command: %r",
@@ -117,6 +135,166 @@ class WGAuthIPC:
 
         finally:
             log.debug("IPC control loop stopped")
+
+    def _handle_peer_request(self, request):
+        request_id = request.get("request_id")
+        public_key = request.get("public_key")
+        allowed_ip = request.get("allowed_ip")
+
+        if type(request_id) is not int or request_id < 1:
+            raise WGAuthProtocolError("invalid request_id")
+
+        if not isinstance(public_key, str) or not public_key:
+            raise WGAuthProtocolError("invalid public_key")
+
+        username = None
+        if isinstance(self.principal, dict):
+            username = self.principal.get("username")
+
+        if not isinstance(username, str) or not username:
+            raise WGAuthProtocolError("IPC principal is missing")
+
+        try:
+            if request["type"] == "PEER_REGISTER":
+                if not isinstance(allowed_ip, str) or not allowed_ip:
+                    raise WGAuthProtocolError("invalid allowed_ip")
+                if self.peer_register is None:
+                    raise RuntimeError("peer register callback is unavailable")
+                self.peer_register(username, public_key, allowed_ip)
+            else:
+                if self.peer_unregister is None:
+                    raise RuntimeError("peer unregister callback is unavailable")
+                self.peer_unregister(username, public_key)
+
+        except PermissionError as exc:
+            log.warning("peer persistence request forbidden: %s", exc)
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "PEER_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 403,
+                "error": str(exc),
+            })
+            return
+
+        except ValueError as exc:
+            log.warning("peer persistence request rejected: %s", exc)
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "PEER_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 409,
+                "error": str(exc),
+            })
+            return
+
+        except Exception as exc:
+            log.exception("peer persistence request failed")
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "PEER_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 500,
+                "error": str(exc),
+            })
+            return
+
+        self.send_packet({
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "PEER_RESULT",
+            "request_id": request_id,
+            "status": "OK",
+        })
+
+    def _handle_ownership_request(self, request):
+        request_id = request.get("request_id")
+
+        if type(request_id) is not int or request_id < 1:
+            raise WGAuthProtocolError("invalid request_id")
+
+        username = None
+        if isinstance(self.principal, dict):
+            username = self.principal.get("username")
+
+        if username != "admin":
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "OWNERSHIP_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 403,
+                "error": "admin principal required",
+            })
+            return
+
+        try:
+            if request["type"] == "OWNERSHIP_STATE":
+                if self.ownership_state is None:
+                    raise RuntimeError("ownership state callback is unavailable")
+                result = self.ownership_state()
+
+            else:
+                public_key = request.get("public_key")
+                target_username = request.get("username")
+
+                if not isinstance(public_key, str) or not public_key:
+                    raise WGAuthProtocolError("invalid public_key")
+                if not isinstance(target_username, str) or not target_username:
+                    raise WGAuthProtocolError("invalid username")
+                if self.ownership_reassign is None:
+                    raise RuntimeError(
+                        "ownership reassign callback is unavailable"
+                    )
+
+                result = self.ownership_reassign(
+                    public_key,
+                    target_username,
+                )
+
+        except FileNotFoundError as exc:
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "OWNERSHIP_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 404,
+                "error": str(exc),
+            })
+            return
+
+        except ValueError as exc:
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "OWNERSHIP_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 409,
+                "error": str(exc),
+            })
+            return
+
+        except Exception as exc:
+            log.exception("ownership request failed")
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "OWNERSHIP_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 500,
+                "error": str(exc),
+            })
+            return
+
+        self.send_packet({
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "OWNERSHIP_RESULT",
+            "request_id": request_id,
+            "status": "OK",
+            "result": result,
+        })
 
     def receive_packet(self):
         data = bytearray()
@@ -199,18 +377,47 @@ class WGAuthIPC:
 
         self.send_packet(packet)
 
-        response = self.receive_packet()
-        response = self.parse_packet(response)
+        while True:
+            response = self.receive_packet()
+            response = self.parse_packet(response)
 
-        if response.get("type") != "ACTIVATION_RESULT":
-            raise WGAuthProtocolError("invalid activation response")
+            if response.get("type") == "STATE_SNAPSHOT":
+                peers = response.get("peers")
 
-        if response.get("status") != "OK":
-            raise WGAuthProtocolError(
-                response.get("error", "activation failed")
-            )
+                try:
+                    if self.state_reconcile is None:
+                        raise RuntimeError(
+                            "state reconciliation callback is unavailable"
+                        )
 
-        return response
+                    self.state_reconcile(peers)
+
+                except Exception as exc:
+                    log.exception("peer state reconciliation failed")
+                    self.send_packet({
+                        "protocol_version": PROTOCOL_VERSION,
+                        "type": "STATE_RESULT",
+                        "status": "ERROR",
+                        "error": str(exc),
+                    })
+                    continue
+
+                self.send_packet({
+                    "protocol_version": PROTOCOL_VERSION,
+                    "type": "STATE_RESULT",
+                    "status": "OK",
+                })
+                continue
+
+            if response.get("type") != "ACTIVATION_RESULT":
+                raise WGAuthProtocolError("invalid activation response")
+
+            if response.get("status") != "OK":
+                raise WGAuthProtocolError(
+                    response.get("error", "activation failed")
+                )
+
+            return response
     def deactivate(self):
         if self.sock is None:
             return

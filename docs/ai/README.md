@@ -5,10 +5,10 @@
 ## Repository
 
 - Root: `/home/main/Desktop/wg_manager`
-- Commit: `bced7c5b1ae5c994e2b32087f5785ddfa2d69a63`
+- Commit: `4cf5d06beb8ed5d3bf3129c548f3da6553a311d3`
 - Branch: `protocol-review`
-- Files in inventory: 102
-- Text files indexed: 82
+- Files in inventory: 110
+- Text files indexed: 90
 
 ### Working tree
 
@@ -60,6 +60,8 @@ The working tree contains uncommitted changes.
 - `src/wg_auth/wg_auth_IPC.py` → [files/src/wg_auth/wg_auth_IPC.py.md](files/src/wg_auth/wg_auth_IPC.py.md)
 - `src/wg_auth/wg_auth_errors.py` → [files/src/wg_auth/wg_auth_errors.py.md](files/src/wg_auth/wg_auth_errors.py.md)
 - `src/wg_auth/wg_auth_lifecycle.py` → [files/src/wg_auth/wg_auth_lifecycle.py.md](files/src/wg_auth/wg_auth_lifecycle.py.md)
+- `src/wg_auth/wg_auth_ownership_service.py` → [files/src/wg_auth/wg_auth_ownership_service.py.md](files/src/wg_auth/wg_auth_ownership_service.py.md)
+- `src/wg_auth/wg_auth_peer_registry.py` → [files/src/wg_auth/wg_auth_peer_registry.py.md](files/src/wg_auth/wg_auth_peer_registry.py.md)
 - `src/wg_auth/wg_auth_session.py` → [files/src/wg_auth/wg_auth_session.py.md](files/src/wg_auth/wg_auth_session.py.md)
 - `src/wg_auth/wg_auth_user_store.py` → [files/src/wg_auth/wg_auth_user_store.py.md](files/src/wg_auth/wg_auth_user_store.py.md)
 - `src/wg_client/__init__.py` → [files/src/wg_client/__init__.py.md](files/src/wg_client/__init__.py.md)
@@ -73,6 +75,7 @@ The working tree contains uncommitted changes.
 - `src/wg_client/wg_client_errors.py` → [files/src/wg_client/wg_client_errors.py.md](files/src/wg_client/wg_client_errors.py.md)
 - `src/wg_client/wg_client_lifecycle.py` → [files/src/wg_client/wg_client_lifecycle.py.md](files/src/wg_client/wg_client_lifecycle.py.md)
 - `src/wg_client/wg_controller_client.py` → [files/src/wg_client/wg_controller_client.py.md](files/src/wg_client/wg_controller_client.py.md)
+- `src/wg_client/wg_peer_service.py` → [files/src/wg_client/wg_peer_service.py.md](files/src/wg_client/wg_peer_service.py.md)
 - `src/wg_client/wg_secure_session.py` → [files/src/wg_client/wg_secure_session.py.md](files/src/wg_client/wg_secure_session.py.md)
 - `src/wg_frontend/__init__.py` → [files/src/wg_frontend/__init__.py.md](files/src/wg_frontend/__init__.py.md)
 - `src/wg_frontend/check_vectors.mjs` → [files/src/wg_frontend/check_vectors.mjs.md](files/src/wg_frontend/check_vectors.mjs.md)
@@ -95,12 +98,16 @@ The working tree contains uncommitted changes.
 - `tests/auth/js/test_auth.conf` → [files/tests/auth/js/test_auth.conf.md](files/tests/auth/js/test_auth.conf.md)
 - `tests/auth/js/wg_auth_client.js` → [files/tests/auth/js/wg_auth_client.js.md](files/tests/auth/js/wg_auth_client.js.md)
 - `tests/auth/test_auth_races.py` → [files/tests/auth/test_auth_races.py.md](files/tests/auth/test_auth_races.py.md)
+- `tests/auth/test_ownership_service.py` → [files/tests/auth/test_ownership_service.py.md](files/tests/auth/test_ownership_service.py.md)
+- `tests/auth/test_peer_registry.py` → [files/tests/auth/test_peer_registry.py.md](files/tests/auth/test_peer_registry.py.md)
+- `tests/auth/test_user_store.py` → [files/tests/auth/test_user_store.py.md](files/tests/auth/test_user_store.py.md)
 - `tests/auth/test_wg_auth.js` → [files/tests/auth/test_wg_auth.js.md](files/tests/auth/test_wg_auth.js.md)
 - `tests/auth/test_wg_auth.py` → [files/tests/auth/test_wg_auth.py.md](files/tests/auth/test_wg_auth.py.md)
 - `tests/client/__init__.py` → [files/tests/client/__init__.py.md](files/tests/client/__init__.py.md)
 - `tests/client/test_auth_client.py` → [files/tests/client/test_auth_client.py.md](files/tests/client/test_auth_client.py.md)
 - `tests/client/test_client.py` → [files/tests/client/test_client.py.md](files/tests/client/test_client.py.md)
 - `tests/client/test_client_API.py` → [files/tests/client/test_client_API.py.md](files/tests/client/test_client_API.py.md)
+- `tests/client/test_peer_service.py` → [files/tests/client/test_peer_service.py.md](files/tests/client/test_peer_service.py.md)
 - `tests/client/test_secure_session.py` → [files/tests/client/test_secure_session.py.md](files/tests/client/test_secure_session.py.md)
 - `tests/client/test_secure_session_concurrency.py` → [files/tests/client/test_secure_session_concurrency.py.md](files/tests/client/test_secure_session_concurrency.py.md)
 - `tests/client/test_secure_session_policy.py` → [files/tests/client/test_secure_session_policy.py.md](files/tests/client/test_secure_session_policy.py.md)
@@ -108,6 +115,7 @@ The working tree contains uncommitted changes.
 - `tests/client/test_wg_client_activator.py` → [files/tests/client/test_wg_client_activator.py.md](files/tests/client/test_wg_client_activator.py.md)
 - `tests/client/test_wg_client_integration.py` → [files/tests/client/test_wg_client_integration.py.md](files/tests/client/test_wg_client_integration.py.md)
 - `tests/e2e/test_js_full_flow.mjs` → [files/tests/e2e/test_js_full_flow.mjs.md](files/tests/e2e/test_js_full_flow.mjs.md)
+- `tests/e2e/test_js_user_lifecycle.mjs` → [files/tests/e2e/test_js_user_lifecycle.mjs.md](files/tests/e2e/test_js_user_lifecycle.mjs.md)
 - `tests/frontend/__init__.py` → [files/tests/frontend/__init__.py.md](files/tests/frontend/__init__.py.md)
 - `tests/frontend/test_cross_language_vector.py` → [files/tests/frontend/test_cross_language_vector.py.md](files/tests/frontend/test_cross_language_vector.py.md)
 - `tests/frontend/test_secure_session_concurrency.test.mjs` → [files/tests/frontend/test_secure_session_concurrency.test.mjs.md](files/tests/frontend/test_secure_session_concurrency.test.mjs.md)

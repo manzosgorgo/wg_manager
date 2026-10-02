@@ -10,17 +10,17 @@ This file is generated automatically.
 | `docs` | 8 |
 | `mock` | 1 |
 | `src` | 1 |
-| `src/wg_auth` | 9 |
-| `src/wg_client` | 12 |
+| `src/wg_auth` | 11 |
+| `src/wg_client` | 13 |
 | `src/wg_frontend` | 8 |
 | `src/wg_manager` | 1 |
 | `systemd` | 6 |
 | `systemd/install` | 2 |
 | `tests` | 3 |
-| `tests/auth` | 4 |
+| `tests/auth` | 7 |
 | `tests/auth/js` | 6 |
-| `tests/client` | 10 |
-| `tests/e2e` | 1 |
+| `tests/client` | 11 |
+| `tests/e2e` | 2 |
 | `tests/frontend` | 4 |
 
 ## Contents
@@ -88,6 +88,8 @@ This file is generated automatically.
 - `wg_auth_IPC.py`
 - `wg_auth_errors.py`
 - `wg_auth_lifecycle.py`
+- `wg_auth_ownership_service.py`
+- `wg_auth_peer_registry.py`
 - `wg_auth_session.py`
 - `wg_auth_user_store.py`
 
@@ -104,6 +106,7 @@ This file is generated automatically.
 - `wg_client_errors.py`
 - `wg_client_lifecycle.py`
 - `wg_controller_client.py`
+- `wg_peer_service.py`
 - `wg_secure_session.py`
 
 ### `src/wg_frontend`
@@ -145,6 +148,9 @@ This file is generated automatically.
 
 - `__init__.py`
 - `test_auth_races.py`
+- `test_ownership_service.py`
+- `test_peer_registry.py`
+- `test_user_store.py`
 - `test_wg_auth.js`
 - `test_wg_auth.py`
 
@@ -163,6 +169,7 @@ This file is generated automatically.
 - `test_auth_client.py`
 - `test_client.py`
 - `test_client_API.py`
+- `test_peer_service.py`
 - `test_secure_session.py`
 - `test_secure_session_concurrency.py`
 - `test_secure_session_policy.py`
@@ -173,6 +180,7 @@ This file is generated automatically.
 ### `tests/e2e`
 
 - `test_js_full_flow.mjs`
+- `test_js_user_lifecycle.mjs`
 
 ### `tests/frontend`
 

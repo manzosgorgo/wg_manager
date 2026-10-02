@@ -6,8 +6,8 @@ The directory structure mirrors the original project tree.
 
 Sensitive files and generated/build directories are deliberately excluded.
 
-- Project files in inventory: 102
-- Text files indexed: 82
+- Project files in inventory: 110
+- Text files indexed: 90
 - Files without source snapshot: 20
 
 ## Files without source snapshot

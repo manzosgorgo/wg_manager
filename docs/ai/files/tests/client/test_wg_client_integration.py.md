@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_wg_client_integration.py`
 - Language: `python`
-- Lines: 440
-- SHA256: `21732b0b2253c63b76a52b19473209e0fd5d45eb582f9d017181b2385964b295`
+- Lines: 711
+- SHA256: `75d7b5d88127e0ae85641d8f89a372ac7a5204a2004ea1ff8d6c7734ddac0706`
 - Imports:
   - `base64`
   - `http.client`
@@ -185,9 +185,24 @@ def test_parse_activation_rejects(overrides,ipc):
         ipc.parse_activation(make_packet(**overrides), now=NOW)
 
 
-def run_activation(packet, cfg, monkeypatch,lifecycle):
+def run_activation(
+    packet,
+    cfg,
+    monkeypatch,
+    lifecycle,
+    *,
+    patch_load_config=True,
+):
     """Drive wg_client.activate() over a socketpair like systemd would."""
-    monkeypatch.setattr(wg_client, "load_config", lambda: cfg)
+    if patch_load_config:
+        monkeypatch.setattr(wg_client, "load_config", lambda: cfg)
+
+    monkeypatch.setattr(wg_client, "_manager_peer_snapshot", lambda api: [])
+    monkeypatch.setattr(
+        WGClientIPC,
+        "reconcile_state",
+        lambda self, peers: {"status": "OK"},
+    )
 
     auth, client = socket.socketpair()
 
@@ -271,6 +286,7 @@ def test_activation_reports_unexpected_exception(monkeypatch, lifecycle):
         make_config(),
         monkeypatch,
         lifecycle,
+        patch_load_config=False,
     )
 
     assert result is None
@@ -301,13 +317,76 @@ class FakeController:
         return {"ok": True, "public_key": public_key}
 
 
+class FakeSecureSession:
+    def __init__(self):
+        self.principal = {"username": "admin", "peers": []}
+        self.is_admin = True
+
+    def verify_request(self, auth, method, path, body):
+        return None
+
+    def create_response_auth(self, request_auth, status, body):
+        return {
+            "session_id": request_auth["session_id"],
+            "counter": request_auth["counter"],
+            "mac": "test-mac",
+        }
+
+    def can_access_peer(self, public_key):
+        return True
+
+    def register_peer(self, public_key):
+        return None
+
+    def unregister_peer(self, public_key):
+        return None
+
+
+class FakeIPC:
+    def __init__(self):
+        self.calls = []
+
+    def register_peer(self, public_key, allowed_ip):
+        self.calls.append(("register_peer", public_key, allowed_ip))
+        return {"status": "OK"}
+
+    def unregister_peer(self, public_key):
+        self.calls.append(("unregister_peer", public_key))
+        return {"status": "OK"}
+
+    def ownership_state(self):
+        self.calls.append(("ownership_state",))
+        return {
+            "users": ["admin", "alice"],
+            "peers": [
+                {
+                    "public_key": PUBLIC_KEY,
+                    "allowed_ip": "10.8.0.2/32",
+                    "owner": "alice",
+                    "ownership_state": "consistent",
+                }
+            ],
+        }
+
+    def reassign_owner(self, public_key, username):
+        self.calls.append(("reassign_owner", public_key, username))
+        return {
+            "public_key": public_key,
+            "owner": username,
+        }
+
+
 @pytest.fixture
 def api(lifecycle):
+    lifecycle.ipc = FakeIPC()
     api = WGClientAPI(
         make_config(),
         LISTEN_PATH,
-        lifecycle=lifecycle)
+        FakeSecureSession(),
+        lifecycle=lifecycle,
+    )
     api.controller = FakeController()
+    api.peer_service.controller = api.controller
     api.bind()
 
     assert api.lifecycle == lifecycle
@@ -324,6 +403,12 @@ def api(lifecycle):
 
 
 def request(api, method, path, body=None, headers=None):
+    headers = dict(headers or {})
+    headers.setdefault("X-WG-Session-ID", "test-session")
+    headers.setdefault("X-WG-Counter", "1")
+    headers.setdefault("X-WG-Nonce", "test-nonce")
+    headers.setdefault("X-WG-MAC", "test-mac")
+
     ctx = ssl.create_default_context(cafile=str(CERT / "ca.crt"))
     ctx.load_cert_chain(str(CERT / "client.crt"), str(CERT / "client.key"))
 
@@ -331,7 +416,7 @@ def request(api, method, path, body=None, headers=None):
     conn = http.client.HTTPSConnection("127.0.0.1", port, context=ctx, timeout=5)
 
     try:
-        conn.request(method, path, body=body, headers=headers or {})
+        conn.request(method, path, body=body, headers=headers)
         response = conn.getresponse()
         return response.status, response.read()
     finally:
@@ -343,6 +428,55 @@ def test_status_below_listen_path(api):
 
     assert status == 200
     assert json.loads(body)["interface"] == "wg0"
+
+
+def test_admin_peer_status(api):
+    api.controller.status_result = {
+        "ok": True,
+        "interface": "wg0",
+        "peers": [
+            {
+                "public_key": PUBLIC_KEY,
+                "allowed_ips": ["10.8.0.2/32"],
+            }
+        ],
+    }
+
+    status, body = request(
+        api,
+        "GET",
+        LISTEN_PATH + "/v1/admin/peers",
+    )
+
+    assert status == 200
+    data = json.loads(body)
+    assert data["users"] == ["admin", "alice"]
+    assert data["peers"][0]["owner"] == "alice"
+    assert data["peers"][0]["runtime"]["public_key"] == PUBLIC_KEY
+
+
+def test_admin_reassign_owner(api):
+    path = (
+        LISTEN_PATH
+        + "/v1/admin/peers/"
+        + quote(PUBLIC_KEY, safe="")
+        + "/owner"
+    )
+
+    status, body = request(
+        api,
+        "PUT",
+        path,
+        body=json.dumps({"username": "alice"}),
+    )
+
+    assert status == 200
+    assert json.loads(body)["owner"] == "alice"
+    assert (
+        "reassign_owner",
+        PUBLIC_KEY,
+        "alice",
+    ) in api.lifecycle.ipc.calls
 
 
 def test_outside_listen_path_is_404(api):
@@ -366,7 +500,10 @@ def test_put_decodes_public_key(api):
     status, _ = request(api, "PUT", path, body=json.dumps({"allowed_ip": "10.8.0.2/32"}))
 
     assert status == 200
-    assert api.controller.calls == [("add_peer", PUBLIC_KEY, "10.8.0.2/32")]
+    assert api.controller.calls == [
+        ("status",),
+        ("add_peer", PUBLIC_KEY, "10.8.0.2/32"),
+    ]
 
 
 def test_delete_decodes_public_key(api):
@@ -393,7 +530,7 @@ def test_trace_not_supported(api):
 
 
 def test_stop_before_serve_loop_does_not_hang():
-    api = WGClientAPI(make_config(), LISTEN_PATH)
+    api = WGClientAPI(make_config(), LISTEN_PATH, FakeSecureSession())
     api.bind()
 
     # Like the session timer firing immediately.
@@ -431,9 +568,14 @@ def test_controller_unreachable_is_502():
 
 
 def test_controller_timeout_from_config():
-    api = WGClientAPI(make_config(), LISTEN_PATH)
+    api = WGClientAPI(make_config(), LISTEN_PATH, FakeSecureSession())
 
     assert api.controller.timeout == 2
+
+
+def test_api_rejects_missing_secure_session():
+    with pytest.raises(RuntimeError, match="requires an authenticated secure session"):
+        WGClientAPI(make_config(), LISTEN_PATH, None)
 
 
 # ----------------------------------------------------------------------
@@ -471,4 +613,133 @@ def test_mock_handshake(tmp_path):
 
 def test_mock_handshake_unknown_peer(tmp_path):
     assert run_mock(tmp_path, "handshake", "wg0", PUBLIC_KEY).returncode == 1
+
+
+# ----------------------------------------------------------------------
+# Persistent IPC peer ownership RPC
+# ----------------------------------------------------------------------
+
+def test_peer_register_rpc_is_completed_by_control_loop(lifecycle):
+    auth_sock, client_sock = socket.socketpair()
+
+    try:
+        ipc = WGClientIPC(client_sock, lifecycle)
+
+        thread = threading.Thread(
+            target=ipc.control_loop,
+            daemon=True,
+        )
+        thread.start()
+
+        def responder():
+            with auth_sock.makefile("rb") as stream:
+                request = json.loads(stream.readline())
+
+            assert request["type"] == "PEER_REGISTER"
+            assert request["public_key"] == PUBLIC_KEY
+            assert request["allowed_ip"] == "10.8.0.2/32"
+            assert type(request["request_id"]) is int
+
+            auth_sock.sendall(
+                json.dumps({
+                    "protocol_version": 1,
+                    "type": "PEER_RESULT",
+                    "request_id": request["request_id"],
+                    "status": "OK",
+                }).encode("utf-8") + b"\n"
+            )
+
+        responder_thread = threading.Thread(
+            target=responder,
+            daemon=True,
+        )
+        responder_thread.start()
+
+        response = ipc.register_peer(
+            PUBLIC_KEY,
+            "10.8.0.2/32",
+        )
+
+        responder_thread.join(timeout=2)
+        assert not responder_thread.is_alive()
+        assert response["status"] == "OK"
+
+        auth_sock.sendall(
+            json.dumps({
+                "protocol_version": 1,
+                "type": "STOP",
+            }).encode("utf-8") + b"\n"
+        )
+
+        thread.join(timeout=2)
+        assert not thread.is_alive()
+
+    finally:
+        auth_sock.close()
+        client_sock.close()
+
+
+def test_peer_register_on_closed_ipc_is_protocol_error(lifecycle):
+    auth_sock, client_sock = socket.socketpair()
+
+    try:
+        ipc = WGClientIPC(client_sock, lifecycle)
+        ipc.stop(notify_shutdown=False)
+
+        with pytest.raises(WGProtocolError, match="IPC connection is closed"):
+            ipc.register_peer(
+                PUBLIC_KEY,
+                "10.8.0.2/32",
+            )
+
+    finally:
+        auth_sock.close()
+
+
+
+def test_manager_peer_snapshot_normalizes_controller_status():
+    class API:
+        interface = "wg0"
+        controller = FakeController()
+
+    API.controller.status_result = {
+        "ok": True,
+        "interface": "wg0",
+        "peers": [
+            {
+                "public_key": "peer-a",
+                "allowed_ips": ["10.8.0.2/32"],
+            }
+        ],
+    }
+
+    assert wg_client._manager_peer_snapshot(API) == [
+        {
+            "public_key": "peer-a",
+            "allowed_ip": "10.8.0.2/32",
+        }
+    ]
+
+
+def test_manager_peer_snapshot_rejects_ambiguous_allowed_ips():
+    class API:
+        interface = "wg0"
+        controller = FakeController()
+
+    API.controller.status_result = {
+        "ok": True,
+        "interface": "wg0",
+        "peers": [
+            {
+                "public_key": "peer-a",
+                "allowed_ips": [
+                    "10.8.0.2/32",
+                    "10.8.0.3/32",
+                ],
+            }
+        ],
+    }
+
+    with pytest.raises(RuntimeError, match="cannot be reconciled safely"):
+        wg_client._manager_peer_snapshot(API)
 ```
