@@ -28,6 +28,7 @@ const peerConfigPreview = document.querySelector("#peer-config-preview");
 const peerDownloadConfigButton = document.querySelector("#peer-download-config");
 const peerNewProvisioningButton = document.querySelector("#peer-new-provisioning");
 const peerShowQrButton = document.querySelector("#peer-show-qr");
+const peerQrScannedButton = document.querySelector("#peer-qr-scanned");
 const peerQrStatus = document.querySelector("#peer-qr-status");
 const peerQrCode = document.querySelector("#peer-qr-code");
 const peerCreateStatus = document.querySelector("#peer-create-status");
@@ -36,6 +37,31 @@ const provisioningDebug = document.querySelector("#provisioning-debug");
 let provisioningState = null;
 let generatedKeyPair = null;
 let provisionedPeer = false;
+let configPendingExport = false;
+
+function setConfigPendingExport(pending) {
+    configPendingExport = Boolean(pending);
+}
+
+function confirmDiscardPendingConfig(message) {
+    if (!configPendingExport) {
+        return true;
+    }
+
+    return window.confirm(
+        message
+        ?? "La configurazione contiene una private key che non è ancora stata salvata. Continuando verrà persa. Procedere?"
+    );
+}
+
+window.addEventListener("beforeunload", (event) => {
+    if (!configPendingExport) {
+        return;
+    }
+
+    event.preventDefault();
+    event.returnValue = "";
+});
 
 const adminNavButton = document.querySelector("#admin-nav-button");
 const adminPeerList = document.querySelector("#admin-peer-list");
@@ -149,6 +175,122 @@ function renderPeers(result) {
         const actions = document.createElement("div");
         actions.className = "card-actions";
 
+        const regenerateButton = document.createElement("button");
+        regenerateButton.type = "button";
+        regenerateButton.textContent = "Rigenera configurazione";
+        regenerateButton.addEventListener("click", async () => {
+            const publicKey = peer.public_key;
+            const allowedIp = Array.isArray(peer.allowed_ips)
+                ? peer.allowed_ips[0]
+                : peer.allowed_ip;
+
+            if (!publicKey || !allowedIp) {
+                peerStatus.className = "operation-status error";
+                peerStatus.textContent =
+                    "Il peer non contiene public key e allowed IP sufficienti per la rigenerazione.";
+                return;
+            }
+
+            const confirmed = window.confirm(
+                "Rigenerare la configurazione di questo peer?\n\n"
+                + "Verrà generata una nuova coppia di chiavi e il peer attuale verrà sostituito. "
+                + "La configurazione WireGuard già installata sul dispositivo non funzionerà più "
+                + "e dovrà essere sostituita con quella nuova."
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            regenerateButton.disabled = true;
+            removeButton.disabled = true;
+            peerStatus.className = "operation-status";
+            peerStatus.textContent = "Rigenerazione peer in corso…";
+
+            let oldPeerRemoved = false;
+
+            try {
+                const client = window.wgFrontend.client;
+                if (!client) {
+                    throw new Error("wg-client session is not initialized");
+                }
+
+                const newKeyPair = await generateWireGuardKeyPair();
+
+                const removeResult = await client.removePeer(publicKey);
+                if (!removeResult.ok) {
+                    throw new Error(
+                        removeResult.data?.message
+                            ?? removeResult.data?.error
+                            ?? `wg-client returned HTTP ${removeResult.status}`
+                    );
+                }
+                oldPeerRemoved = true;
+
+                const addResult = await client.addPeer(
+                    newKeyPair.publicKey,
+                    allowedIp,
+                );
+
+                if (!addResult.ok) {
+                    throw new Error(
+                        addResult.data?.message
+                            ?? addResult.data?.error
+                            ?? `wg-client returned HTTP ${addResult.status}`
+                    );
+                }
+
+                generatedKeyPair = newKeyPair;
+                provisionedPeer = true;
+                setConfigPendingExport(true);
+
+                peerPublicKeyInput.value = newKeyPair.publicKey;
+
+                const existingOption = Array.from(peerAllowedIpInput.options)
+                    .find((option) => option.value === allowedIp);
+
+                if (existingOption) {
+                    peerAllowedIpInput.value = allowedIp;
+                } else {
+                    const option = document.createElement("option");
+                    option.value = allowedIp;
+                    option.textContent = allowedIp;
+                    option.selected = true;
+                    peerAllowedIpInput.append(option);
+                }
+
+                peerPublicKeyInput.disabled = true;
+                peerAllowedIpInput.disabled = true;
+                peerRoutingModeInput.disabled = true;
+                peerKeepaliveInput.disabled = true;
+                peerGenerateKeysButton.disabled = true;
+                peerCreateButton.disabled = true;
+                peerNewProvisioningButton.hidden = false;
+
+                peerQrCode.hidden = true;
+                peerQrCode.replaceChildren();
+                peerQrScannedButton.hidden = true;
+
+                renderClientConfigPreview();
+                await refreshPeers();
+
+                peerCreateStatus.className = "operation-status success";
+                peerCreateStatus.textContent =
+                    "Peer rigenerato. Scarica la nuova configurazione o acquisisci il QR.";
+                peerStatus.className = "operation-status success";
+                peerStatus.textContent =
+                    "Configurazione rigenerata: quella precedente non è più valida.";
+
+            } catch (error) {
+                peerStatus.className = "operation-status error";
+                peerStatus.textContent = oldPeerRemoved
+                    ? `Rigenerazione fallita dopo la rimozione del vecchio peer: ${error.message ?? String(error)}`
+                    : (error.message ?? String(error));
+                regenerateButton.disabled = false;
+                removeButton.disabled = false;
+            }
+        });
+
         const removeButton = document.createElement("button");
         removeButton.type = "button";
         removeButton.textContent = "Elimina";
@@ -190,7 +332,7 @@ function renderPeers(result) {
             }
         });
 
-        actions.append(removeButton);
+        actions.append(regenerateButton, removeButton);
         card.append(key, details, actions);
         peerList.append(card);
     }
@@ -263,6 +405,7 @@ function updateQrAvailability() {
     if (!ready) {
         peerQrCode.hidden = true;
         peerQrCode.replaceChildren();
+        peerQrScannedButton.hidden = true;
     }
 }
 
@@ -640,7 +783,14 @@ form.addEventListener("submit", async (event) => {
 });
 
 logoutButton.addEventListener("click", async () => {
+    if (!confirmDiscardPendingConfig(
+        "La nuova configurazione non è ancora stata salvata. Uscendo ora la private key verrà persa. Effettuare comunque il logout?"
+    )) {
+        return;
+    }
+
     logoutButton.disabled = true;
+    setConfigPendingExport(false);
 
     stopHeartbeat();
 
@@ -728,6 +878,7 @@ peerGenerateKeysButton.addEventListener("click", async () => {
 
     try {
         generatedKeyPair = await generateWireGuardKeyPair();
+        setConfigPendingExport(true);
         peerPublicKeyInput.value = generatedKeyPair.publicKey;
         renderClientConfigPreview();
 
@@ -764,9 +915,20 @@ peerDownloadConfigButton.addEventListener("click", () => {
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(url);
+
+    setConfigPendingExport(false);
+    peerQrStatus.textContent =
+        "Configurazione scaricata. La protezione contro la chiusura è stata disattivata.";
 });
 
 peerNewProvisioningButton.addEventListener("click", async () => {
+    if (!confirmDiscardPendingConfig(
+        "La configurazione corrente non è ancora stata salvata. Preparando un altro peer la private key verrà persa. Continuare?"
+    )) {
+        return;
+    }
+
+    setConfigPendingExport(false);
     generatedKeyPair = null;
     provisionedPeer = false;
 
@@ -782,6 +944,7 @@ peerNewProvisioningButton.addEventListener("click", async () => {
 
     peerQrCode.hidden = true;
     peerQrCode.replaceChildren();
+    peerQrScannedButton.hidden = true;
     peerCreateStatus.className = "operation-status";
     peerCreateStatus.textContent = "";
 
@@ -806,6 +969,15 @@ peerShowQrButton.addEventListener("click", () => {
         height: 280,
         correctLevel: window.QRCode.CorrectLevel.M,
     });
+
+    peerQrScannedButton.hidden = false;
+});
+
+peerQrScannedButton.addEventListener("click", () => {
+    setConfigPendingExport(false);
+    peerQrScannedButton.hidden = true;
+    peerQrStatus.textContent =
+        "QR acquisito. La protezione contro la chiusura è stata disattivata.";
 });
 
 peerAllowedIpInput.addEventListener("change", renderClientConfigPreview);
