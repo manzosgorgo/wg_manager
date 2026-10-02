@@ -67,10 +67,12 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
             peer_service,
             listen_path,
             session,
+            lifecycle,
     ):
         super().__init__(server_address, handler_class)
         self.peer_service = peer_service
         self.listen_path = listen_path
+        self.lifecycle = lifecycle
 
         if session is None:
             raise RuntimeError("WGClientHTTPServer requires a secure session")
@@ -264,6 +266,11 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             return False
 
         self.request_auth = auth
+
+        # Only a successfully authenticated browser request proves that
+        # the holder of K_session is still attached to this session.
+        self.server.lifecycle.notify_activity()
+
         return True
 
     def _authenticated_headers(self, code, body):

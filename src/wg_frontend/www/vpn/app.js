@@ -10,7 +10,6 @@ const passwordInput = document.querySelector("#password");
 const button = document.querySelector("#login-button");
 const status = document.querySelector("#auth-status");
 const authConnectionStatus = document.querySelector("#auth-connection-status");
-const resetSessionButton = document.querySelector("#reset-session-button");
 
 const sessionUser = document.querySelector("#session-user");
 const connectionStatus = document.querySelector("#connection-status");
@@ -25,20 +24,45 @@ window.wgFrontend = {
     client: null,
 };
 
+const HEARTBEAT_INTERVAL_MS = 10_000;
+let heartbeatTimer = null;
+
+function stopHeartbeat() {
+    if (heartbeatTimer !== null) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+    }
+}
+
+function startHeartbeat() {
+    stopHeartbeat();
+
+    heartbeatTimer = setInterval(async () => {
+        const client = window.wgFrontend.client;
+        if (!client) {
+            stopHeartbeat();
+            return;
+        }
+
+        try {
+            await client.status();
+        } catch (error) {
+            stopHeartbeat();
+            window.wgFrontend.client = null;
+            connectionStatus.textContent = "Sessione persa";
+            showAuthView();
+            status.className = "auth-status error";
+            status.textContent =
+                error.message ?? "La sessione non è più raggiungibile.";
+            refreshAuthStatus();
+        }
+    }, HEARTBEAT_INTERVAL_MS);
+}
+
 function showAuthView() {
     postauthView.hidden = true;
     authView.hidden = false;
     document.title = "Malandrino · Accesso";
-}
-
-function showResetSession(message = "Sessione server già attiva.") {
-    status.className = "auth-status";
-    status.textContent = message;
-    resetSessionButton.hidden = false;
-}
-
-function hideResetSession() {
-    resetSessionButton.hidden = true;
 }
 
 function showPostauthView() {
@@ -115,11 +139,9 @@ async function refreshAuthStatus() {
                 : "Auth online";
 
             if (serverSessionActive && !auth.sessionId) {
-                showResetSession(
-                    "Esiste una sessione server attiva, ma questa pagina non possiede più la chiave di sessione."
-                );
-            } else {
-                hideResetSession();
+                status.className = "auth-status";
+                status.textContent =
+                    "Esiste una sessione server ancora attiva. Verrà chiusa automaticamente se il browser che la possiede non invia più richieste autenticate.";
             }
         }
     } catch {
@@ -137,8 +159,6 @@ form.addEventListener("submit", async (event) => {
     let authenticatedHere = false;
 
     try {
-        hideResetSession();
-
         await auth.authenticate(
             usernameInput.value,
             passwordInput.value,
@@ -161,11 +181,13 @@ form.addEventListener("submit", async (event) => {
         passwordInput.value = "";
         renderPeers(clientStatus);
         showPostauthView();
+        startHeartbeat();
 
     } catch (error) {
         const originalMessage = error.message ?? String(error);
 
         if (authenticatedHere) {
+            stopHeartbeat();
             try {
                 await auth.logout();
             } catch {
@@ -179,45 +201,15 @@ form.addEventListener("submit", async (event) => {
         status.textContent = originalMessage;
         authConnectionStatus.textContent = "Offline";
 
-        if (!authenticatedHere && /session already active/i.test(originalMessage)) {
-            showResetSession(
-                "Una sessione precedente è ancora attiva sul server."
-            );
-        }
     } finally {
         button.disabled = false;
     }
 });
 
-resetSessionButton.addEventListener("click", async () => {
-    resetSessionButton.disabled = true;
-    status.className = "auth-status";
-    status.textContent = "Chiusura della sessione precedente…";
-
-    try {
-        const result = await auth.resetServerSession();
-
-        if (!result.ok || !result.data?.ok) {
-            throw new Error(
-                result.data?.error
-                    ?? `reset session failed (${result.status})`
-            );
-        }
-
-        window.wgFrontend.client = null;
-        hideResetSession();
-        status.textContent = "Sessione precedente chiusa. Puoi autenticarti.";
-        authConnectionStatus.textContent = "Auth online";
-    } catch (error) {
-        status.className = "auth-status error";
-        status.textContent = error.message ?? String(error);
-    } finally {
-        resetSessionButton.disabled = false;
-    }
-});
-
 logoutButton.addEventListener("click", async () => {
     logoutButton.disabled = true;
+
+    stopHeartbeat();
 
     try {
         await auth.logout();

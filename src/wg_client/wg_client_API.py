@@ -90,6 +90,7 @@ class WGClientAPI:
                 self.peer_service,
                 self.listen_path,
                 self.session,
+                self.lifecycle,
             )
 
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)

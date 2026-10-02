@@ -79,6 +79,10 @@ class WGAuthIPC:
                     self.lifecycle.request_session_shutdown(notify_client=False)
                     return
 
+                if command == "KEEPALIVE":
+                    self.lifecycle.touch_session()
+                    continue
+
                 if command in ("PEER_REGISTER", "PEER_UNREGISTER"):
                     self._handle_peer_request(request)
                     continue

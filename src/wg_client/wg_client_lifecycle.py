@@ -10,6 +10,13 @@ class WGClientLifecycle:
         self.stop_event = threading.Event()
         self.shutdown_lock = threading.Lock()
 
+    def notify_activity(self):
+        ipc = self.ipc
+        if ipc is None:
+            return
+
+        ipc.keepalive()
+
     def request_shutdown(self, notify_shutdown=True):
         with self.shutdown_lock:
             if self.stop_event.is_set():

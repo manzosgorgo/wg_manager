@@ -572,6 +572,24 @@ class WGClientIPC:
         with self._send_lock:
             self.sock.sendall(self._encode_packet(response))
 
+    def keepalive(self):
+        sock = self.sock
+        if sock is None:
+            raise WGProtocolError("IPC connection is closed")
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "KEEPALIVE",
+        }
+
+        try:
+            with self._send_lock:
+                sock.sendall(self._encode_packet(packet))
+        except OSError as exc:
+            raise WGProtocolError(
+                f"IPC keepalive failed: {exc}"
+            ) from exc
+
     def _notify_stop(self):
         if self.sock is None:
             return

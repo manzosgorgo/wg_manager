@@ -20,7 +20,13 @@ def main():
 
     config = load_config(config_path)
 
-    lifecycle = WGAuthLifecycle()
+    lifecycle = WGAuthLifecycle(
+        idle_timeout=config.getint(
+            "client",
+            "idle_timeout",
+            fallback=45,
+        ),
+    )
 
     with WGAuthAPI(
         config,
