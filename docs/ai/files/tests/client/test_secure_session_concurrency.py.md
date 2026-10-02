@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_secure_session_concurrency.py`
 - Language: `python`
-- Lines: 226
-- SHA256: `cd92a91c672e46a9742b4e0c20de09f6703c3feafc1c090f612d08135f0fcb84`
+- Lines: 229
+- SHA256: `c7f39688040b8c7daa06a0dcf775409d3efb5ea87e2618e0526ed26b8b5fc259`
 - Imports:
   - `collections`
   - `concurrent.futures`
@@ -64,13 +64,13 @@ CFG = {
         "counter_max": 0xFFFFFFFF,
     }
 }
-K_SESSION = bytes(range(32))
+K_SESSION = bytes(range(64))
 SESSION_ID = bytes(16)
 LISTEN_PATH = "/vpn-test"
 INTERFACE = "wg0"
 
 
-class FakeController:
+class FakePeerService:
     def status(self):
         return {"interface": INTERFACE, "peers": []}
 
@@ -86,11 +86,14 @@ def start_server():
     srv = WGClientHTTPServer(
         ("127.0.0.1", 0),
         WGClientAPIHandler,
-        FakeController(),
+        FakePeerService(),
         LISTEN_PATH,
-        INTERFACE,
-        None,  # lifecycle: non usato da GET/PUT/DELETE
-        WGSecureSession(CFG, K_SESSION, SESSION_ID),
+        WGSecureSession(
+            CFG,
+            K_SESSION,
+            SESSION_ID,
+            principal={"username": "admin", "peers": []},
+        ),
     )
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv

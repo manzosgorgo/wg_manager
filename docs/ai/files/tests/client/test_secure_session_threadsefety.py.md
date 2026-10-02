@@ -5,7 +5,7 @@
 - Path: `tests/client/test_secure_session_threadsefety.py`
 - Language: `python`
 - Lines: 106
-- SHA256: `55230b593bcb8d317f725d70439406df2dc4f94d232342ab6eb7a4599fbc2d31`
+- SHA256: `4cfa01e2b18b41f910b33f26a2f83cc9c801d1207c33ff8ed1cbca38a6741c96`
 - Imports:
   - `concurrent.futures`
   - `pytest`
@@ -46,7 +46,7 @@ CFG = {
         "counter_max": 0xFFFFFFFF,
     }
 }
-K_SESSION = bytes(range(32))
+K_SESSION = bytes(range(64))
 SESSION_ID = bytes(16)
 
 

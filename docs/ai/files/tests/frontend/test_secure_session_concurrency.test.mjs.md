@@ -5,7 +5,7 @@
 - Path: `tests/frontend/test_secure_session_concurrency.test.mjs`
 - Language: `javascript`
 - Lines: 113
-- SHA256: `d7576d572e88294fb6c06665e87bfff5d7cfeaadb67857702327454652051f82`
+- SHA256: `27bcf64a4052808fdd40926353fc0a66a536154d3a7cd7454ab6ecae3bf67233`
 - Imports:
   - `../../src/wg_frontend/wg_secure_session.js`
   - `node:assert`
@@ -20,7 +20,7 @@
 //
 // createRequestAuth legge il contatore prima di due `await` (hash e firma)
 // e lo assegna dopo: due chiamate concorrenti vedono lo stesso valore.
-// Con il codice attuale il primo test deve FALLIRE.
+// Verifica che l'allocazione concorrente dei counter resti sicura.
 
 import test from "node:test";
 import assert from "node:assert";
@@ -41,7 +41,7 @@ const CFG = {
 };
 
 async function newSession() {
-    const k = Uint8Array.from({ length: 32 }, (_, i) => i);
+    const k = Uint8Array.from({ length: 64 }, (_, i) => i);
     return WGSecureSession.create(CFG, k, new Uint8Array(16));
 }
 

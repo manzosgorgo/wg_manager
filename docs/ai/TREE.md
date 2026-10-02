@@ -41,6 +41,7 @@
 │   │   ├── wg_auth_API.py
 │   │   ├── wg_auth_API_handler.py
 │   │   ├── wg_auth_IPC.py
+│   │   ├── wg_auth_account_service.py
 │   │   ├── wg_auth_errors.py
 │   │   ├── wg_auth_lifecycle.py
 │   │   ├── wg_auth_ownership_service.py
@@ -93,17 +94,14 @@
 │   │   │   ├── test_auth.conf
 │   │   │   └── wg_auth_client.js
 │   │   ├── __init__.py
-│   │   ├── test_auth_races.py
+│   │   ├── test_account_service.py
+│   │   ├── test_auth_api_state.py
 │   │   ├── test_ownership_service.py
 │   │   ├── test_peer_registry.py
-│   │   ├── test_user_store.py
-│   │   ├── test_wg_auth.js
-│   │   └── test_wg_auth.py
+│   │   └── test_user_store.py
 │   ├── client
 │   │   ├── __init__.py
-│   │   ├── test_auth_client.py
-│   │   ├── test_client.py
-│   │   ├── test_client_API.py
+│   │   ├── test_admin_ipc.py
 │   │   ├── test_peer_service.py
 │   │   ├── test_secure_session.py
 │   │   ├── test_secure_session_concurrency.py
@@ -120,7 +118,6 @@
 │   │   ├── test_secure_session_concurrency.test.mjs
 │   │   └── wg_secure_session_gen_vectors.py
 │   ├── __init__.py
-│   ├── test_http_handler.py
 │   └── test_mock.py
 ├── .gitignore
 ├── README.md

@@ -4,8 +4,8 @@
 
 - Path: `tests/client/test_wg_client_integration.py`
 - Language: `python`
-- Lines: 711
-- SHA256: `75d7b5d88127e0ae85641d8f89a372ac7a5204a2004ea1ff8d6c7734ddac0706`
+- Lines: 762
+- SHA256: `c04eb13a5c97ea582ec2606d9d91547f5b48c44ec313136113c44f69d466e12d`
 - Imports:
   - `base64`
   - `http.client`
@@ -366,6 +366,13 @@ class FakeIPC:
                     "ownership_state": "consistent",
                 }
             ],
+            "ips": {
+                "10.8.0.2/32": {
+                    "public_key": PUBLIC_KEY,
+                    "username": "alice",
+                    "ownership_state": "consistent",
+                }
+            },
         }
 
     def reassign_owner(self, public_key, username):
@@ -374,6 +381,14 @@ class FakeIPC:
             "public_key": public_key,
             "owner": username,
         }
+
+    def create_user(self, username, password):
+        self.calls.append(("create_user", username, password))
+        return {"username": username, "peers": []}
+
+    def delete_user(self, username):
+        self.calls.append(("delete_user", username))
+        return {"username": username, "deleted": True}
 
 
 @pytest.fixture
@@ -453,6 +468,7 @@ def test_admin_peer_status(api):
     assert data["users"] == ["admin", "alice"]
     assert data["peers"][0]["owner"] == "alice"
     assert data["peers"][0]["runtime"]["public_key"] == PUBLIC_KEY
+    assert data["ips"]["10.8.0.2/32"]["public_key"] == PUBLIC_KEY
 
 
 def test_admin_reassign_owner(api):
@@ -475,6 +491,41 @@ def test_admin_reassign_owner(api):
     assert (
         "reassign_owner",
         PUBLIC_KEY,
+        "alice",
+    ) in api.lifecycle.ipc.calls
+
+
+def test_admin_create_user(api):
+    status, body = request(
+        api,
+        "POST",
+        LISTEN_PATH + "/v1/admin/users",
+        body=json.dumps({
+            "username": "bob",
+            "password": "secret",
+        }),
+    )
+
+    assert status == 201
+    assert json.loads(body)["username"] == "bob"
+    assert (
+        "create_user",
+        "bob",
+        "secret",
+    ) in api.lifecycle.ipc.calls
+
+
+def test_admin_delete_user(api):
+    status, body = request(
+        api,
+        "DELETE",
+        LISTEN_PATH + "/v1/admin/users/alice",
+    )
+
+    assert status == 200
+    assert json.loads(body)["deleted"] is True
+    assert (
+        "delete_user",
         "alice",
     ) in api.lifecycle.ipc.calls
 

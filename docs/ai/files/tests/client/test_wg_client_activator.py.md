@@ -4,10 +4,9 @@
 
 - Path: `tests/client/test_wg_client_activator.py`
 - Language: `python`
-- Lines: 159
-- SHA256: `61137f3fb7cd3cefbf9485e6fafc0a3d8972e1e9138383a56ac33a0649e0fc32`
+- Lines: 153
+- SHA256: `a45f08f5948f7f81eb8beb0754b76f89707be0d76908915e50eab323e9de7ef9`
 - Imports:
-  - `asyncio`
   - `concurrent.futures`
   - `pytest`
   - `src.wg_client.wg_client_activator`
@@ -22,8 +21,6 @@
 import subprocess
 import threading
 import time
-from asyncio import futures
-
 import pytest
 
 from src.wg_client.wg_client_activator import activate_client
@@ -36,17 +33,13 @@ DEFAULT_SOCKET = "/run/wg_manager/wg-client-test.sock"
 def activation_params():
     return {
         "socket_path": DEFAULT_SOCKET,
-        "k_sess": (
-            "b7e4a2c91f6d0835"
-            "9a31c7e4b25f608d"
-            "4c8e1a73f0b692de"
-            "5a17c3f84e29b601"
-        ),
+        "k_sess": "ab" * 64,
         "timeout": 30,
         "client_id": "pytest-client",
-        "principal": {"username": "pytest-user"},
+        "principal": {"username": "pytest-user", "peers": []},
         "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
         "listen_path": "/api/7f3a91c2e8b44d17/9c71e4a2f6b83d10",
+        "state_reconcile": lambda peers: None,
     }
 def systemd_client_instances():
     result = subprocess.run(

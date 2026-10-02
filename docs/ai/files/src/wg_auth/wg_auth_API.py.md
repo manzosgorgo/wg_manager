@@ -4,14 +4,15 @@
 
 - Path: `src/wg_auth/wg_auth_API.py`
 - Language: `python`
-- Lines: 404
-- SHA256: `42b8b506aad054cbd488d0f9635432d48eafb582eb75adb7dbeaefa024388253`
+- Lines: 425
+- SHA256: `9726b391cee245d09d8b969223e31f5f03caac786c4a7ac539a33008bd0feda4`
 - Imports:
   - `http.server`
   - `json`
   - `logging`
   - `src.wg_auth.wg_auth_API_handler`
   - `src.wg_auth.wg_auth_IPC`
+  - `src.wg_auth.wg_auth_account_service`
   - `src.wg_auth.wg_auth_errors`
   - `src.wg_auth.wg_auth_ownership_service`
   - `src.wg_auth.wg_auth_peer_registry`
@@ -34,6 +35,7 @@ from src.wg_auth.wg_auth_errors import WGAuthSessionError, WGAuthAuthenticationE
 from src.wg_auth.wg_auth_user_store import WGAuthUserStore
 from src.wg_auth.wg_auth_peer_registry import WGAuthPeerRegistry
 from src.wg_auth.wg_auth_ownership_service import WGAuthOwnershipService
+from src.wg_auth.wg_auth_account_service import WGAuthAccountService
 
 log = logging.getLogger("wg_auth.API")
 
@@ -52,11 +54,18 @@ class WGAuthAPI:
             config["auth"].get(
                 "peer_registry",
                 config["auth"]["login_dir"] + "/.peer_registry.json",
-            )
+            ),
+            config["auth"].get(
+                "ip_registry",
+                config["auth"]["login_dir"] + "/.ip_registry.json",
+            ),
         )
         self.ownership_service = WGAuthOwnershipService(
             self.user_store,
             self.peer_registry,
+        )
+        self.account_service = WGAuthAccountService(
+            self.user_store,
         )
 
         self.session = None
@@ -188,6 +197,8 @@ class WGAuthAPI:
                 state_reconcile=self._reconcile_peer_state,
                 ownership_state=self._ownership_state,
                 ownership_reassign=self._reassign_ownership,
+                account_create=self._create_account,
+                account_delete=self._delete_account,
             )
 
             self.ipc = ipc
@@ -284,6 +295,17 @@ class WGAuthAPI:
     def _reassign_ownership(self, public_key, username):
         return self.ownership_service.reassign(
             public_key,
+            username,
+        )
+
+    def _create_account(self, username, password):
+        return self.account_service.create(
+            username,
+            password,
+        )
+
+    def _delete_account(self, username):
+        return self.account_service.delete(
             username,
         )
 

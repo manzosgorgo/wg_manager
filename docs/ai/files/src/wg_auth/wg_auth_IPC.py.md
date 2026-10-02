@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_IPC.py`
 - Language: `python`
-- Lines: 442
-- SHA256: `7642df020ed13e7ce13f2514565814704a95c97f708dc6b324db68545a8185db`
+- Lines: 546
+- SHA256: `3e8bf05c82bba4f2e826655d30d4dcb33348649db9339822aa6b1de57a5f8a40`
 - Imports:
   - `json`
   - `logging`
@@ -45,6 +45,8 @@ class WGAuthIPC:
         state_reconcile=None,
         ownership_state=None,
         ownership_reassign=None,
+        account_create=None,
+        account_delete=None,
     ):
         self.socket_path = socket_path
         self.client_id = client_id
@@ -57,6 +59,8 @@ class WGAuthIPC:
         self.state_reconcile = state_reconcile
         self.ownership_state = ownership_state
         self.ownership_reassign = ownership_reassign
+        self.account_create = account_create
+        self.account_delete = account_delete
 
         self.sock = None
     @property
@@ -69,11 +73,13 @@ class WGAuthIPC:
         try:
             while True:
                 packet = self.receive_packet()
-                log.debug("received IPC packet: %r", packet)
 
                 try:
                     request = self.parse_packet(packet)
-                    log.debug("parsed IPC packet: %r", request)
+                    log.debug(
+                        "received IPC command: %r",
+                        request.get("type"),
+                    )
                 except WGAuthProtocolError as exc:
                     log.error(
                         "invalid IPC packet: %s",
@@ -97,6 +103,10 @@ class WGAuthIPC:
 
                 if command in ("OWNERSHIP_STATE", "OWNERSHIP_REASSIGN"):
                     self._handle_ownership_request(request)
+                    continue
+
+                if command in ("ACCOUNT_CREATE", "ACCOUNT_DELETE"):
+                    self._handle_account_request(request)
                     continue
 
                 log.error(
@@ -291,6 +301,100 @@ class WGAuthIPC:
         self.send_packet({
             "protocol_version": PROTOCOL_VERSION,
             "type": "OWNERSHIP_RESULT",
+            "request_id": request_id,
+            "status": "OK",
+            "result": result,
+        })
+
+    def _handle_account_request(self, request):
+        request_id = request.get("request_id")
+
+        if type(request_id) is not int or request_id < 1:
+            raise WGAuthProtocolError("invalid request_id")
+
+        principal_username = None
+        if isinstance(self.principal, dict):
+            principal_username = self.principal.get("username")
+
+        if principal_username != "admin":
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "ACCOUNT_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 403,
+                "error": "admin principal required",
+            })
+            return
+
+        username = request.get("username")
+        if not isinstance(username, str) or not username:
+            raise WGAuthProtocolError("invalid username")
+
+        try:
+            if request["type"] == "ACCOUNT_CREATE":
+                password = request.get("password")
+                if not isinstance(password, str) or not password:
+                    raise WGAuthProtocolError("invalid password")
+                if self.account_create is None:
+                    raise RuntimeError("account create callback is unavailable")
+                result = self.account_create(
+                    username,
+                    password,
+                )
+            else:
+                if self.account_delete is None:
+                    raise RuntimeError("account delete callback is unavailable")
+                result = self.account_delete(username)
+
+        except FileExistsError as exc:
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "ACCOUNT_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 409,
+                "error": str(exc),
+            })
+            return
+
+        except FileNotFoundError as exc:
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "ACCOUNT_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 404,
+                "error": str(exc),
+            })
+            return
+
+        except ValueError as exc:
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "ACCOUNT_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 409,
+                "error": str(exc),
+            })
+            return
+
+        except Exception as exc:
+            log.exception("account request failed")
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "ACCOUNT_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 500,
+                "error": str(exc),
+            })
+            return
+
+        self.send_packet({
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "ACCOUNT_RESULT",
             "request_id": request_id,
             "status": "OK",
             "result": result,

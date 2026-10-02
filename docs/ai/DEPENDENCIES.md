@@ -20,6 +20,7 @@ This file is generated automatically.
 - `logging`
 - `src.wg_auth.wg_auth_API_handler`
 - `src.wg_auth.wg_auth_IPC`
+- `src.wg_auth.wg_auth_account_service`
 - `src.wg_auth.wg_auth_errors`
 - `src.wg_auth.wg_auth_ownership_service`
 - `src.wg_auth.wg_auth_peer_registry`
@@ -42,6 +43,10 @@ This file is generated automatically.
 - `socket`
 - `src.wg_auth.wg_auth_errors`
 - `time`
+
+## `src/wg_auth/wg_auth_account_service.py`
+
+- `opaque`
 
 ## `src/wg_auth/wg_auth_lifecycle.py`
 
@@ -204,8 +209,22 @@ This file is generated automatically.
 - `fs`
 - `https`
 
+## `tests/auth/test_account_service.py`
+
+- `opaque`
+- `pytest`
+- `src.wg_auth.wg_auth_account_service`
+- `src.wg_auth.wg_auth_user_store`
+
+## `tests/auth/test_auth_api_state.py`
+
+- `pytest`
+- `src.wg_auth.wg_auth_API`
+- `src.wg_auth.wg_auth_errors`
+
 ## `tests/auth/test_ownership_service.py`
 
+- `pytest`
 - `src.wg_auth.wg_auth_ownership_service`
 - `src.wg_auth.wg_auth_peer_registry`
 - `src.wg_auth.wg_auth_user_store`
@@ -223,52 +242,13 @@ This file is generated automatically.
 - `pytest`
 - `src.wg_auth.wg_auth_user_store`
 
-## `tests/auth/test_wg_auth.py`
+## `tests/client/test_admin_ipc.py`
 
-- `json`
-- `ssl`
-- `subprocess`
-- `sys`
-- `time`
-- `urllib.error`
-- `urllib.request`
-
-## `tests/client/test_auth_client.py`
-
-- `base64`
-- `ipaddress`
-- `pathlib`
-- `pytest`
-- `src.wg_client`
-- `src.wg_client.wg_client_activator`
+- `socket`
+- `src.wg_auth.wg_auth_IPC`
+- `src.wg_client.wg_client_IPC`
 - `src.wg_client.wg_client_errors`
-- `src.wg_client.wg_controller_client`
-- `src.wg_client.wg_secure_session`
-- `typing`
-- `unittest`
-
-## `tests/client/test_client.py`
-
-- `base64`
-- `ipaddress`
-- `pathlib`
-- `pytest`
-- `src.wg_client`
-- `src.wg_client.wg_client_activator`
-- `src.wg_client.wg_client_errors`
-- `src.wg_client.wg_controller_client`
-- `src.wg_client.wg_secure_session`
-- `typing`
-- `unittest`
-
-## `tests/client/test_client_API.py`
-
-- `logging`
-- `os`
-- `src.wg_client.wg_client_API`
-- `src.wg_client.wg_client_config`
 - `threading`
-- `time`
 
 ## `tests/client/test_peer_service.py`
 
@@ -307,7 +287,6 @@ This file is generated automatically.
 
 ## `tests/client/test_wg_client_activator.py`
 
-- `asyncio`
 - `concurrent.futures`
 - `pytest`
 - `src.wg_client.wg_client_activator`
@@ -341,8 +320,6 @@ This file is generated automatically.
 ## `tests/e2e/test_js_full_flow.mjs`
 
 - `../../src/wg_frontend/wg_secure_session.js`
-- `../auth/js/opaque_client.js`
-- `../auth/js/wg_auth_client.js`
 - `node:assert/strict`
 - `node:crypto`
 - `node:fs`
@@ -354,8 +331,6 @@ This file is generated automatically.
 ## `tests/e2e/test_js_user_lifecycle.mjs`
 
 - `../../src/wg_frontend/wg_secure_session.js`
-- `../auth/js/opaque_client.js`
-- `../auth/js/wg_auth_client.js`
 - `node:assert/strict`
 - `node:child_process`
 - `node:crypto`
@@ -388,13 +363,6 @@ This file is generated automatically.
 - `json`
 - `src.wg_client.wg_secure_session`
 - `sys`
-
-## `tests/test_http_handler.py`
-
-- `logging`
-- `socket`
-- `ssl`
-- `tests.client.test_wg_handler`
 
 ## `tests/test_mock.py`
 

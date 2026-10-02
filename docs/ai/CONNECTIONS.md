@@ -10,7 +10,7 @@ Generated mechanically by `tools/project_index.py`.
 ## Summary
 
 - Production connections: **7**
-- Test connections: **4**
+- Test connections: **3**
 
 ## Production connections
 
@@ -36,7 +36,7 @@ Generated mechanically by `tools/project_index.py`.
 - `WGAuthAPI._create_server`
 
 **Evidence:**
-- `src/wg_auth/wg_auth_API.py:373` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
+- `src/wg_auth/wg_auth_API.py:394` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
 
 **Message surfaces:**
 - **HTTP**
@@ -69,7 +69,7 @@ Generated mechanically by `tools/project_index.py`.
 - `WGAuthIPC.activate`
 
 **Evidence:**
-- `src/wg_auth/wg_auth_IPC.py:342` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
+- `src/wg_auth/wg_auth_IPC.py:446` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
 
 **Message surfaces:**
 - **IPC**
@@ -142,15 +142,16 @@ Generated mechanically by `tools/project_index.py`.
 - `activate_client`
 
 **Evidence:**
-- `src/wg_client/wg_client_activator.py:48` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
-- `src/wg_client/wg_client_activator.py:54` CONNECT `sock.connect(socket_path)`
-- `src/wg_client/wg_client_activator.py:55` SENDALL `sock.sendall(payload)`
-- `src/wg_client/wg_client_activator.py:79` CLOSE `sock.close()`
+- `src/wg_client/wg_client_activator.py:49` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
+- `src/wg_client/wg_client_activator.py:55` CONNECT `sock.connect(socket_path)`
+- `src/wg_client/wg_client_activator.py:56` SENDALL `sock.sendall(payload)`
+- `src/wg_client/wg_client_activator.py:96` SENDALL `sock.sendall((json.dumps(state_result, separators=(',', ':')) + '\n').encode('utf-8'))`
+- `src/wg_client/wg_client_activator.py:116` CLOSE `sock.close()`
 
 **Message surfaces:**
 - **INTERNAL**
   - `activate_client()`
-    - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, created_at, listen_path, principal}`
+    - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, created_at, listen_path, principal}`, `{protocol_version, type, status}`
 
 ### connection-006
 
@@ -223,8 +224,8 @@ Generated mechanically by `tools/project_index.py`.
 - `send`
 
 **Evidence:**
-- `tests/client/test_secure_session_concurrency.py:120` HTTP_CLIENT `http.client.HTTPConnection('127.0.0.1', port, timeout=5)`
-- `tests/client/test_secure_session_concurrency.py:127` CLOSE `conn.close()`
+- `tests/client/test_secure_session_concurrency.py:123` HTTP_CLIENT `http.client.HTTPConnection('127.0.0.1', port, timeout=5)`
+- `tests/client/test_secure_session_concurrency.py:130` CLOSE `conn.close()`
 
 ### connection-009
 
@@ -269,30 +270,5 @@ Generated mechanically by `tools/project_index.py`.
 - `request`
 
 **Evidence:**
-- `tests/client/test_wg_client_integration.py:383` HTTP_CLIENT `http.client.HTTPSConnection('127.0.0.1', port, context=ctx, timeout=5)`
-- `tests/client/test_wg_client_integration.py:390` CLOSE `conn.close()`
-
-### connection-011
-
-- **Kind:** socket
-- **Transport:** TCP
-
-**Layers:**
-- socket
-
-**Variables:**
-- `server_socket`
-
-**Files:**
-- `/home/main/Desktop/wg_manager/tests/test_http_handler.py`
-- `tests/test_http_handler.py`
-
-**Symbols:**
-- `main`
-
-**Evidence:**
-- `tests/test_http_handler.py:127` SOCKET_CREATE `socket.socket(socket.AF_INET, socket.SOCK_STREAM)`
-- `tests/test_http_handler.py:138` BIND `server_socket.bind((HOST, PORT))`
-- `tests/test_http_handler.py:142` LISTEN `server_socket.listen(1)`
-- `tests/test_http_handler.py:153` ACCEPT `server_socket.accept()`
-- `tests/test_http_handler.py:165` CLOSE `server_socket.close()`
+- `tests/client/test_wg_client_integration.py:398` HTTP_CLIENT `http.client.HTTPSConnection('127.0.0.1', port, context=ctx, timeout=5)`
+- `tests/client/test_wg_client_integration.py:405` CLOSE `conn.close()`
