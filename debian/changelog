@@ -1,3 +1,9 @@
+wg-manager (0.1.0-4) unstable; urgency=medium
+
+  * Allow auth/client and controller packages to be co-installed.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 00:55:00 +0200
+
 wg-manager (0.1.0-3) unstable; urgency=medium
 
   * Install sysusers configuration explicitly before package configuration.

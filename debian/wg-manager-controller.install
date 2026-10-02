@@ -1,5 +1,4 @@
 # Python runtime.
-src/__init__.py usr/lib/wg-manager/src/
 src/wg_manager/*.py usr/lib/wg-manager/src/wg_manager/
 
 # Production systemd units.
