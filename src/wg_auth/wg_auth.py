@@ -1,5 +1,6 @@
 import configparser
 import logging
+import os
 import sys
 import threading
 
@@ -9,7 +10,11 @@ from wg_auth_session import WGAuthSession
 from wg_auth_API import WGAuthAPI
 
 log = logging.getLogger("wg-auth")
-config_path = "/home/main/Desktop/wg_manager/config/wg-auth.conf"
+config_path = os.environ.get(
+    "WG_AUTH_CONFIG",
+    "/home/main/Desktop/wg_manager/config/wg-auth.conf",
+)
+
 def load_config(path):
     config = configparser.ConfigParser()
     config.read(path)
