@@ -24,10 +24,12 @@ const peerCreateButton = document.querySelector("#peer-create-button");
 const peerAllowedIpInput = document.querySelector("#peer-allowed-ip");
 const peerRoutingModeInput = document.querySelector("#peer-routing-mode");
 const peerKeepaliveInput = document.querySelector("#peer-keepalive");
+const peerConfigPanel = document.querySelector("#peer-config-panel");
 const peerConfigPreview = document.querySelector("#peer-config-preview");
 const peerDownloadConfigButton = document.querySelector("#peer-download-config");
 const peerNewProvisioningButton = document.querySelector("#peer-new-provisioning");
 const peerShowQrButton = document.querySelector("#peer-show-qr");
+const peerQrPanel = document.querySelector("#peer-qr-panel");
 const peerQrScannedButton = document.querySelector("#peer-qr-scanned");
 const peerQrStatus = document.querySelector("#peer-qr-status");
 const peerQrCode = document.querySelector("#peer-qr-code");
@@ -243,6 +245,9 @@ function renderPeers(result) {
                 generatedKeyPair = newKeyPair;
                 provisionedPeer = true;
                 setConfigPendingExport(true);
+                peerConfigPanel.hidden = false;
+                peerDownloadConfigButton.hidden = false;
+                peerQrPanel.hidden = false;
 
                 peerPublicKeyInput.value = newKeyPair.publicKey;
 
@@ -415,16 +420,8 @@ function renderClientConfigPreview() {
     const routingMode = peerRoutingModeInput.value;
     const keepalive = Number(peerKeepaliveInput.value);
 
-    if (!generatedKeyPair) {
-        peerConfigPreview.textContent =
-            "Genera le chiavi per creare la configurazione.";
-        updateQrAvailability();
-        return;
-    }
-
-    if (!address) {
-        peerConfigPreview.textContent =
-            "Seleziona un IP per generare la preview.";
+    if (!provisionedPeer || !generatedKeyPair || !address) {
+        peerConfigPreview.textContent = "";
         updateQrAvailability();
         return;
     }
@@ -845,6 +842,9 @@ peerForm.addEventListener("submit", async (event) => {
         }
 
         provisionedPeer = true;
+        peerConfigPanel.hidden = false;
+        peerDownloadConfigButton.hidden = false;
+        peerQrPanel.hidden = false;
 
         peerPublicKeyInput.disabled = true;
         peerAllowedIpInput.disabled = true;
@@ -941,6 +941,9 @@ peerNewProvisioningButton.addEventListener("click", async () => {
     peerGenerateKeysButton.disabled = false;
     peerCreateButton.disabled = false;
     peerNewProvisioningButton.hidden = true;
+    peerConfigPanel.hidden = true;
+    peerDownloadConfigButton.hidden = true;
+    peerQrPanel.hidden = true;
 
     peerQrCode.hidden = true;
     peerQrCode.replaceChildren();
