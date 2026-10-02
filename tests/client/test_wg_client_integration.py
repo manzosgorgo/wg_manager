@@ -311,6 +311,7 @@ def api(lifecycle):
         lifecycle=lifecycle,
     )
     api.controller = FakeController()
+    api.peer_service.controller = api.controller
     api.bind()
 
     assert api.lifecycle == lifecycle

@@ -7,6 +7,7 @@ from src.wg_client.wg_client_API_handler import WGClientAPIHandler, WGClientHTTP
 from src.wg_client.wg_client_errors import WGAPIError
 from src.wg_client.wg_client_lifecycle import WGClientLifecycle
 from src.wg_client.wg_controller_client import WGControllerClient
+from src.wg_client.wg_peer_service import WGPeerService
 
 
 log = logging.getLogger("wg_manager.api")
@@ -61,6 +62,13 @@ class WGClientAPI:
             timeout=config["controller"]["timeout"],
         )
 
+        self.peer_service = WGPeerService(
+            self.controller,
+            self.session,
+            self.lifecycle,
+            self.interface,
+        )
+
     def start(self):
         """Bind and serve until stop() is called."""
         self.bind()
@@ -79,10 +87,8 @@ class WGClientAPI:
             self.server = WGClientHTTPServer(
                 (self.host, self.port),
                 WGClientAPIHandler,
-                self.controller,
+                self.peer_service,
                 self.listen_path,
-                self.interface,
-                self.lifecycle,
                 self.session,
             )
 
