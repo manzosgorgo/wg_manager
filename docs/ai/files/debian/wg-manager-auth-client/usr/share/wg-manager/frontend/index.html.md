@@ -1,0 +1,253 @@
+# `debian/wg-manager-auth-client/usr/share/wg-manager/frontend/index.html`
+
+## Metadata
+
+- Path: `debian/wg-manager-auth-client/usr/share/wg-manager/frontend/index.html`
+- Language: `html`
+- Lines: 240
+- SHA256: `fcaba8baafe1710c0c7010ad90f64b1de30c807f7cb19a0df84f33f5cc7a2bb3`
+
+## Source
+
+```html
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Malandrino · Accesso</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="auth-view" class="shell auth-shell">
+        <main class="auth-main">
+            <section class="auth-card">
+                <div class="auth-icon">🔐</div>
+
+                <div class="auth-heading">
+                    <div class="eyebrow">Zona Protetta</div>
+                    <h2>WireGuard VPN Manager</h2>
+                    <p>Accedi per gestire la VPN.</p>
+                </div>
+
+                <form id="login-form">
+                    <label class="auth-label" for="username">Username</label>
+                    <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        autocomplete="username"
+                        required
+                        autofocus
+                    >
+
+                    <label class="auth-label" for="password">Password</label>
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                    <button
+                        id="login-button"
+                        type="submit"
+                        class="auth-button"
+                    >
+                        Accedi
+                    </button>
+                </form>
+
+                <div
+                    id="auth-status"
+                    class="auth-status"
+                    aria-live="polite"
+                ></div>
+            </section>
+        </main>
+
+        <footer>
+            <span id="auth-connection-status"></span>
+            <span>Solo per i veri malandrini</span>
+        </footer>
+    </div>
+
+    <div id="postauth-view" class="shell postauth-shell" hidden>
+        <header class="postauth-header">
+            <div>
+                <div class="eyebrow">Zona Protetta</div>
+                <h1>WireGuard VPN Manager</h1>
+            </div>
+
+            <div class="session-actions">
+                <span id="session-user"></span>
+                <button id="logout-button" type="button">Logout</button>
+            </div>
+        </header>
+
+        <main class="postauth-main">
+            <nav class="postauth-nav" aria-label="Sezioni VPN">
+                <button type="button" data-view="peers">Peer</button>
+                <button type="button" data-view="new-peer">Nuovo peer</button>
+                <button id="admin-nav-button" type="button" data-view="admin" hidden>Admin</button>
+            </nav>
+
+            <section id="view-peers" class="postauth-panel">
+                <div class="section-heading">
+                    <div>
+                        <div class="eyebrow">Sessione</div>
+                        <h2>I tuoi peer</h2>
+                    </div>
+                    <button id="refresh-peers" type="button">Aggiorna</button>
+                </div>
+
+                <div id="peer-list" class="placeholder-list"></div>
+                <div id="peer-status" class="operation-status" aria-live="polite"></div>
+            </section>
+
+            <section id="view-new-peer" class="postauth-panel" hidden>
+                <div class="section-heading">
+                    <div>
+                        <div class="eyebrow">Provisioning</div>
+                        <h2>Aggiungi peer</h2>
+                    </div>
+                    <button id="peer-new-provisioning" type="button" hidden>Prepara altro peer</button>
+                </div>
+
+                <form id="peer-form" class="postauth-form">
+                    <label>
+                        Public key
+                        <input id="peer-public-key" name="public_key" type="text" readonly placeholder="Generata nel browser">
+                    </label>
+
+                    <button id="peer-generate-keys" type="button">Genera chiavi</button>
+
+                    <label>
+                        IP VPN
+                        <select id="peer-allowed-ip" name="allowed_ip" required>
+                            <option value="">Caricamento indirizzi…</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Routing
+                        <select id="peer-routing-mode" name="routing_mode">
+                            <option value="vpn">Solo rete VPN</option>
+                            <option value="full">Full tunnel</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Persistent keepalive
+                        <select id="peer-keepalive" name="persistent_keepalive">
+                            <option value="0">Off</option>
+                            <option value="10">10 secondi</option>
+                            <option value="25" selected>25 secondi</option>
+                            <option value="60">60 secondi</option>
+                        </select>
+                    </label>
+
+                    <button id="peer-create-button" type="submit">Crea peer</button>
+                </form>
+
+                <div id="peer-create-status" class="operation-status" aria-live="polite"></div>
+
+                <div class="key-warning" role="alert">
+                    <strong>Private key non recuperabile</strong>
+                    <span>
+                        Quando verrà generata la configurazione, la private key resterà solo in questo browser e solo per questa sessione.
+                        Scarica subito la configurazione o acquisisci il QR: chiudendo o ricaricando la pagina non potrà essere recuperata.
+                    </span>
+                </div>
+
+                <section class="provisioning-section">
+                    <div class="subsection-heading">
+                        <div class="eyebrow">Dati client</div>
+                        <h3>Configurazione</h3>
+                    </div>
+
+                    <div id="peer-config-panel" class="placeholder-card" hidden>
+                        <strong>Configurazione WireGuard</strong>
+                        <pre id="peer-config-preview"></pre>
+                        <div class="card-actions">
+                            <button id="peer-download-config" type="button" hidden disabled>Scarica .conf</button>
+                        </div>
+                    </div>
+
+                    <div id="peer-qr-panel" class="placeholder-card" hidden>
+                        <strong>QR WireGuard</strong>
+                        <span id="peer-qr-status">
+                            Il QR sarà disponibile quando la configurazione sarà completa.
+                        </span>
+                        <div id="peer-qr-code" class="peer-qr-code"></div>
+                        <div class="card-actions">
+                            <button id="peer-qr-scanned" type="button" hidden>Ho scansionato il QR</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="provisioning-section debug-section">
+                    <div class="subsection-heading">
+                        <div class="eyebrow">Debug</div>
+                        <h3>Provisioning</h3>
+                    </div>
+
+                    <details class="advanced-info">
+                        <summary>Mostra dati avanzati</summary>
+                        <div class="placeholder-card">
+                            <pre id="provisioning-debug">Caricamento…</pre>
+                        </div>
+                    </details>
+                </section>
+            </section>
+
+            <section id="view-admin" class="postauth-panel" hidden>
+                <div class="section-heading">
+                    <div>
+                        <div class="eyebrow">Amministrazione</div>
+                        <h2>Peer e utenti</h2>
+                    </div>
+                </div>
+
+                <div class="admin-grid">
+                    <section>
+                        <h3>Ownership / stato globale</h3>
+                        <div id="admin-peer-list" class="placeholder-list"></div>
+                    </section>
+
+                    <section>
+                        <h3>Utenti</h3>
+                        <form id="user-form" class="postauth-form">
+                            <label>
+                                Username
+                                <input id="new-username" name="username" type="text">
+                            </label>
+
+                            <label>
+                                Password
+                                <input id="new-password" name="password" type="password">
+                            </label>
+
+                            <button type="submit">Crea utente</button>
+                        </form>
+
+                        <div id="admin-user-list" class="placeholder-list"></div>
+                        <div id="admin-status" class="operation-status" aria-live="polite"></div>
+                    </section>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <span id="connection-status">Online</span>
+            <span>Solo per i veri malandrini</span>
+        </footer>
+    </div>
+
+    <script src="/js/vendor/libopaque.js"></script>
+    <script src="/vendor/qrcode.min.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
+```

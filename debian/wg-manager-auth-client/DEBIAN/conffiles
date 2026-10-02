@@ -1,0 +1,3 @@
+/etc/apache2/conf-available/wg-manager.conf
+/etc/wg-manager/wg-auth.conf
+/etc/wg-manager/wg-client.conf

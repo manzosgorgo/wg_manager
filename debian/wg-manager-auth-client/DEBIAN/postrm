@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge)
+        if command -v a2disconf >/dev/null 2>&1; then
+            a2disconf wg-manager >/dev/null 2>&1 || true
+        fi
+        ;;
+esac
+
+# debhelper inserts generated cleanup here.
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = remove ] && [ -d /run/systemd/system ] ; then
+	systemctl --system daemon-reload >/dev/null || true
+fi
+# End automatically added section
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "purge" ]; then
+	if [ -x "/usr/bin/deb-systemd-helper" ]; then
+		deb-systemd-helper purge 'wg-auth.service' 'wg-client.socket' >/dev/null || true
+	fi
+fi
+# End automatically added section
+
+
+exit 0

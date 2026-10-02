@@ -1,18 +1,10 @@
 # wg-manager documentation
 
-## Manuale operativo
+Automatically generated documentation for the `wg_manager` project.
 
-Questi documenti sono mantenuti manualmente e sono la reference per il
-deployment production:
-
-- [Deployment Debian](deployment.md)
-- [Configurazione production](configuration.md)
-
-## Documentazione generata
-
-`docs/ai/` contiene documentazione e snapshot generati automaticamente.
-È documentazione osservazionale del tree corrente e non sostituisce il manuale
-operativo sopra.
+> This repository contains generated documentation and analysis artifacts.
+> It is observational documentation of the current project tree, not a
+> normative architecture specification.
 
 ## Project analysis
 
@@ -350,6 +342,25 @@ python3 tools/manage_users.py --login-dir login create USER
 python3 tools/manage_users.py --login-dir login delete USER
 python3 tools/manage_users.py --login-dir login claim-peer USER PUBLIC_KEY
 ```
+
+## Deployment production
+
+Il deployment Debian e la configurazione production sono documentati
+separatamente dalla documentazione generata:
+
+- [Guida deployment Debian](docs/deployment.md)
+- [Reference configurazione production](docs/configuration.md)
+- [Note sul packaging](pkg/README.md)
+
+I package installano inoltre checker read-only:
+
+```bash
+sudo wg-manager-check-auth-client
+sudo wg-manager-check-controller
+```
+
+I servizi production non vengono abilitati o avviati automaticamente durante
+l'installazione: prima vanno configurati rete e certificati.
 
 ## Test
 

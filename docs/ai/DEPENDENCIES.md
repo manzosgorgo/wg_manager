@@ -2,6 +2,207 @@
 
 This file is generated automatically.
 
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth.py`
+
+- `configparser`
+- `logging`
+- `os`
+- `src.wg_auth.wg_auth_IPC`
+- `src.wg_auth.wg_auth_lifecycle`
+- `sys`
+- `threading`
+- `wg_auth_API`
+- `wg_auth_session`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_API.py`
+
+- `http.server`
+- `json`
+- `logging`
+- `src.wg_auth.wg_auth_API_handler`
+- `src.wg_auth.wg_auth_IPC`
+- `src.wg_auth.wg_auth_account_service`
+- `src.wg_auth.wg_auth_errors`
+- `src.wg_auth.wg_auth_ownership_service`
+- `src.wg_auth.wg_auth_peer_registry`
+- `src.wg_auth.wg_auth_session`
+- `src.wg_auth.wg_auth_user_store`
+- `ssl`
+- `threading`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_API_handler.py`
+
+- `http.server`
+- `json`
+- `logging`
+- `src.wg_auth.wg_auth_errors`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_IPC.py`
+
+- `json`
+- `logging`
+- `socket`
+- `src.wg_auth.wg_auth_errors`
+- `time`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_account_service.py`
+
+- `opaque`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_lifecycle.py`
+
+- `logging`
+- `threading`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_peer_registry.py`
+
+- `json`
+- `os`
+- `tempfile`
+- `threading`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_session.py`
+
+- `logging`
+- `opaque`
+- `secrets`
+- `src.wg_auth.wg_auth_errors`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_user_store.py`
+
+- `base64`
+- `binascii`
+- `dataclasses`
+- `json`
+- `os`
+- `tempfile`
+- `threading`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py`
+
+- `logging`
+- `os`
+- `re`
+- `socket`
+- `src.wg_client.wg_client_API`
+- `src.wg_client.wg_client_IPC`
+- `src.wg_client.wg_client_config`
+- `src.wg_client.wg_client_errors`
+- `src.wg_client.wg_client_lifecycle`
+- `src.wg_client.wg_secure_session`
+- `sys`
+- `systemd`
+- `threading`
+- `time`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_API.py`
+
+- `logging`
+- `src.wg_client.wg_client_API_handler`
+- `src.wg_client.wg_client_errors`
+- `src.wg_client.wg_client_lifecycle`
+- `src.wg_client.wg_controller_client`
+- `src.wg_client.wg_peer_service`
+- `ssl`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_API_handler.py`
+
+- `datetime`
+- `http`
+- `http.server`
+- `json`
+- `logging`
+- `src.wg_client.wg_client_errors`
+- `threading`
+- `urllib.parse`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_IPC.py`
+
+- `json`
+- `logging`
+- `re`
+- `socket`
+- `src.wg_client.wg_client_errors`
+- `threading`
+- `time`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_activator.py`
+
+- `json`
+- `socket`
+- `time`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_config.py`
+
+- `configparser`
+- `math`
+- `os`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_lifecycle.py`
+
+- `logging`
+- `threading`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py`
+
+- `http.client`
+- `json`
+- `logging`
+- `src.wg_client.wg_client_API_handler`
+- `src.wg_client.wg_client_errors`
+- `ssl`
+- `urllib.parse`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_peer_service.py`
+
+- `ipaddress`
+- `logging`
+- `src.wg_client.wg_client_errors`
+
+## `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_secure_session.py`
+
+- `base64`
+- `binascii`
+- `cryptography.hazmat.primitives`
+- `cryptography.hazmat.primitives.kdf.hkdf`
+- `hashlib`
+- `hmac`
+- `logging`
+- `math`
+- `secrets`
+- `src.wg_client.wg_client_errors`
+- `threading`
+- `time`
+
+## `debian/wg-manager-auth-client/usr/share/wg-manager/frontend/app.js`
+
+- `/js/wg_auth_session.js`
+- `/js/wg_client_api.js`
+
+## `debian/wg-manager-auth-client/usr/share/wg-manager/js/vendor/libopaque.js`
+
+- `crypto`
+- `fs`
+- `path`
+
+## `debian/wg-manager-auth-client/usr/share/wg-manager/js/wg_auth_session.js`
+
+- `./wg_opaque_client.js`
+
+## `debian/wg-manager-controller/usr/lib/wg-manager/src/wg_manager/wg_manager.py`
+
+- `base64`
+- `configparser`
+- `http`
+- `ipaddress`
+- `json`
+- `os`
+- `socket`
+- `ssl`
+- `subprocess`
+- `sys`
+- `urllib.parse`
+
 ## `src/wg_auth/wg_auth.py`
 
 - `configparser`
@@ -383,3 +584,9 @@ This file is generated automatically.
 - `pytest`
 - `subprocess`
 - `sys`
+
+## `vendor/libopaque.js`
+
+- `crypto`
+- `fs`
+- `path`

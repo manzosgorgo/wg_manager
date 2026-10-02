@@ -4,19 +4,27 @@
 
 - Path: `docs/README.md`
 - Language: `markdown`
-- Lines: 405
-- SHA256: `5a853b0a037799ec7815e4555c3b99e7ab8f47fff3d2898f0d42c604836e273d`
+- Lines: 413
+- SHA256: `3c1cab908e4ba4a792cfd92763d5494b2dba5be156a415b5ba34bed24781502c`
 
 ## Source
 
 ```markdown
 # wg-manager documentation
 
-Automatically generated documentation for the `wg_manager` project.
+## Manuale operativo
 
-> This repository contains generated documentation and analysis artifacts.
-> It is observational documentation of the current project tree, not a
-> normative architecture specification.
+Questi documenti sono mantenuti manualmente e sono la reference per il
+deployment production:
+
+- [Deployment Debian](deployment.md)
+- [Configurazione production](configuration.md)
+
+## Documentazione generata
+
+`docs/ai/` contiene documentazione e snapshot generati automaticamente.
+È documentazione osservazionale del tree corrente e non sostituisce il manuale
+operativo sopra.
 
 ## Project analysis
 

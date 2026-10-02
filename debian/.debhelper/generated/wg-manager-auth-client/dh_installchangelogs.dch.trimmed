@@ -1,0 +1,31 @@
+wg-manager (0.1.0-5) unstable; urgency=medium
+
+  * Add production deployment and configuration documentation.
+  * Install read-only setup checkers for both package roles.
+  * Ensure installed administrative commands are executable.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 01:05:00 +0200
+
+wg-manager (0.1.0-4) unstable; urgency=medium
+
+  * Allow auth/client and controller packages to be co-installed.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 00:55:00 +0200
+
+wg-manager (0.1.0-3) unstable; urgency=medium
+
+  * Install sysusers configuration explicitly before package configuration.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 00:45:00 +0200
+
+wg-manager (0.1.0-2) unstable; urgency=medium
+
+  * Ensure system users exist before tmpfiles and package setup run.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 00:20:00 +0200
+
+wg-manager (0.1.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging for the split auth/client and controller runtime.
+
+ -- wg_manager local package <root@localhost>  Fri, 02 Oct 2026 23:55:00 +0200

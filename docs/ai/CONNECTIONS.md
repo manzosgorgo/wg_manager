@@ -9,12 +9,199 @@ Generated mechanically by `tools/project_index.py`.
 
 ## Summary
 
-- Production connections: **7**
+- Production connections: **14**
 - Test connections: **3**
 
 ## Production connections
 
 ### connection-001
+
+- **Kind:** http-server
+- **Role:** server
+- **Handler:** `WGAuthAPIHandler`
+
+**Layers:**
+- TCP
+- HTTP
+
+**Variables:**
+- `server`
+
+**Files:**
+- `/home/main/Desktop/wg_manager/debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_API.py`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_API.py`
+- `src/wg_auth/wg_auth_API_handler.py`
+
+**Symbols:**
+- `WGAuthAPI._create_server`
+
+**Evidence:**
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_API.py:402` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
+
+**Message surfaces:**
+- **HTTP**
+  - `WGAuthAPIHandler._handle_auth_start()`
+    - **Inputs:** `request.pub`, `request.username`
+    - **Outputs:** `{ok, error}`, `{ok, response}`
+  - `WGAuthAPIHandler._handle_auth_verify()`
+    - **Inputs:** `request.auth`
+    - **Outputs:** `{ok, authenticated, session_id, k_session, activation}`, `{ok, error}`
+  - `WGAuthAPIHandler.do_DELETE()`
+    - **Outputs:** `{ok, error}`
+  - `WGAuthAPIHandler.do_GET()`
+    - **Outputs:** `{ok}`, `{ok, error}`
+  - `WGAuthAPIHandler.do_POST()`
+    - **Outputs:** `{ok, error}`
+
+### connection-002
+
+- **Kind:** socket
+- **Transport:** UNIX
+
+**Layers:**
+- socket
+
+**Files:**
+- `/home/main/Desktop/wg_manager/debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_IPC.py`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_IPC.py`
+
+**Symbols:**
+- `WGAuthIPC.activate`
+
+**Evidence:**
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_auth/wg_auth_IPC.py:495` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
+
+**Message surfaces:**
+- **IPC**
+  - `WGAuthIPC.activate()`
+    - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, listen_path, principal, created_at}`, `{protocol_version, type, status}`, `{protocol_version, type, status, error}`
+
+### connection-003
+
+- **Kind:** socket
+- **Role:** client
+- **Transport:** UNIX-DGRAM
+
+**Layers:**
+- socket
+
+**Variables:**
+- `sock`
+
+**Files:**
+- `/home/main/Desktop/wg_manager/debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py`
+
+**Symbols:**
+- `systemd_notify`
+
+**Evidence:**
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py:45` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py:48` CONNECT `sock.connect(notify_socket)`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py:49` SENDALL `sock.sendall(message.encode())`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py:52` CLOSE `sock.close()`
+
+### connection-004
+
+- **Kind:** socket
+- **Transport:** UNIX
+
+**Layers:**
+- socket
+
+**Variables:**
+- `sock`
+
+**Files:**
+- `/home/main/Desktop/wg_manager/debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py`
+
+**Symbols:**
+- `main`
+
+**Evidence:**
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client.py:193` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=os.dup(sys.stdin.fileno()))`
+
+### connection-005
+
+- **Kind:** socket
+- **Role:** client
+- **Transport:** UNIX
+
+**Layers:**
+- socket
+
+**Variables:**
+- `sock`
+
+**Files:**
+- `/home/main/Desktop/wg_manager/debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_activator.py`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_activator.py`
+
+**Symbols:**
+- `activate_client`
+
+**Evidence:**
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_activator.py:49` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_activator.py:55` CONNECT `sock.connect(socket_path)`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_activator.py:56` SENDALL `sock.sendall(payload)`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_activator.py:96` SENDALL `sock.sendall((json.dumps(state_result, separators=(',', ':')) + '\n').encode('utf-8'))`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_client_activator.py:116` CLOSE `sock.close()`
+
+**Message surfaces:**
+- **INTERNAL**
+  - `activate_client()`
+    - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, created_at, listen_path, principal}`, `{protocol_version, type, status}`
+
+### connection-006
+
+- **Kind:** http-client
+- **Role:** client
+
+**Layers:**
+- TCP
+- TLS
+- HTTP
+
+**Variables:**
+- `conn`
+
+**Files:**
+- `/home/main/Desktop/wg_manager/debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py`
+
+**Symbols:**
+- `WGControllerClient._request`
+
+**Evidence:**
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py:32` HTTP_CLIENT `http.client.HTTPSConnection(self.host, self.port, context=self.tls, timeout=self.timeout)`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py:74` CLOSE `conn.close()`
+
+### connection-007
+
+- **Kind:** http-client
+- **Role:** client
+
+**Layers:**
+- TCP
+- TLS
+- HTTP
+
+**Variables:**
+- `conn`
+
+**Files:**
+- `/home/main/Desktop/wg_manager/debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py`
+
+**Symbols:**
+- `WGClientClient._request`
+
+**Evidence:**
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py:130` HTTP_CLIENT `http.client.HTTPSConnection(self.host, self.port, context=self.tls, timeout=self.timeout)`
+- `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py:195` CLOSE `conn.close()`
+
+### connection-008
 
 - **Kind:** http-server
 - **Role:** server
@@ -53,7 +240,7 @@ Generated mechanically by `tools/project_index.py`.
   - `WGAuthAPIHandler.do_POST()`
     - **Outputs:** `{ok, error}`
 
-### connection-002
+### connection-009
 
 - **Kind:** socket
 - **Transport:** UNIX
@@ -76,7 +263,7 @@ Generated mechanically by `tools/project_index.py`.
   - `WGAuthIPC.activate()`
     - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, listen_path, principal, created_at}`, `{protocol_version, type, status}`, `{protocol_version, type, status, error}`
 
-### connection-003
+### connection-010
 
 - **Kind:** socket
 - **Role:** client
@@ -101,7 +288,7 @@ Generated mechanically by `tools/project_index.py`.
 - `src/wg_client/wg_client.py:49` SENDALL `sock.sendall(message.encode())`
 - `src/wg_client/wg_client.py:52` CLOSE `sock.close()`
 
-### connection-004
+### connection-011
 
 - **Kind:** socket
 - **Transport:** UNIX
@@ -122,7 +309,7 @@ Generated mechanically by `tools/project_index.py`.
 **Evidence:**
 - `src/wg_client/wg_client.py:193` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=os.dup(sys.stdin.fileno()))`
 
-### connection-005
+### connection-012
 
 - **Kind:** socket
 - **Role:** client
@@ -153,7 +340,7 @@ Generated mechanically by `tools/project_index.py`.
   - `activate_client()`
     - **Outputs:** `{protocol_version, session_id, k_session, client_id, timeout, created_at, listen_path, principal}`, `{protocol_version, type, status}`
 
-### connection-006
+### connection-013
 
 - **Kind:** http-client
 - **Role:** client
@@ -177,7 +364,7 @@ Generated mechanically by `tools/project_index.py`.
 - `src/wg_client/wg_controller_client.py:32` HTTP_CLIENT `http.client.HTTPSConnection(self.host, self.port, context=self.tls, timeout=self.timeout)`
 - `src/wg_client/wg_controller_client.py:74` CLOSE `conn.close()`
 
-### connection-007
+### connection-014
 
 - **Kind:** http-client
 - **Role:** client
@@ -203,7 +390,7 @@ Generated mechanically by `tools/project_index.py`.
 
 ## Test connections
 
-### connection-008
+### connection-015
 
 - **Kind:** http-client
 - **Role:** client
@@ -227,7 +414,7 @@ Generated mechanically by `tools/project_index.py`.
 - `tests/client/test_secure_session_concurrency.py:123` HTTP_CLIENT `http.client.HTTPConnection('127.0.0.1', port, timeout=5)`
 - `tests/client/test_secure_session_concurrency.py:130` CLOSE `conn.close()`
 
-### connection-009
+### connection-016
 
 - **Kind:** socket
 - **Transport:** UNIX
@@ -249,7 +436,7 @@ Generated mechanically by `tools/project_index.py`.
 - `tests/client/test_wg_client_integration.py:46` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
 - `tests/client/test_wg_client_integration.py:50` CLOSE `sock.close()`
 
-### connection-010
+### connection-017
 
 - **Kind:** http-client
 - **Role:** client

@@ -1,0 +1,59 @@
+# `debian/wg-manager-controller/DEBIAN/postinst`
+
+## Metadata
+
+- Path: `debian/wg-manager-controller/DEBIAN/postinst`
+- Language: `unknown`
+- Lines: 46
+- SHA256: `ddf1d5aab5bee92ff49baaee5329307cde8f96150d70d07926f3cfcf4f1bcd7d`
+
+## Source
+
+```
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ] && command -v systemd-sysusers >/dev/null 2>&1; then
+    systemd-sysusers /usr/lib/sysusers.d/wg-manager-controller.conf
+fi
+
+# debhelper inserts sysusers/systemd integration here.
+# Automatically added by dh_installsystemd/13.24.2
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	if deb-systemd-helper debian-installed 'wg-manager.socket'; then
+		# The following line should be removed in trixie or trixie+1
+		deb-systemd-helper unmask 'wg-manager.socket' >/dev/null || true
+
+		if deb-systemd-helper --quiet was-enabled 'wg-manager.socket'; then
+			# Create new symlinks, if any.
+			deb-systemd-helper enable 'wg-manager.socket' >/dev/null || true
+		fi
+	fi
+
+	# Update the statefile to add new symlinks (if any), which need to be cleaned
+	# up on purge. Also remove old symlinks.
+	deb-systemd-helper update-state 'wg-manager.socket' >/dev/null || true
+fi
+# End automatically added section
+
+
+if [ "$1" = "configure" ]; then
+    install -d -o root -g root       -m 0755 /etc/wg-manager/cert
+    install -d -o root -g wg-manager -m 0750 /etc/wg-manager/cert/controller
+
+    if [ -e /etc/wg-manager/cert/ca.crt ]; then
+        chown root:root /etc/wg-manager/cert/ca.crt
+        chmod 0644 /etc/wg-manager/cert/ca.crt
+    fi
+    if [ -e /etc/wg-manager/cert/controller/server.crt ]; then
+        chown root:wg-manager /etc/wg-manager/cert/controller/server.crt
+        chmod 0644 /etc/wg-manager/cert/controller/server.crt
+    fi
+    if [ -e /etc/wg-manager/cert/controller/server.key ]; then
+        chown root:wg-manager /etc/wg-manager/cert/controller/server.key
+        chmod 0640 /etc/wg-manager/cert/controller/server.key
+    fi
+fi
+
+exit 0
+```

@@ -1,0 +1,97 @@
+#!/bin/sh
+set -u
+
+fail=0
+warn=0
+
+ok()   { printf 'OK    %s\n' "$*"; }
+bad()  { printf 'FAIL  %s\n' "$*" >&2; fail=$((fail + 1)); }
+note() { printf 'WARN  %s\n' "$*" >&2; warn=$((warn + 1)); }
+
+if [ "$(id -u)" -ne 0 ]; then
+    bad "run this checker as root"
+    printf '\nSummary: %s failure(s), %s warning(s)\n' "$fail" "$warn"
+    exit 1
+fi
+
+check_user() {
+    if getent passwd "$1" >/dev/null 2>&1; then
+        ok "system user $1 exists"
+    else
+        bad "system user $1 is missing"
+    fi
+}
+
+check_file() {
+    if [ -f "$1" ]; then
+        ok "$1 exists"
+    else
+        bad "$1 is missing"
+    fi
+}
+
+check_readable_as() {
+    user=$1
+    file=$2
+    if [ -f "$file" ] && runuser -u "$user" -- test -r "$file"; then
+        ok "$file is readable by $user"
+    else
+        bad "$file is not readable by $user"
+    fi
+}
+
+check_user wg-auth
+check_user wg-client
+check_user www-data
+
+check_file /etc/wg-manager/wg-auth.conf
+check_file /etc/wg-manager/wg-client.conf
+check_file /etc/apache2/conf-available/wg-manager.conf
+
+check_file /etc/wg-manager/cert/ca.crt
+check_readable_as wg-auth /etc/wg-manager/cert/auth/auth.crt
+check_readable_as wg-auth /etc/wg-manager/cert/auth/auth.key
+check_readable_as wg-client /etc/wg-manager/cert/client/client.crt
+check_readable_as wg-client /etc/wg-manager/cert/client/client.key
+check_readable_as www-data /etc/wg-manager/cert/apache/apache-client.pem
+
+if [ -f /etc/wg-manager/wg-client.conf ]; then
+    if grep -Eq '^[[:space:]]*host[[:space:]]*=[[:space:]]*wg-manager-controller[[:space:]]*$' /etc/wg-manager/wg-client.conf; then
+        bad "controller.host still has the package placeholder"
+    else
+        ok "controller.host no longer has the package placeholder"
+    fi
+
+    if grep -Eq 'example\.invalid' /etc/wg-manager/wg-client.conf; then
+        bad "wireguard.endpoint still contains example.invalid"
+    else
+        ok "wireguard.endpoint no longer contains example.invalid"
+    fi
+fi
+
+if [ -f /var/lib/wg-manager/auth/admin ]; then
+    ok "admin OPAQUE record exists"
+else
+    note "admin OPAQUE record is missing; run: wg-manager-users create admin"
+fi
+
+if apachectl configtest >/dev/null 2>&1; then
+    ok "apachectl configtest passes"
+else
+    note "apachectl configtest currently fails"
+fi
+
+if [ -e /etc/apache2/conf-enabled/wg-manager.conf ]; then
+    ok "Apache wg-manager configuration is enabled"
+else
+    note "Apache wg-manager configuration is not enabled"
+fi
+
+if systemctl is-enabled wg-auth.service >/dev/null 2>&1; then
+    ok "wg-auth.service is enabled"
+else
+    note "wg-auth.service is not enabled"
+fi
+
+printf '\nSummary: %s failure(s), %s warning(s)\n' "$fail" "$warn"
+[ "$fail" -eq 0 ]

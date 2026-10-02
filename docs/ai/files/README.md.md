@@ -4,8 +4,8 @@
 
 - Path: `README.md`
 - Language: `markdown`
-- Lines: 357
-- SHA256: `979e3ba1640127e7be133d584c198738484eb603fac7e62c01d494d79133d6e1`
+- Lines: 376
+- SHA256: `c5cda3e2bbec8bdeb06ef44f4649b055c72375324c154093f7900b62b667c5e2`
 
 ## Source
 
@@ -306,6 +306,25 @@ python3 tools/manage_users.py --login-dir login create USER
 python3 tools/manage_users.py --login-dir login delete USER
 python3 tools/manage_users.py --login-dir login claim-peer USER PUBLIC_KEY
 ```
+
+## Deployment production
+
+Il deployment Debian e la configurazione production sono documentati
+separatamente dalla documentazione generata:
+
+- [Guida deployment Debian](docs/deployment.md)
+- [Reference configurazione production](docs/configuration.md)
+- [Note sul packaging](pkg/README.md)
+
+I package installano inoltre checker read-only:
+
+```bash
+sudo wg-manager-check-auth-client
+sudo wg-manager-check-controller
+```
+
+I servizi production non vengono abilitati o avviati automaticamente durante
+l'installazione: prima vanno configurati rete e certificati.
 
 ## Test
 

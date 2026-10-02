@@ -1,0 +1,13 @@
+[Unit]
+Description=WG Manager client activation socket
+
+[Socket]
+ListenStream=/run/wg-manager/wg-client.sock
+SocketUser=wg-client
+SocketGroup=wg-client
+SocketMode=0660
+DirectoryMode=0770
+Accept=yes
+
+[Install]
+# Started as a dependency of wg-auth.service.

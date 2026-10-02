@@ -1,0 +1,240 @@
+# `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py`
+
+## Metadata
+
+- Path: `debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_client/wg_controller_client.py`
+- Language: `python`
+- Lines: 219
+- SHA256: `ba61751e1b092ff059c586c008f9cc7c9bec19babfa5a5be6e5e8946b8e09b59`
+- Imports:
+  - `http.client`
+  - `json`
+  - `logging`
+  - `src.wg_client.wg_client_API_handler`
+  - `src.wg_client.wg_client_errors`
+  - `ssl`
+  - `urllib.parse`
+
+## Source
+
+```python
+#!/usr/bin/env python3
+
+import http.client
+import json
+import ssl
+from urllib.parse import quote
+import logging
+
+from src.wg_client.wg_client_errors import WGControllerError
+from src.wg_client.wg_client_API_handler import AUTH_SESSION_ID_HEADER, AUTH_COUNTER_HEADER, AUTH_NONCE_HEADER, AUTH_MAC_HEADER
+
+
+class WGControllerClient:
+    def __init__(self, host, port, ca, cert, key, timeout=10):
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+
+        self.tls = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=ca)
+
+        self.tls.minimum_version = ssl.TLSVersion.TLSv1_3
+        self.tls.load_cert_chain(certfile=cert, keyfile=key)
+
+    def _request(self, method, path, body=None):
+        if body is None:
+            data = None
+        elif isinstance(body, bytes):
+            data = body
+        else:
+            data = json.dumps(body, separators=(",", ":")).encode()
+
+        conn = http.client.HTTPSConnection(
+            self.host, self.port, context=self.tls, timeout=self.timeout
+        )
+
+        headers = {
+            "Accept": "application/json",
+            "Connection": "close",
+        }
+
+        if data is not None:
+            headers["Content-Type"] = "application/json"
+            headers["Content-Length"] = str(len(data))
+
+        try:
+            try:
+                conn.request(method, path, body=data, headers=headers)
+
+                response = conn.getresponse()
+                raw = response.read()
+
+            # ssl.SSLError and TimeoutError are subclasses of OSError.
+            except (OSError, http.client.HTTPException) as exc:
+                raise WGControllerError(
+                    502, f"controller unreachable: {type(exc).__name__}"
+                ) from exc
+
+            try:
+                obj = json.loads(raw.decode())
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                obj = None
+
+            if response.status >= 400:
+                message = "HTTP error"
+
+                if isinstance(obj, dict):
+                    message = obj.get("error", message)
+
+                raise WGControllerError(response.status, message, obj)
+
+            return response.status, obj
+
+        finally:
+            conn.close()
+
+    def status(self):
+        status, obj = self._request("GET", "/v1/status")
+
+        return obj
+
+    def provisioning(self):
+        status, obj = self._request("GET", "/v1/provisioning")
+        return obj
+
+    def add_peer(self, public_key, allowed_ip):
+        status, obj = self._request(
+            "POST",
+            "/v1/peers",
+            {
+                "public_key": str(public_key),
+                "allowed_ip": str(allowed_ip),
+            },
+        )
+
+        return obj
+
+    def remove_peer(self, public_key):
+        path = "/v1/peers/" + quote(public_key, safe="")
+
+        status, obj = self._request("DELETE", path)
+
+        return obj
+
+
+class WGClientClient:
+    def __init__(self, host, port, ca, cert, key, timeout=10,listen_path=None,secure_session=None):
+        self.log = logging.getLogger("wg_client.ClientClient")
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+
+        self.tls = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=ca)
+
+        self.tls.minimum_version = ssl.TLSVersion.TLSv1_3
+        self.tls.load_cert_chain(certfile=cert, keyfile=key)
+
+        self.listen_path = listen_path
+        self.secure_session = secure_session
+        if secure_session is None:
+            self.log.warning("secure_session is None, using insecure session")
+
+    def _request(self, method, path, body=None):
+        if body is None:
+            data = None
+        elif isinstance(body, bytes):
+            data = body
+        else:
+            data = json.dumps(body, separators=(",", ":")).encode()
+
+        conn = http.client.HTTPSConnection(
+            self.host, self.port, context=self.tls, timeout=self.timeout
+        )
+        headers = {
+            "Accept": "application/json",
+            "Connection": "close",
+        }
+        if data is not None:
+            headers["Content-Type"] = "application/json"
+            headers["Content-Length"] = str(len(data))
+
+        if self.secure_session is not None:
+            auth_path= str(path)
+            req_auth = self.secure_session.create_request_auth(
+                method,
+                auth_path,
+                data or b""
+            )
+            headers.update({
+                AUTH_SESSION_ID_HEADER: req_auth["session_id"],
+                AUTH_COUNTER_HEADER: str(req_auth["counter"]),
+                AUTH_NONCE_HEADER: req_auth["nonce"],
+                AUTH_MAC_HEADER: req_auth["mac"],
+            })
+
+        request_path = (
+            f"{self.listen_path}{path}"
+            if self.listen_path is not None
+            else str(path)
+        )
+
+        try:
+            try:
+                conn.request(method, request_path, body=data, headers=headers)
+                response = conn.getresponse()
+                raw = response.read()
+            # ssl.SSLError and TimeoutError are subclasses of OSError.
+            except (OSError, http.client.HTTPException) as exc:
+                raise WGControllerError(
+                    502, f"controller unreachable: {type(exc).__name__}"
+                ) from exc
+            try:
+                if self.secure_session is not None:
+                    response_auth = {
+                        "session_id": response.getheader(AUTH_SESSION_ID_HEADER),
+                        "counter": int(response.getheader(AUTH_COUNTER_HEADER)),
+                        "mac": response.getheader(AUTH_MAC_HEADER),
+                    }
+                    self.secure_session.verify_response(
+                        response_auth,
+                        req_auth,
+                        response.
+                        status,
+                        raw
+                    )
+                obj = json.loads(raw.decode())
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                obj = None
+            if response.status >= 400:
+                message = "HTTP error"
+                if isinstance(obj, dict):
+                    message = obj.get("error", message)
+                raise WGControllerError(response.status, message, obj)
+            return response.status, obj
+        finally:
+            conn.close()
+
+    def status(self):
+        status, obj = self._request("GET", "/v1/status")
+
+        return obj
+
+    def add_peer(self, public_key, allowed_ip):
+        status, obj = self._request(
+            "PUT",
+            "/v1/peers/" + quote(public_key, safe=""),
+            {
+                "public_key": str(public_key),
+                "allowed_ip": str(allowed_ip),
+            },
+        )
+
+        return obj
+
+    def remove_peer(self, public_key):
+        path = "/v1/peers/" + quote(public_key, safe="")
+
+        status, obj = self._request("DELETE", path)
+
+        return obj
+```
