@@ -1,368 +1,358 @@
-# WireGuard Manager (`wg_manager`)
+# wg_manager
 
-Sistema sicuro, modulare e isolato per la gestione dinamica del ciclo di vita di endpoint e peer WireGuard, basato su socket activation systemd, separazione dei privilegi a livello di processo e sessioni crittografiche anti-replay.
+Backend modulare per autenticare utenti, creare sessioni applicative sicure e
+gestire peer WireGuard mantenendo separati autenticazione, autorizzazione e
+privilegi di rete.
 
----
+Lo stato descritto qui corrisponde all'implementazione corrente della branch
+`protocol-review`.
 
-## 1. Panoramica del Progetto
-
-`wg_manager` è un'infrastruttura backend progettata per consentire la configurazione e il provisioning dinamico di peer WireGuard con i massimi requisiti di sicurezza. L'architettura adotta il principio del privilegio minimo (*least privilege*) e della separazione dei compiti (*separation of concerns*):
-
-- **Isolamento dei Privilegi**: I servizi aperti verso l'esterno o che gestiscono le sessioni client non possiedono capacità di rete avanzate. Solo il controller di backend (`wg_manager`) detiene la capability Linux `CAP_NET_ADMIN`.
-- **Istanze per-sessione Effimere**: L'API del client (`wg_client`) viene creata dinamicamente su richiesta da `systemd` tramite socket activation Unix IPC (`Accept=yes`). Ogni sessione client opera in un processo dedicato, isolato, con un percorso URL casuale (`listen_path`) e un timer di scadenza rigoroso.
-- **Crittografia a Livelli Multipli**:
-  - Trasporto sicuro con **TLS 1.3** e mutua autenticazione certificati (**mTLS**).
-  - Autenticazione applicativa a livello di messaggio tramite **`WGSecureSession`**, che implementa HKDF-SHA256, HMAC-SHA256, nonce crittografici e contatori anti-replay.
-
----
-
-## 2. Architettura dei Servizi e Ciclo di Vita (Lifecycle)
-
-### Schema Architetturale
+## Architettura
 
 ```text
- ┌────────────────┐
- │     Client     │ (Browser / App Mobile)
- └───────┬────────┘
-         │ 1. Autenticazione (es. OPAQUE / TLS)
-         ▼
- ┌───────────────────────────┐
- │       wg_auth             │ (Endpoint esterno di autenticazione)
- └───────────┬───────────────┘
-             │ 2. Pacchetto di Attivazione JSON
-             ▼
- ┌───────────────────────────┐
- │   wg-client-test.socket   │ (AF_UNIX IPC, Accept=yes)
- └───────────┬───────────────┘
-             │ 3. Istanziamento per-sessione (StandardInput=socket)
-             ▼
- ┌───────────────────────────┐
- │   wg-client-test@.service │ ◄── Processo wg_client.py
- │                           │     - Valida activation packet
- │                           │     - Inizializza WGClientAPI & bind() TLS 1.3
- │                           │     - Risponde ACTIVATION_RESULT (OK) su IPC
- │                           │     - Notifica systemd READY=1
- └───────────┬───────────────┘     - Avvia timer di sessione (timeout)
-             │
-             │ 4. Richieste REST autenticate HTTPS
-             │    (GET /v1/status, PUT /v1/peers/<pk>, DELETE /v1/peers/<pk>)
-             ▼
- ┌───────────────────────────┐
- │  WGClientAPIHandler       │
- └───────────┬───────────────┘
-             │ 5. Inoltro HTTPS mTLS (WGControllerClient)
-             ▼
- ┌───────────────────────────┐
- │ wg-controller-test.socket │ (127.0.0.1:9443)
- └───────────┬───────────────┘
-             │
-             ▼
- ┌───────────────────────────┐
- │   wg_manager.py           │ (Esegue con CAP_NET_ADMIN)
- └───────────┬───────────────┘
-             │ 6. Configurazione kernel o mock
-             ▼
- ┌───────────────────────────┐
- │   WireGuard (wg0 / mock)  │
- └───────────────────────────┘
+Browser / frontend
+       |
+       | OPAQUE
+       v
+   wg-auth :9445
+       |
+       | IPC Unix persistente
+       | activation + reconciliation + persistence/admin RPC
+       v
+   wg-client :9444
+       |
+       | HTTPS mTLS
+       v
+   wg-manager :9443
+       |
+       | wg / mock
+       v
+    WireGuard
 ```
 
-### Ciclo di Vita della Sessione (`Lifecycle`)
+### wg-auth
 
-1. **Attivazione IPC**: `wg_auth` riceve l'autenticazione dell'utente, stabilisce una chiave segreta di sessione `k_session` e si connette al socket Unix `/run/wg_manager/wg-client-test.sock`.
-2. **Creazione Servizio**: `systemd` avvia una nuova istanza `wg-client-test@<id>.service`, collegando il socket Unix direttamente allo standard input/output del processo `wg_client.py`.
-3. **Validazione e Bind**: `wg_client.py` legge il pacchetto di attivazione JSON, valida i campi crittografici, le scadenze temporali e il `listen_path`. Successivamente effettua il `bind()` e l'inizializzazione TLS del server HTTPS (`WGClientAPI`).
-4. **Ack e Ready**: Solo ad avvio e bind completati con successo, `wg_client` invia il messaggio `ACTIVATION_RESULT: {"type":"ACTIVATION_RESULT","status":"OK",...}` sul socket IPC e invia `READY=1` a systemd tramite `sd_notify`.
-5. **Sessione Attiva**: Il client comunica direttamente via HTTPS con `WGClientAPIHandler` sul percorso dedicato `https://<host>:<port><listen_path>/v1/...`.
-6. **Inoltro al Controller**: Le operazioni sui peer vengono validate (subnet, formato chiavi X25519) e inoltrate tramite client mTLS a `wg_manager.py`.
-7. **Scadenza e Shutdown**: Un timer asincrono (`threading.Timer`) monitora la durata della sessione. Alla scadenza del `timeout` (o su interruzione di segnale), il server HTTPS viene arrestato ordinatamente (`stop()`), viene inviato `STOPPING=1` a systemd e il socket IPC viene chiuso.
+`wg-auth` gestisce:
 
----
+- autenticazione OPAQUE;
+- stato della sessione autenticata;
+- account persistenti;
+- ownership dei peer;
+- registry globale peer/IP;
+- attivazione e shutdown di `wg-client`.
 
-## 3. Struttura dei File e delle Directory
+I record utente sono salvati in `login/<username>` e contengono il record
+OPAQUE e l'elenco dei peer posseduti.
+
+Gli indici globali sono:
 
 ```text
-wg_manager/
-├── src/
-│   ├── wg_client/                      # Componenti del client e dell'API per-sessione
-│   │   ├── __init__.py
-│   │   ├── wg_client.py                # Entry point per-sessione: gestione IPC, lifecycle, timer, systemd notify
-│   │   ├── wg_client_API.py            # Lifecycle del server HTTPS (WGClientHTTPServer, bind, TLS 1.3 mTLS, serve, stop)
-│   │   ├── wg_client_API_handler.py    # Handler HTTP REST (BaseHTTPRequestHandler) per routing e parsing endpoint
-│   │   ├── wg_client_config.py         # Parsing della configurazione INI per wg_client
-│   │   ├── wg_client_errors.py         # Gerarchia delle eccezioni (WGError, WGProtocolError, WGAPIError, ecc.)
-│   │   ├── wg_controller_client.py     # Client HTTPS mTLS verso wg_manager (WGControllerClient e WGCClientClient)
-│   │   └── wg_secure_session.py        # Stato crittografico: HKDF-SHA256, HMAC-SHA256, nonce, contatori anti-replay
-│   │
-│   └── wg_manager/
-│       └── wg_manager.py               # Controller WireGuard privileged: parsing HTTP, policy IP e invocazione wg/mock
-│
-├── config/                             # File di configurazione INI
-│   ├── wg-client-test.conf             # Configurazione per wg_client (porte, certificati, controller)
-│   ├── wg-manager.conf                 # Configurazione base per il controller wg_manager
-│   ├── wg-manager-realtest.conf        # Configurazione per test reali su interfaccia wg0
-│   └── wg-manager-captest.conf         # Configurazione per test di capability e policy
-│
-├── systemd/                            # Definizioni dei servizi e socket systemd
-│   ├── wg-client-test.socket           # Socket activation Unix domain stream per wg_client
-│   ├── wg-client-test@.service         # Unit template istanziata per ogni connessione/sessione IPC
-│   ├── wg-controller-test.socket       # Socket activation TCP (127.0.0.1:9443) per wg_manager
-│   ├── wg-controller-test@.service     # Unit template istanziata per ogni richiesta al controller
-│   └── install/                        # Script di installazione dei servizi nel sistema
-│       ├── install-client-service.sh
-│       └── install-server-service.sh
-│
-├── cert/ / tls/                        # Certificati X.509 e chiavi per TLS 1.3 / mTLS
-│   ├── ca.crt                          # Certificate Authority condivisa
-│   ├── server.crt / server.key         # Certificato e chiave privata del server
-│   └── client.crt / client.key         # Certificato e chiave privata del client mTLS
-│
-├── mock/                               # Script di simulazione per test e sviluppo locale
-│   └── mock                            # Mock dell'eseguibile /usr/bin/wg (gestisce stato in /tmp/mock-state.txt)
-│
-├── docs/                               # Documentazione di dettaglio e specifiche architetturali
-│   ├── architettura-completa.md        # Specifica approfondita dell'architettura e dei flussi
-│   ├── struttura.md                    # Nomenclatura, ruoli dei componenti e convenzioni di progetto
-│   ├── wg-client-api.md                # Specifiche delle API del client
-│   └── roadmap.md                      # Roadmap e checklist di avanzamento implementativo
-│
-├── tests/                              # Suite di test automatizzati (pytest)
-│   ├── client/
-│   │   ├── test_wg_client_lifecycle.py # Test completi di parsing activation packet, lifecycle, timeout e HTTPS
-│   │   ├── test_secure_session.py      # Test di derivazione chiavi, validazione HMAC, anti-tampering e anti-replay
-│   │   ├── test_client.py              # Test funzionali end-to-end su WGCClientClient e API
-│   │   ├── test_client_API.py          # Runner interattivo standalone per WGClientAPI
-│   │   └── test_wg_client_activator.py # Script CLI per simulare l'attivazione IPC via socket Unix
-│   └── pyproject.toml                  # Configurazione del build system e di pytest
-└── README.md                           # Questo documento di riepilogo
+login/.peer_registry.json   public_key -> allowed_ip / owner / state
+login/.ip_registry.json     allowed_ip -> public_key / owner / state
 ```
 
----
+I registry sono indici derivati. Le sorgenti autorevoli restano:
 
-## 4. Specifiche del Protocollo
+- `wg-manager` / WireGuard per i peer realmente presenti;
+- `login/<username>` per l'ownership persistita.
 
-### 4.1 Protocollo IPC di Attivazione (`wg_auth` ➔ `wg_client`)
+All'attivazione `wg-client` legge lo stato live dal manager e invia uno
+`STATE_SNAPSHOT` a `wg-auth`, che ricostruisce entrambi i registry.
 
-La comunicazione avviene su socket Unix `AF_UNIX` (`/run/wg_manager/wg-client-test.sock`). Il pacchetto di attivazione è un oggetto JSON su una singola riga terminata da newline (`\n`), di dimensione massima 64 KB.
+Un peer live senza owner persistito viene classificato `orphan` e può essere
+riparato dall'amministratore. Ownership multiple, IP duplicati e snapshot
+malformati restano errori fatal della reconciliation.
 
-#### Pacchetto di Attivazione (Richiesta)
-```json
-{
-  "protocol_version": 1,
-  "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
-  "k_session": "b7e4a2c91f6d08359a31c7e4b25f608d4c8e1a73f0b692de5a17c3f84e29b601",
-  "client_id": "android-test-client",
-  "timeout": 1800,
-  "created_at": 1800000000,
-  "listen_path": "/api/7f3a91c2e8b44d17/9c71e4a2f6b83d10"
-}
+### wg-client
+
+`wg-client` è un processo per-sessione avviato via systemd socket activation.
+
+Responsabilità principali:
+
+- validazione del pacchetto di activation;
+- `WGSecureSession` obbligatoria;
+- autenticazione HMAC di request e response;
+- replay window e counter;
+- autorizzazione per-owner;
+- orchestrazione tra persistence e controller;
+- API HTTPS per utenti e amministratore.
+
+La secure session deriva chiavi request/response da una `K_session` OPAQUE
+di 64 byte tramite HKDF-SHA256. `session_key_size` indica la dimensione delle
+chiavi locali derivate (32 byte nella configurazione corrente), non la
+dimensione della `K_session`.
+
+### wg-manager
+
+`wg-manager` è il componente privilegiato e resta volutamente piccolo.
+
+Conosce solo policy WireGuard:
+
+- formato chiavi;
+- subnet VPN;
+- duplicate public key;
+- duplicate allowed IP;
+- operazioni `wg show/set`.
+
+Non conosce account, username o ownership applicativa.
+
+Il servizio gira come `wg-manager` con `CAP_NET_ADMIN`; in sviluppo può
+usare `mock/mock` tramite `WG_PROGRAM`.
+
+## Flusso di autenticazione e activation
+
+```text
+frontend
+   |
+   | POST /auth
+   | POST /auth/verify
+   v
+wg-auth
+   |
+   | activation packet
+   v
+wg-client
+   |
+   | GET controller /v1/status
+   v
+wg-manager
+   |
+   | live peer snapshot
+   v
+wg-client
+   |
+   | STATE_SNAPSHOT
+   v
+wg-auth
+   |
+   | rebuild peer/ip registry
+   | STATE_RESULT
+   v
+wg-client
+   |
+   | bind HTTPS API
+   | ACTIVATION_RESULT OK
+   v
+session ACTIVE
 ```
 
-- `protocol_version` (*int*): Versione del protocollo (attualmente `1`).
-- `session_id` (*hex string*): Identificatore univoco di sessione a 128 bit (16 byte, 32 caratteri hex).
-- `k_session` (*hex string*): Chiave simmetrica segreta stabilita in fase di autenticazione (almeno 32 byte, 64 caratteri hex).
-- `client_id` (*string*): Identificativo testuale non vuoto del client.
-- `timeout` (*int*): Durata massima della sessione in secondi ($1 \le \text{timeout} \le 86400$).
-- `created_at` (*int*): Timestamp Unix di generazione del pacchetto (tolleranza clock skew $\pm 30\text{s}$).
-- `listen_path` (*string*): Prefisso URL su cui risponderà l'API (es. `/api/<segmento_1>/<segmento_2>`).
+L'activation non viene dichiarata riuscita finché bind HTTPS e reconciliation
+non sono completati.
 
-#### Risposta di Attivazione (`ACTIVATION_RESULT`)
-- In caso di successo (dopo il corretto bind HTTPS):
-  ```json
-  {
-    "type": "ACTIVATION_RESULT",
-    "status": "OK",
-    "session_id": "7f3a91c2e8b44d17a6f05c9b31de8247",
-    "listen_path": "/api/7f3a91c2e8b44d17/9c71e4a2f6b83d10",
-    "expires_at": 1800001800
-  }
-  ```
-- In caso di errore (validazione pacchetto o bind fallito):
-  ```json
-  {
-    "type": "ACTIVATION_RESULT",
-    "status": "ERROR",
-    "error": "failed to initialize HTTPS API: [Errno 98] Address already in use"
-  }
-  ```
+## API
 
----
+Tutte le API di `wg-client` sono sotto il `listen_path` assegnato alla
+sessione e richiedono gli header di `WGSecureSession`.
 
-### 4.2 Protocollo di Sicurezza Applicativa (`WGSecureSession`)
+### Utente
 
-`WGSecureSession` garantisce confidenzialità dell'identificativo, autenticità dei messaggi e protezione da manomissioni e attacchi di replay:
-
-1. **Derivazione delle Chiavi**:
-   $$\text{SessionSeed} = \text{HKDF-SHA256}(\text{key}=K_{\text{session}}, \text{salt}=\text{SessionID}, \text{info}=\text{"wg\_manager secure session v1"})$$
-   $$\text{Key}_{\text{request}} = \text{HKDF-SHA256}(\text{key}=\text{SessionSeed}, \text{info}=\text{"wg\_manager secure session v1|request authentication"})$$
-   $$\text{Key}_{\text{response}} = \text{HKDF-SHA256}(\text{key}=\text{SessionSeed}, \text{info}=\text{"wg\_manager secure session v1|response authentication"})$$
-
-2. **Dati di Autenticazione della Richiesta**:
-   - `session_id_b64`: Base64 del `session_id`.
-   - `counter`: Intero strettamente crescente per richiesta.
-   - `timestamp`: Timestamp Unix (controllo finestra temporale $\pm 30\text{s}$).
-   - `nonce_b64`: Nonce casuale CSPRNG a 256 bit (32 byte in Base64).
-   - `mac_b64`: $\text{HMAC-SHA256}(\text{Key}_{\text{request}}, \text{SessionID} \parallel \text{Counter} \parallel \text{Timestamp} \parallel \text{Nonce} \parallel \text{Method} \parallel \text{Path} \parallel \text{SHA256}(\text{Body}))$.
-
-3. **Autenticazione della Risposta**:
-   - $\text{Response-MAC} = \text{HMAC-SHA256}(\text{Key}_{\text{response}}, \text{SessionID} \parallel \text{Counter} \parallel \text{Nonce} \parallel \text{Status} \parallel \text{SHA256}(\text{Body}))$.
-
----
-
-### 4.3 Specifiche API REST HTTPS (`WGClientAPI`)
-
-Tutte le chiamate sono esposte sotto il prefisso dinamico configurato in `listen_path`.
-
-#### 1. Stato del Gateway
-- **Metodo / Path**: `GET <listen_path>/v1/status`
-- **Descrizione**: Restituisce lo stato dell'interfaccia e l'elenco dei peer registrati.
-- **Risposta (200 OK)**:
-  ```json
-  {
-    "interface": "wg0",
-    "peers": [
-      {
-        "public_key": "x5TFq2PZmM+kYwQk...=",
-        "endpoint": "198.51.100.1:51820",
-        "allowed_ips": ["10.8.0.2/32"],
-        "latest_handshake": "1710000000",
-        "transfer_rx": "1048576",
-        "transfer_tx": "2097152"
-      }
-    ]
-  }
-  ```
-
-#### 2. Registrazione / Aggiornamento Peer
-- **Metodo / Path**: `PUT <listen_path>/v1/peers/<public_key_b64>`
-- **Body JSON**:
-  ```json
-  {
-    "allowed_ip": "10.8.0.2/32"
-  }
-  ```
-- **Risposta (200 OK)**:
-  ```json
-  {
-    "status": "ok",
-    "public_key": "x5TFq2PZmM+kYwQk...=",
-    "allowed_ip": "10.8.0.2/32"
-  }
-  ```
-
-#### 3. Rimozione Peer
-- **Metodo / Path**: `DELETE <listen_path>/v1/peers/<public_key_b64>`
-- **Risposta (200 OK)**:
-  ```json
-  {
-    "status": "ok",
-    "public_key": "x5TFq2PZmM+kYwQk...="
-  }
-  ```
-
-#### Formato Standard degli Errori JSON
-In caso di errore HTTP (es. 400, 404, 405, 500, 502):
-```json
-{
-  "timestamp": "2026-09-24T20:22:00.000000+00:00",
-  "status": 404,
-  "error": "Not Found",
-  "message": "resource not found",
-  "path": "/api/test/v1/unknown"
-}
+```text
+GET    /v1/status
+PUT    /v1/peers/<public_key>
+DELETE /v1/peers/<public_key>
 ```
 
----
+Gli utenti normali vedono e possono modificare solo i peer posseduti.
 
-### 4.4 Specifiche Controller WireGuard (`wg_manager`)
+### Amministratore
 
-Il servizio `wg_manager.py` riceve richieste tramite socket TCP locale protetto da mTLS (default `127.0.0.1:9443`):
-- `GET /v1/status`: Esegue `wg show <if> dump` e restituisce i dati strutturati dei peer.
-- `POST /v1/peers`: Valida la chiave pubblica a 32 byte e la subnet (`policy.vpn_network`), quindi esegue `wg set <if> peer <pk> allowed-ips <ip>`.
-- `DELETE /v1/peers/<pk>`: Esegue `wg set <if> peer <pk> remove`.
+```text
+GET    /v1/admin/peers
+PUT    /v1/admin/peers/<public_key>/owner
+POST   /v1/admin/users
+DELETE /v1/admin/users/<username>
+```
 
----
+La vista admin unisce:
 
-## 5. Configurazione
+- stato runtime del manager;
+- ownership persistita;
+- stato `consistent/orphan/stale`;
+- indice IP;
+- lista utenti.
 
-I file di configurazione utilizzano la sintassi standard INI.
+Il reassignment di ownership non modifica WireGuard.
 
-### Esempio: `config/wg-client-test.conf`
+### wg-manager
+
+Il controller locale espone:
+
+```text
+GET    /v1/status
+POST   /v1/peers
+DELETE /v1/peers/<public_key>
+```
+
+ed è raggiunto da `wg-client` tramite HTTPS mTLS.
+
+## Consistency model
+
+Creazione peer:
+
+```text
+reserve ownership + IP
+        |
+        v
+manager add
+        |
+        v
+session ownership update
+```
+
+Se il manager fallisce, la reservation viene rollbackata.
+
+Rimozione peer:
+
+```text
+manager remove
+      |
+      v
+ownership cleanup
+      |
+      v
+session ownership update
+```
+
+Se il manager ha già rimosso il peer ma la persistence fallisce, l'API
+restituisce un errore di consistenza `502`: il peer è già stato rimosso e lo
+stato deve essere riparato/reconciliato.
+
+La protezione contro crash nel mezzo di operazioni multi-processo è affidata
+alla combinazione di write atomiche, rollback best-effort, reconciliation
+all'attivazione e strumenti admin di repair. Un protocollo transazionale più
+forte è rimandato a una fase successiva.
+
+## IPC wg-auth <-> wg-client
+
+Il canale Unix persistente trasporta attualmente:
+
+```text
+ACTIVATION / ACTIVATION_RESULT
+STATE_SNAPSHOT / STATE_RESULT
+PEER_REGISTER / PEER_UNREGISTER / PEER_RESULT
+OWNERSHIP_STATE / OWNERSHIP_REASSIGN / OWNERSHIP_RESULT
+ACCOUNT_CREATE / ACCOUNT_DELETE / ACCOUNT_RESULT
+STOP
+```
+
+Le operazioni ownership/account sono autorizzate nuovamente lato `wg-auth`;
+non ci si affida solo al controllo HTTP di `wg-client`.
+
+## systemd
+
+Unit principali:
+
+```text
+wg-client-test.socket
+wg-client-test@.service
+wg-controller-test.socket
+wg-controller-test@.service
+```
+
+Il socket client è:
+
 ```ini
-[client]
-name = wg-client
-log_level = DEBUG
-
-[api]
-host = 127.0.0.1
-port = 9444
-server_cert = /home/main/Desktop/wg_manager/cert/server.crt
-server_key = /home/main/Desktop/wg_manager/cert/server.key
-ca = /home/main/Desktop/wg_manager/cert/ca.crt
-
-[controller]
-host = 127.0.0.1
-port = 9443
-ca = /home/main/Desktop/wg_manager/cert/ca.crt
-client_cert = /home/main/Desktop/wg_manager/cert/client.crt
-client_key = /home/main/Desktop/wg_manager/cert/client.key
-timeout = 10
-
-[wireguard]
-interface = wg0
+SocketUser=wg-client
+SocketGroup=wg-client
+SocketMode=0660
+Accept=yes
 ```
 
-### Esempio: `config/wg-manager.conf`
-```ini
-[manager]
-interface = wg0
+Il controller gira come `wg-manager` con `CAP_NET_ADMIN`.
 
-[tls]
-server_cert = /home/main/Desktop/wg_manager/cert/server.crt
-server_key = /home/main/Desktop/wg_manager/cert/server.key
-client_ca = /home/main/Desktop/wg_manager/cert/ca.crt
+Le unit installate determinano le configurazioni runtime tramite variabili
+d'ambiente come `WG_CLIENT_CONFIG`, `WG_CONFIG`, `WG_PROGRAM`,
+`WG_MOCK_STATE` e `WG_MOCK_LOG`.
 
-[policy]
-vpn_network = 10.8.0.0/24
+## Configurazione e stato
+
+File principali:
+
+```text
+config/wg-auth.conf
+config/wg-client-test-auth.conf
+config/wg-manager.conf
 ```
 
----
-
-## 6. Sicurezza e Hardening con systemd
-
-I servizi systemd inclusi in `systemd/` applicano le direttive di hardening raccomandate da Linux Security:
-
-- **`Type=notify`** con integrazione nativa di `sd_notify` (`READY=1`, `STOPPING=1`, `STATUS=...`).
-- **`NoNewPrivileges=yes`**: Previene l'elevazione dei privilegi tramite setuid/setgid.
-- **`ProtectSystem=strict`** e **`ProtectKernelTunables=yes`**: Monta il filesystem di sistema in sola lettura e blocca la manipolazione di sysctl.
-- **`PrivateTmp=yes`**: Crea uno spazio dei nomi isolato per `/tmp`.
-- **`CapabilityBoundingSet=CAP_NET_ADMIN`** e **`AmbientCapabilities=CAP_NET_ADMIN`**: Assegnate esclusivamente al servizio di gestione `wg-controller-test@.service`.
-
----
-
-## 7. Esecuzione dei Test e Strumenti di Sviluppo
-
-### Prerequisiti
-- Python 3.11+
-- `cryptography`, `pytest`
-
-### Eseguire i Test Automatici
-Per eseguire l'intera suite di test unitari e di integrazione:
+Per vedere in un unico report unit systemd, configurazioni selezionate,
+registry, utenti, mock state, socket e log:
 
 ```bash
-pytest tests/client/
+python3 tools/wg_diagnostics.py
 ```
 
-### Test di Attivazione Socket Manuale
-Per simulare il passaggio del pacchetto di attivazione da `wg_auth` al socket Unix:
+Opzioni utili:
 
 ```bash
-python3 tests/client/test_wg_client_activator.py --socket /run/wg_manager/wg-client-test.sock --timeout 1800
+python3 tools/wg_diagnostics.py --no-logs
+python3 tools/wg_diagnostics.py --journal-lines 100
 ```
 
-### Test Funzionale API e Controller
-Per verificare le operazioni CRUD dei peer contro un'istanza API attiva:
+Gestione locale account/ownership:
 
 ```bash
-python3 tests/client/test_client.py --host 127.0.0.1 --port 9444 --peer-ip 10.8.0.2/32
+python3 tools/manage_users.py --login-dir login create USER
+python3 tools/manage_users.py --login-dir login delete USER
+python3 tools/manage_users.py --login-dir login claim-peer USER PUBLIC_KEY
 ```
+
+## Test
+
+La suite corrente copre:
+
+- OPAQUE e lifecycle account;
+- state machine auth;
+- parsing/activation client;
+- secure session Python e JavaScript;
+- replay, concurrency e cross-language vectors;
+- peer CRUD e authorization;
+- rollback/partial failure;
+- ownership e reassignment;
+- peer registry e IP registry;
+- IPC reale client <-> auth per peer/admin/account RPC;
+- API HTTPS client;
+- mock WireGuard;
+- flow E2E JavaScript.
+
+Test Python:
+
+```bash
+pytest -v
+```
+
+E2E:
+
+```bash
+node tests/e2e/test_js_full_flow.mjs
+node tests/e2e/test_js_user_lifecycle.mjs
+node tests/frontend/test_secure_session_concurrency.test.mjs
+```
+
+## Documentazione automatica
+
+`docs/ai/` contiene snapshot e documentazione generati meccanicamente.
+Non va trattata come specifica normativa e non va modificata manualmente.
+
+Gli snapshot principali sono:
+
+```text
+docs/ai/wg_auth_proto.md
+docs/ai/wg_client_proto.md
+docs/ai/wg_manager_proto.md
+docs/ai/wg_all_proto.md
+```
+
+La documentazione sugli strumenti di analisi statica resta in:
+
+```text
+docs/comm-callgraph.md
+docs/protocol-flow.md
+docs/static-analysis.md
+```
+
+## Stato del progetto
+
+Il backend di autenticazione/sessione/ownership/peer management è considerato
+completo per questa fase ed è coperto dalla suite corrente.
+
+Le attività successive sono mantenute in [TODO.md](TODO.md).
