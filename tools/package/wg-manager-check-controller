@@ -52,10 +52,10 @@ if [ -f /etc/wg-manager/wg-manager.conf ]; then
 fi
 
 if [ -n "$iface" ]; then
-    if ip link show "$iface" >/dev/null 2>&1; then
-        ok "WireGuard interface $iface exists"
+    if wg show "$iface" >/dev/null 2>&1; then
+        ok "WireGuard interface $iface is available to wg"
     else
-        bad "configured interface $iface does not exist"
+        bad "configured WireGuard interface $iface is not available"
     fi
 else
     bad "could not determine [manager] interface"
