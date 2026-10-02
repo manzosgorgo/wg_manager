@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module src.wg_client.wg_controller_client</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_client.html" class="white">wg_client</a>.wg_controller_client</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_client/wg_controller_client.py">/home/main/Desktop/wg_manager/src/wg_client/wg_controller_client.py</a></td></tr></table>
+    <p></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="http.html">http</a><br>
+</td><td class="multicolumn"><a href="json.html">json</a><br>
+</td><td class="multicolumn"><a href="logging.html">logging</a><br>
+</td><td class="multicolumn"><a href="ssl.html">ssl</a><br>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+    
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#object">builtins.object</a>
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="src.wg_client.wg_controller_client.html#WGClientClient">WGClientClient</a>
+</dt><dt class="heading-text"><a href="src.wg_client.wg_controller_client.html#WGControllerClient">WGControllerClient</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="WGClientClient">class <strong>WGClientClient</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#WGClientClient">WGClientClient</a>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;host,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ca,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cert,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;key,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;timeout=10,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;listen_path=None,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;secure_session=None<br>
+)<br>
+&nbsp;<br>
+<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="WGClientClient-__init__"><strong>__init__</strong></a>(
+    self,
+    host,
+    port,
+    ca,
+    cert,
+    key,
+    timeout=10,
+    listen_path=None,
+    secure_session=None
+)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt><a name="WGClientClient-add_peer"><strong>add_peer</strong></a>(self, public_key, allowed_ip)</dt></dl>
+
+<dl><dt><a name="WGClientClient-remove_peer"><strong>remove_peer</strong></a>(self, public_key)</dt></dl>
+
+<dl><dt><a name="WGClientClient-status"><strong>status</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table> <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="WGControllerClient">class <strong>WGControllerClient</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#WGControllerClient">WGControllerClient</a>(host,&nbsp;port,&nbsp;ca,&nbsp;cert,&nbsp;key,&nbsp;timeout=10)<br>
+&nbsp;<br>
+<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="WGControllerClient-__init__"><strong>__init__</strong></a>(self, host, port, ca, cert, key, timeout=10)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt><a name="WGControllerClient-add_peer"><strong>add_peer</strong></a>(self, public_key, allowed_ip)</dt></dl>
+
+<dl><dt><a name="WGControllerClient-provisioning"><strong>provisioning</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="WGControllerClient-remove_peer"><strong>remove_peer</strong></a>(self, public_key)</dt></dl>
+
+<dl><dt><a name="WGControllerClient-status"><strong>status</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+    
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>AUTH_COUNTER_HEADER</strong> = 'X-WG-Counter'<br>
+<strong>AUTH_MAC_HEADER</strong> = 'X-WG-MAC'<br>
+<strong>AUTH_NONCE_HEADER</strong> = 'X-WG-Nonce'<br>
+<strong>AUTH_SESSION_ID_HEADER</strong> = 'X-WG-Session-ID'</td></tr></table>
+</body></html>

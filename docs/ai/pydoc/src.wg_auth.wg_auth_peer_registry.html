@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module src.wg_auth.wg_auth_peer_registry</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_auth.html" class="white">wg_auth</a>.wg_auth_peer_registry</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_peer_registry.py">/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_peer_registry.py</a></td></tr></table>
+    <p></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="json.html">json</a><br>
+</td><td class="multicolumn"><a href="os.html">os</a><br>
+</td><td class="multicolumn"><a href="tempfile.html">tempfile</a><br>
+</td><td class="multicolumn"><a href="threading.html">threading</a><br>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+    
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#object">builtins.object</a>
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="src.wg_auth.wg_auth_peer_registry.html#WGAuthPeerRegistry">WGAuthPeerRegistry</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="WGAuthPeerRegistry">class <strong>WGAuthPeerRegistry</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#WGAuthPeerRegistry">WGAuthPeerRegistry</a>(path,&nbsp;ip_path=None)<br>
+&nbsp;<br>
+Persistent&nbsp;global&nbsp;reservation&nbsp;table&nbsp;for&nbsp;WireGuard&nbsp;keys&nbsp;and&nbsp;IPs.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="WGAuthPeerRegistry-__init__"><strong>__init__</strong></a>(self, path, ip_path=None)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt><a name="WGAuthPeerRegistry-get"><strong>get</strong></a>(self, public_key)</dt></dl>
+
+<dl><dt><a name="WGAuthPeerRegistry-reconcile"><strong>reconcile</strong></a>(self, manager_peers, owners)</dt><dd><span class="code">Rebuild&nbsp;the&nbsp;registry&nbsp;from&nbsp;the&nbsp;manager's&nbsp;live&nbsp;key/IP&nbsp;state&nbsp;and<br>
+the&nbsp;user&nbsp;store's&nbsp;persisted&nbsp;ownership&nbsp;map.<br>
+&nbsp;<br>
+manager_peers&nbsp;is&nbsp;a&nbsp;list&nbsp;of&nbsp;{"public_key":&nbsp;str,&nbsp;"allowed_ip":&nbsp;str}.<br>
+owners&nbsp;maps&nbsp;public_key&nbsp;-&gt;&nbsp;username.<br>
+&nbsp;<br>
+Live&nbsp;peers&nbsp;without&nbsp;a&nbsp;persisted&nbsp;owner&nbsp;are&nbsp;retained&nbsp;as&nbsp;orphan<br>
+reservations&nbsp;so&nbsp;an&nbsp;administrator&nbsp;can&nbsp;claim&nbsp;or&nbsp;reassign&nbsp;them.</span></dd></dl>
+
+<dl><dt><a name="WGAuthPeerRegistry-release"><strong>release</strong></a>(self, actor_username, public_key)</dt></dl>
+
+<dl><dt><a name="WGAuthPeerRegistry-reserve"><strong>reserve</strong></a>(self, username, public_key, allowed_ip)</dt></dl>
+
+<dl><dt><a name="WGAuthPeerRegistry-set_owner"><strong>set_owner</strong></a>(self, public_key, username)</dt></dl>
+
+<dl><dt><a name="WGAuthPeerRegistry-snapshot"><strong>snapshot</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="WGAuthPeerRegistry-snapshot_ips"><strong>snapshot_ips</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>

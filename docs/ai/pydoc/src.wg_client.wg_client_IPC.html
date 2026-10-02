@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module src.wg_client.wg_client_IPC</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_client.html" class="white">wg_client</a>.wg_client_IPC</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_client/wg_client_IPC.py">/home/main/Desktop/wg_manager/src/wg_client/wg_client_IPC.py</a></td></tr></table>
+    <p></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="json.html">json</a><br>
+<a href="logging.html">logging</a><br>
+</td><td class="multicolumn"><a href="re.html">re</a><br>
+<a href="socket.html">socket</a><br>
+</td><td class="multicolumn"><a href="threading.html">threading</a><br>
+<a href="time.html">time</a><br>
+</td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+    
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#object">builtins.object</a>
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="src.wg_client.wg_client_IPC.html#WGClientIPC">WGClientIPC</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="WGClientIPC">class <strong>WGClientIPC</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#WGClientIPC">WGClientIPC</a>(sock,&nbsp;lifecycle)<br>
+&nbsp;<br>
+<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="WGClientIPC-__init__"><strong>__init__</strong></a>(self, sock, lifecycle)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt><a name="WGClientIPC-control_loop"><strong>control_loop</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-create_user"><strong>create_user</strong></a>(self, username, password)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-delete_user"><strong>delete_user</strong></a>(self, username)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-keepalive"><strong>keepalive</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-ownership_state"><strong>ownership_state</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-parse_activation"><strong>parse_activation</strong></a>(self, obj, now=None)</dt><dd><span class="code">Validate&nbsp;an&nbsp;activation&nbsp;packet.<br>
+&nbsp;<br>
+Returns&nbsp;a&nbsp;dict&nbsp;with&nbsp;decoded&nbsp;session_id&nbsp;and&nbsp;k_session&nbsp;(bytes),<br>
+client_id,&nbsp;listen_path&nbsp;and&nbsp;expires_at&nbsp;(unix&nbsp;time).<br>
+&nbsp;<br>
+The&nbsp;OPAQUE&nbsp;session&nbsp;key&nbsp;length&nbsp;belongs&nbsp;to&nbsp;the&nbsp;activation&nbsp;protocol;<br>
+WGSecureSession's&nbsp;configured&nbsp;session_key_size&nbsp;controls&nbsp;only&nbsp;the<br>
+length&nbsp;of&nbsp;keys&nbsp;derived&nbsp;locally&nbsp;with&nbsp;HKDF.</span></dd></dl>
+
+<dl><dt><a name="WGClientIPC-parse_packet"><strong>parse_packet</strong></a>(self, packet)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-provisioning_state"><strong>provisioning_state</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-reassign_owner"><strong>reassign_owner</strong></a>(self, public_key, username)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-receive_packet"><strong>receive_packet</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-reconcile_state"><strong>reconcile_state</strong></a>(self, peers)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-register_peer"><strong>register_peer</strong></a>(self, public_key, allowed_ip)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-send_result"><strong>send_result</strong></a>(self, status, **fields)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-stop"><strong>stop</strong></a>(self, notify_shutdown=True)</dt></dl>
+
+<dl><dt><a name="WGClientIPC-unregister_peer"><strong>unregister_peer</strong></a>(self, public_key)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+    
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>IPC_RESPONSE_TIMEOUT</strong> = 10<br>
+<strong>LISTEN_PATH_RE</strong> = re.compile('(/[A-Za-z0-9_-]+)+')<br>
+<strong>MAX_CLOCK_SKEW</strong> = 30<br>
+<strong>MAX_PACKET_SIZE</strong> = 65536<br>
+<strong>MAX_SESSION_TIMEOUT</strong> = 86400<br>
+<strong>OPAQUE_SESSION_KEY_SIZE</strong> = 64<br>
+<strong>PROTOCOL_VERSION</strong> = 1<br>
+<strong>log</strong> = &lt;Logger wg_manager.IPC (WARNING)&gt;</td></tr></table>
+</body></html>
