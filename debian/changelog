@@ -1,3 +1,9 @@
+wg-manager (0.1.0-2) unstable; urgency=medium
+
+  * Ensure system users exist before tmpfiles and package setup run.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 00:20:00 +0200
+
 wg-manager (0.1.0-1) unstable; urgency=medium
 
   * Initial Debian packaging for the split auth/client and controller runtime.

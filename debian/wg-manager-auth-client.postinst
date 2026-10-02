@@ -3,6 +3,10 @@ set -e
 
 case "$1" in
     configure)
+        if command -v systemd-sysusers >/dev/null 2>&1; then
+            systemd-sysusers /usr/lib/sysusers.d/wg-manager-auth-client.conf
+        fi
+
         if command -v a2enmod >/dev/null 2>&1; then
             a2enmod alias proxy proxy_http ssl >/dev/null
         fi

@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e
 
+if [ "$1" = "configure" ] && command -v systemd-sysusers >/dev/null 2>&1; then
+    systemd-sysusers /usr/lib/sysusers.d/wg-manager-controller.conf
+fi
+
 # debhelper inserts sysusers/systemd integration here.
 #DEBHELPER#
 
