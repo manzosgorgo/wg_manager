@@ -11,7 +11,7 @@ from src.wg_client.wg_client_errors import (
 from src.wg_client.wg_secure_session import WGSecureSession
 
 
-K_SESSION = b"A" * 32
+K_SESSION = b"A" * 64
 SESSION_ID = b"B" * 16
 
 

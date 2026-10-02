@@ -44,13 +44,13 @@ CFG = {
         "counter_max": 0xFFFFFFFF,
     }
 }
-K_SESSION = bytes(range(32))
+K_SESSION = bytes(range(64))
 SESSION_ID = bytes(16)
 LISTEN_PATH = "/vpn-test"
 INTERFACE = "wg0"
 
 
-class FakeController:
+class FakePeerService:
     def status(self):
         return {"interface": INTERFACE, "peers": []}
 
@@ -66,11 +66,14 @@ def start_server():
     srv = WGClientHTTPServer(
         ("127.0.0.1", 0),
         WGClientAPIHandler,
-        FakeController(),
+        FakePeerService(),
         LISTEN_PATH,
-        INTERFACE,
-        None,  # lifecycle: non usato da GET/PUT/DELETE
-        WGSecureSession(CFG, K_SESSION, SESSION_ID),
+        WGSecureSession(
+            CFG,
+            K_SESSION,
+            SESSION_ID,
+            principal={"username": "admin", "peers": []},
+        ),
     )
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv

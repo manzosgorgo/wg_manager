@@ -28,7 +28,7 @@ CFG = {
         "counter_max": 0xFFFFFFFF,
     }
 }
-K_SESSION = bytes(range(32))
+K_SESSION = bytes(range(64))
 SESSION_ID = bytes(16)
 
 
