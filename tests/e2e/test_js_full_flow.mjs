@@ -421,7 +421,13 @@ async function main() {
 
     console.log("[10/10] logout");
 
-    const logout = await authClient.logout();
+    const logout = await secureRequest(
+      session,
+      listenPath,
+      clientPort,
+      "DELETE",
+      "/v1/session",
+    );
     assert.equal(logout.status, 200, JSON.stringify(logout.data));
     authenticated = false;
 
@@ -444,12 +450,18 @@ async function main() {
       }
     }
 
-    if (authenticated) {
+    if (authenticated && session) {
       try {
-        await authClient.logout();
+        await secureRequest(
+          session,
+          listenPath,
+          clientPort,
+          "DELETE",
+          "/v1/session",
+        );
         await waitForLoggedOut(authClient);
       } catch {
-        // Best-effort cleanup.
+        // Best-effort cleanup; idle timeout remains the final fallback.
       }
     }
 

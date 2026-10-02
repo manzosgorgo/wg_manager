@@ -104,18 +104,10 @@ export class WGAuthSession {
         };
     }
 
-    async logout() {
-        try {
-            return await this._request("DELETE", "/auth");
-        } finally {
-            this.username = null;
-            this.sessionId = null;
-            this.kSession = null;
-            this.activation = null;
-        }
-    }
-
-    async resetServerSession() {
-        return this.logout();
+    clear() {
+        this.username = null;
+        this.sessionId = null;
+        this.kSession = null;
+        this.activation = null;
     }
 }

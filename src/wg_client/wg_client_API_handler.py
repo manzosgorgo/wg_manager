@@ -30,6 +30,7 @@ ADMIN_PEERS_PATH = "/v1/admin/peers"
 ADMIN_PEERS_PREFIX = "/v1/admin/peers/"
 ADMIN_USERS_PATH = "/v1/admin/users"
 ADMIN_USERS_PREFIX = "/v1/admin/users/"
+SESSION_PATH = "/v1/session"
 
 # Headers used to carry WGSecureSession authentication over HTTPS.
 # Not frozen yet as part of the wire protocol: convenient for this
@@ -488,6 +489,11 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             path = self.api_path()
+
+            if path == SESSION_PATH:
+                self.send_json(200, {"ok": True})
+                self.server.lifecycle.request_shutdown()
+                return
 
             if path is not None and path.startswith(ADMIN_USERS_PREFIX):
                 username = unquote(path[len(ADMIN_USERS_PREFIX):])

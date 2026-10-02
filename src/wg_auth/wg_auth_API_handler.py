@@ -210,11 +210,12 @@ class WGAuthAPIHandler(BaseHTTPRequestHandler):
             )
             return
 
-        self.api.lifecycle.request_session_shutdown()
-
         self._send_json(
-            200,
-            {"ok": True},
+            405,
+            {
+                "ok": False,
+                "error": "logout requires authenticated wg-client session",
+            },
         )
 
     def do_GET(self):

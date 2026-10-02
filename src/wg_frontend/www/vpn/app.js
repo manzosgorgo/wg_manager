@@ -188,13 +188,18 @@ form.addEventListener("submit", async (event) => {
 
         if (authenticatedHere) {
             stopHeartbeat();
-            try {
-                await auth.logout();
-            } catch {
-                // Best-effort rollback. The original frontend error is primary.
+
+            const client = window.wgFrontend.client;
+            if (client) {
+                try {
+                    await client.logout();
+                } catch {
+                    // The idle timeout remains the fallback recovery path.
+                }
             }
 
             window.wgFrontend.client = null;
+            auth.clear();
         }
 
         status.className = "auth-status error";
@@ -212,12 +217,17 @@ logoutButton.addEventListener("click", async () => {
     stopHeartbeat();
 
     try {
-        await auth.logout();
+        const client = window.wgFrontend.client;
+        if (client) {
+            await client.logout();
+        }
     } finally {
         window.wgFrontend.client = null;
+        auth.clear();
         connectionStatus.textContent = "Offline";
         showAuthView();
         logoutButton.disabled = false;
+        refreshAuthStatus();
     }
 });
 

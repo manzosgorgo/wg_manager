@@ -125,6 +125,10 @@ export class WGClientAPI {
         return this.request("GET", "/v1/status");
     }
 
+    logout() {
+        return this.request("DELETE", "/v1/session");
+    }
+
     addPeer(publicKey, allowedIp) {
         const path = "/v1/peers/" + encodeURIComponent(publicKey);
 
