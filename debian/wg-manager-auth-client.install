@@ -18,5 +18,7 @@ systemd/production/wg-auth.service usr/lib/systemd/system/
 systemd/production/wg-client.socket usr/lib/systemd/system/
 systemd/production/wg-client@.service usr/lib/systemd/system/
 
-# Production config and Apache files will be added once their final paths are
-# committed.
+# Production configuration and Apache integration.
+config/production/wg-auth.conf etc/wg-manager/
+config/production/wg-client.conf etc/wg-manager/
+apache/production/wg-manager.conf etc/apache2/conf-available/

@@ -6,5 +6,5 @@ src/wg_manager/*.py usr/lib/wg-manager/src/wg_manager/
 systemd/production/wg-manager.socket usr/lib/systemd/system/
 systemd/production/wg-manager@.service usr/lib/systemd/system/
 
-# Production configuration will be added once the final /etc/wg-manager
-# layout is committed.
+# Production configuration.
+config/production/wg-manager.conf etc/wg-manager/
