@@ -33,6 +33,7 @@ class WGAuthUserStore:
             not isinstance(username, str)
             or not username
             or username in (".", "..")
+            or username.startswith(".")
             or os.path.basename(username) != username
             or "/" in username
             or "\\" in username
@@ -187,3 +188,36 @@ class WGAuthUserStore:
                 )
 
             os.unlink(self._path(username))
+
+
+    def list_users(self):
+        with self._lock:
+            users = []
+
+            for name in sorted(os.listdir(self.login_dir)):
+                if name.startswith("."):
+                    continue
+
+                path = os.path.join(self.login_dir, name)
+                if not os.path.isfile(path):
+                    continue
+
+                users.append(self.load(name))
+
+            return users
+
+    def peer_owners(self):
+        owners = {}
+
+        for user in self.list_users():
+            for public_key in user.peers:
+                previous = owners.get(public_key)
+
+                if previous is not None and previous != user.username:
+                    raise ValueError(
+                        f"peer {public_key!r} is owned by multiple users"
+                    )
+
+                owners[public_key] = user.username
+
+        return owners

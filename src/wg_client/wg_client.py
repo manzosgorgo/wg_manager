@@ -52,6 +52,48 @@ def systemd_notify(message):
         sock.close()
 
 
+def _manager_peer_snapshot(api):
+    status = api.controller.status()
+
+    if (
+        not isinstance(status, dict)
+        or status.get("interface") != api.interface
+    ):
+        raise RuntimeError("controller interface mismatch during activation")
+
+    peers = status.get("peers")
+    if not isinstance(peers, list):
+        raise RuntimeError("controller returned invalid peer list")
+
+    snapshot = []
+
+    for peer in peers:
+        if not isinstance(peer, dict):
+            raise RuntimeError("controller returned invalid peer entry")
+
+        public_key = peer.get("public_key")
+        allowed_ips = peer.get("allowed_ips")
+
+        if (
+            not isinstance(public_key, str)
+            or not public_key
+            or not isinstance(allowed_ips, list)
+            or len(allowed_ips) != 1
+            or not isinstance(allowed_ips[0], str)
+            or not allowed_ips[0]
+        ):
+            raise RuntimeError(
+                "controller peer state cannot be reconciled safely"
+            )
+
+        snapshot.append({
+            "public_key": public_key,
+            "allowed_ip": allowed_ips[0],
+        })
+
+    return snapshot
+
+
 def activate(ipc, lifecycle):
     """
     Read the activation packet and bring the HTTPS API up.
@@ -100,6 +142,13 @@ def activate(ipc, lifecycle):
             activation["listen_path"],
             session,
             lifecycle,
+        )
+
+        snapshot = _manager_peer_snapshot(api)
+        ipc.reconcile_state(snapshot)
+        log.info(
+            "reconciled %d live peer reservations",
+            len(snapshot),
         )
 
         log.debug("api bind")

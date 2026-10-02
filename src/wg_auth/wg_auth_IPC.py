@@ -24,6 +24,7 @@ class WGAuthIPC:
         principal=None,
         peer_register=None,
         peer_unregister=None,
+        state_reconcile=None,
     ):
         self.socket_path = socket_path
         self.client_id = client_id
@@ -33,6 +34,7 @@ class WGAuthIPC:
         self.principal = principal
         self.peer_register = peer_register
         self.peer_unregister = peer_unregister
+        self.state_reconcile = state_reconcile
 
         self.sock = None
     @property
@@ -111,6 +113,7 @@ class WGAuthIPC:
     def _handle_peer_request(self, request):
         request_id = request.get("request_id")
         public_key = request.get("public_key")
+        allowed_ip = request.get("allowed_ip")
 
         if type(request_id) is not int or request_id < 1:
             raise WGAuthProtocolError("invalid request_id")
@@ -127,13 +130,39 @@ class WGAuthIPC:
 
         try:
             if request["type"] == "PEER_REGISTER":
+                if not isinstance(allowed_ip, str) or not allowed_ip:
+                    raise WGAuthProtocolError("invalid allowed_ip")
                 if self.peer_register is None:
                     raise RuntimeError("peer register callback is unavailable")
-                self.peer_register(username, public_key)
+                self.peer_register(username, public_key, allowed_ip)
             else:
                 if self.peer_unregister is None:
                     raise RuntimeError("peer unregister callback is unavailable")
                 self.peer_unregister(username, public_key)
+
+        except PermissionError as exc:
+            log.warning("peer persistence request forbidden: %s", exc)
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "PEER_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 403,
+                "error": str(exc),
+            })
+            return
+
+        except ValueError as exc:
+            log.warning("peer persistence request rejected: %s", exc)
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "PEER_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 409,
+                "error": str(exc),
+            })
+            return
 
         except Exception as exc:
             log.exception("peer persistence request failed")
@@ -142,6 +171,7 @@ class WGAuthIPC:
                 "type": "PEER_RESULT",
                 "request_id": request_id,
                 "status": "ERROR",
+                "status_code": 500,
                 "error": str(exc),
             })
             return
@@ -234,18 +264,47 @@ class WGAuthIPC:
 
         self.send_packet(packet)
 
-        response = self.receive_packet()
-        response = self.parse_packet(response)
+        while True:
+            response = self.receive_packet()
+            response = self.parse_packet(response)
 
-        if response.get("type") != "ACTIVATION_RESULT":
-            raise WGAuthProtocolError("invalid activation response")
+            if response.get("type") == "STATE_SNAPSHOT":
+                peers = response.get("peers")
 
-        if response.get("status") != "OK":
-            raise WGAuthProtocolError(
-                response.get("error", "activation failed")
-            )
+                try:
+                    if self.state_reconcile is None:
+                        raise RuntimeError(
+                            "state reconciliation callback is unavailable"
+                        )
 
-        return response
+                    self.state_reconcile(peers)
+
+                except Exception as exc:
+                    log.exception("peer state reconciliation failed")
+                    self.send_packet({
+                        "protocol_version": PROTOCOL_VERSION,
+                        "type": "STATE_RESULT",
+                        "status": "ERROR",
+                        "error": str(exc),
+                    })
+                    continue
+
+                self.send_packet({
+                    "protocol_version": PROTOCOL_VERSION,
+                    "type": "STATE_RESULT",
+                    "status": "OK",
+                })
+                continue
+
+            if response.get("type") != "ACTIVATION_RESULT":
+                raise WGAuthProtocolError("invalid activation response")
+
+            if response.get("status") != "OK":
+                raise WGAuthProtocolError(
+                    response.get("error", "activation failed")
+                )
+
+            return response
     def deactivate(self):
         if self.sock is None:
             return

@@ -155,6 +155,8 @@ def test_parse_activation_rejects(overrides,ipc):
 def run_activation(packet, cfg, monkeypatch,lifecycle):
     """Drive wg_client.activate() over a socketpair like systemd would."""
     monkeypatch.setattr(wg_client, "load_config", lambda: cfg)
+    monkeypatch.setattr(wg_client, "_manager_peer_snapshot", lambda api: [])
+    monkeypatch.setattr(WGClientIPC, "reconcile_state", lambda self, peers: {"status": "OK"})
 
     auth, client = socket.socketpair()
 
@@ -294,7 +296,7 @@ class FakeSecureSession:
 
 
 class FakeIPC:
-    def register_peer(self, public_key):
+    def register_peer(self, public_key, allowed_ip):
         return {"status": "OK"}
 
     def unregister_peer(self, public_key):
@@ -376,7 +378,10 @@ def test_put_decodes_public_key(api):
     status, _ = request(api, "PUT", path, body=json.dumps({"allowed_ip": "10.8.0.2/32"}))
 
     assert status == 200
-    assert api.controller.calls == [("add_peer", PUBLIC_KEY, "10.8.0.2/32")]
+    assert api.controller.calls == [
+        ("status",),
+        ("add_peer", PUBLIC_KEY, "10.8.0.2/32"),
+    ]
 
 
 def test_delete_decodes_public_key(api):
@@ -510,6 +515,7 @@ def test_peer_register_rpc_is_completed_by_control_loop(lifecycle):
 
             assert request["type"] == "PEER_REGISTER"
             assert request["public_key"] == PUBLIC_KEY
+            assert request["allowed_ip"] == "10.8.0.2/32"
             assert type(request["request_id"]) is int
 
             auth_sock.sendall(
@@ -527,7 +533,10 @@ def test_peer_register_rpc_is_completed_by_control_loop(lifecycle):
         )
         responder_thread.start()
 
-        response = ipc.register_peer(PUBLIC_KEY)
+        response = ipc.register_peer(
+            PUBLIC_KEY,
+            "10.8.0.2/32",
+        )
 
         responder_thread.join(timeout=2)
         assert not responder_thread.is_alive()
@@ -556,7 +565,58 @@ def test_peer_register_on_closed_ipc_is_protocol_error(lifecycle):
         ipc.stop(notify_shutdown=False)
 
         with pytest.raises(WGProtocolError, match="IPC connection is closed"):
-            ipc.register_peer(PUBLIC_KEY)
+            ipc.register_peer(
+                PUBLIC_KEY,
+                "10.8.0.2/32",
+            )
 
     finally:
         auth_sock.close()
+
+
+
+def test_manager_peer_snapshot_normalizes_controller_status():
+    class API:
+        interface = "wg0"
+        controller = FakeController()
+
+    API.controller.status_result = {
+        "ok": True,
+        "interface": "wg0",
+        "peers": [
+            {
+                "public_key": "peer-a",
+                "allowed_ips": ["10.8.0.2/32"],
+            }
+        ],
+    }
+
+    assert wg_client._manager_peer_snapshot(API) == [
+        {
+            "public_key": "peer-a",
+            "allowed_ip": "10.8.0.2/32",
+        }
+    ]
+
+
+def test_manager_peer_snapshot_rejects_ambiguous_allowed_ips():
+    class API:
+        interface = "wg0"
+        controller = FakeController()
+
+    API.controller.status_result = {
+        "ok": True,
+        "interface": "wg0",
+        "peers": [
+            {
+                "public_key": "peer-a",
+                "allowed_ips": [
+                    "10.8.0.2/32",
+                    "10.8.0.3/32",
+                ],
+            }
+        ],
+    }
+
+    with pytest.raises(RuntimeError, match="cannot be reconciled safely"):
+        wg_client._manager_peer_snapshot(API)

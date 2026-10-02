@@ -5,6 +5,7 @@ import logging
 from src.wg_client.wg_client_errors import (
     WGControllerError,
     WGPeerError,
+    WGPeerPersistenceError,
     WGProtocolError,
 )
 
@@ -86,17 +87,28 @@ class WGPeerService:
             if isinstance(peer, dict)
         }
 
-        if (
-            public_key in existing_keys
-            and not self.session.can_access_peer(public_key)
-        ):
+        if public_key in existing_keys:
+            if not self.session.can_access_peer(public_key):
+                raise WGPeerError(
+                    403,
+                    "peer is not owned by this principal",
+                )
+
             raise WGPeerError(
-                403,
-                "peer is not owned by this principal",
+                409,
+                "public key already exists",
             )
 
         try:
-            self.ipc.register_peer(public_key)
+            self.ipc.register_peer(
+                public_key,
+                allowed_ip,
+            )
+        except WGPeerPersistenceError as exc:
+            raise WGPeerError(
+                exc.status,
+                exc.message,
+            ) from exc
         except WGProtocolError as exc:
             raise WGPeerError(
                 502,
@@ -146,6 +158,11 @@ class WGPeerService:
 
         try:
             self.ipc.unregister_peer(public_key)
+        except WGPeerPersistenceError as exc:
+            raise WGPeerError(
+                exc.status,
+                exc.message,
+            ) from exc
         except WGProtocolError as exc:
             log.error(
                 "peer removed but ownership cleanup failed: %s",

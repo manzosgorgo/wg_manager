@@ -54,6 +54,15 @@ class WGConnectionClosed(WGProtocolError):
     pass
 
 
+class WGPeerPersistenceError(WGProtocolError):
+    """Semantic error returned by the auth persistence IPC."""
+
+    def __init__(self, status, message):
+        super().__init__(message)
+        self.status = status
+        self.message = message
+
+
 class WGAPIError(WGClientError):
     """Error raised while processing an API request."""
 

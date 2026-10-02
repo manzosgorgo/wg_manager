@@ -5,7 +5,7 @@ import socket
 import threading
 import time
 
-from src.wg_client.wg_client_errors import WGProtocolError
+from src.wg_client.wg_client_errors import WGProtocolError, WGPeerPersistenceError
 log = logging.getLogger("wg_manager.IPC")
 
 MAX_PACKET_SIZE = 65536
@@ -261,12 +261,18 @@ class WGClientIPC:
             item["error"] = error
             item["event"].set()
 
-    def _peer_request(self, command, public_key):
+    def _peer_request(self, command, public_key, allowed_ip=None):
         if command not in ("PEER_REGISTER", "PEER_UNREGISTER"):
             raise WGProtocolError("invalid peer IPC command")
 
         if not isinstance(public_key, str) or not public_key:
             raise WGProtocolError("public_key must be a non-empty string")
+
+        if command == "PEER_REGISTER":
+            if not isinstance(allowed_ip, str) or not allowed_ip:
+                raise WGProtocolError(
+                    "allowed_ip must be a non-empty string"
+                )
 
         event = threading.Event()
 
@@ -285,6 +291,9 @@ class WGClientIPC:
             "request_id": request_id,
             "public_key": public_key,
         }
+
+        if command == "PEER_REGISTER":
+            packet["allowed_ip"] = allowed_ip
 
         try:
             sock = self.sock
@@ -317,8 +326,13 @@ class WGClientIPC:
                 raise WGProtocolError("missing PEER_RESULT")
 
             if response.get("status") != "OK":
-                raise WGProtocolError(
-                    response.get("error", "peer persistence failed")
+                status_code = response.get("status_code", 502)
+                if type(status_code) is not int:
+                    status_code = 502
+
+                raise WGPeerPersistenceError(
+                    status_code,
+                    response.get("error", "peer persistence failed"),
                 )
 
             return response
@@ -327,11 +341,48 @@ class WGClientIPC:
             with self._pending_lock:
                 self._pending.pop(request_id, None)
 
-    def register_peer(self, public_key):
-        return self._peer_request("PEER_REGISTER", public_key)
+    def register_peer(self, public_key, allowed_ip):
+        return self._peer_request(
+            "PEER_REGISTER",
+            public_key,
+            allowed_ip,
+        )
 
     def unregister_peer(self, public_key):
         return self._peer_request("PEER_UNREGISTER", public_key)
+
+    def reconcile_state(self, peers):
+        if not isinstance(peers, list):
+            raise WGProtocolError("peer snapshot must be a list")
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "STATE_SNAPSHOT",
+            "peers": peers,
+        }
+
+        try:
+            with self._send_lock:
+                self.sock.sendall(self._encode_packet(packet))
+
+            response = self.parse_packet(
+                self.receive_packet()
+            )
+
+        except OSError as exc:
+            raise WGProtocolError(
+                f"state reconciliation IPC failed: {exc}"
+            ) from exc
+
+        if response.get("type") != "STATE_RESULT":
+            raise WGProtocolError("invalid state reconciliation response")
+
+        if response.get("status") != "OK":
+            raise WGProtocolError(
+                response.get("error", "state reconciliation failed")
+            )
+
+        return response
 
     def _encode_packet(self, packet):
         payload = (

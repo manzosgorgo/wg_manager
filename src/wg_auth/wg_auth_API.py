@@ -7,6 +7,7 @@ from http.server import ThreadingHTTPServer
 from src.wg_auth.wg_auth_IPC import WGAuthIPC
 from src.wg_auth.wg_auth_errors import WGAuthSessionError, WGAuthAuthenticationError
 from src.wg_auth.wg_auth_user_store import WGAuthUserStore
+from src.wg_auth.wg_auth_peer_registry import WGAuthPeerRegistry
 
 log = logging.getLogger("wg_auth.API")
 
@@ -21,6 +22,12 @@ class WGAuthAPI:
         self.config = config
         self.lifecycle = lifecycle
         self.user_store = WGAuthUserStore(config["auth"]["login_dir"])
+        self.peer_registry = WGAuthPeerRegistry(
+            config["auth"].get(
+                "peer_registry",
+                config["auth"]["login_dir"] + "/.peer_registry.json",
+            )
+        )
 
         self.session = None
         self.ipc = None
@@ -148,6 +155,7 @@ class WGAuthAPI:
                 principal=session.principal,
                 peer_register=self._register_peer,
                 peer_unregister=self._unregister_peer,
+                state_reconcile=self._reconcile_peer_state,
             )
 
             self.ipc = ipc
@@ -203,11 +211,39 @@ class WGAuthAPI:
 
 
 
-    def _register_peer(self, username, public_key):
-        self.user_store.add_peer(username, public_key)
+    def _register_peer(self, username, public_key, allowed_ip):
+        self.peer_registry.reserve(
+            username,
+            public_key,
+            allowed_ip,
+        )
+
+        try:
+            self.user_store.add_peer(username, public_key)
+        except Exception:
+            self.peer_registry.release(username, public_key)
+            raise
 
     def _unregister_peer(self, username, public_key):
-        self.user_store.remove_peer(username, public_key)
+        reservation = self.peer_registry.release(
+            username,
+            public_key,
+        )
+
+        owner = (
+            reservation["username"]
+            if reservation is not None
+            else username
+        )
+
+        self.user_store.remove_peer(owner, public_key)
+
+    def _reconcile_peer_state(self, manager_peers):
+        owners = self.user_store.peer_owners()
+        self.peer_registry.reconcile(
+            manager_peers,
+            owners,
+        )
 
     # ------------------------------------------------------------------
     # Activation failure

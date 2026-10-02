@@ -99,3 +99,30 @@ def test_delete_user_with_owned_peers_is_rejected(tmp_path):
         store.delete_user("bob")
 
     assert (tmp_path / "bob").exists()
+
+
+
+def test_peer_owners_builds_global_index(tmp_path):
+    store = WGAuthUserStore(str(tmp_path))
+    store.create_user("alice", b"A" * 256)
+    store.create_user("bob", b"B" * 256)
+    store.add_peer("alice", "peer-a")
+    store.add_peer("bob", "peer-b")
+
+    assert store.peer_owners() == {
+        "peer-a": "alice",
+        "peer-b": "bob",
+    }
+
+
+def test_peer_owners_rejects_duplicate_ownership(tmp_path):
+    import pytest
+
+    store = WGAuthUserStore(str(tmp_path))
+    store.create_user("alice", b"A" * 256)
+    store.create_user("bob", b"B" * 256)
+    store.add_peer("alice", "peer-a")
+    store.add_peer("bob", "peer-a")
+
+    with pytest.raises(ValueError, match="multiple users"):
+        store.peer_owners()
