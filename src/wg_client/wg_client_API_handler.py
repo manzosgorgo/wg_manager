@@ -5,7 +5,7 @@ import json
 import logging
 import threading
 from http import HTTPStatus
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 import src.wg_client.wg_client_errors
 from src.wg_client.wg_client_errors import (
@@ -145,14 +145,14 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
 
     def api_target(self):
         """
-        Return the request target relative to listen_path, including
-        the query string if present, or None if the request is outside
-        listen_path.
+        Return the canonical request target authenticated by
+        WGSecureSession.
 
-        This is the exact string that must be authenticated: the query
-        string can carry application-level meaning, so it has to be
-        part of what create_request_auth()/verify_request() sign, even
-        though routing (api_path()) ignores it.
+        Reverse proxies are allowed to normalize percent-encoding in the
+        request path (for example "%3D" -> "="). Dynamic path components
+        are therefore decoded and re-encoded here before MAC verification,
+        so direct clients and proxied browser requests authenticate the
+        same logical target.
         """
         parsed = urlsplit(self.path)
         path = parsed.path
@@ -162,6 +162,28 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             return None
 
         target = path[len(prefix):]
+
+        if target.startswith(PEERS_PREFIX):
+            public_key = unquote(target[len(PEERS_PREFIX):])
+            target = PEERS_PREFIX + quote(public_key, safe="")
+
+        elif (
+            target.startswith(ADMIN_PEERS_PREFIX)
+            and target.endswith("/owner")
+        ):
+            encoded = target[
+                len(ADMIN_PEERS_PREFIX):-len("/owner")
+            ]
+            public_key = unquote(encoded)
+            target = (
+                ADMIN_PEERS_PREFIX
+                + quote(public_key, safe="")
+                + "/owner"
+            )
+
+        elif target.startswith(ADMIN_USERS_PREFIX):
+            username = unquote(target[len(ADMIN_USERS_PREFIX):])
+            target = ADMIN_USERS_PREFIX + quote(username, safe="")
 
         if parsed.query:
             target += "?" + parsed.query
