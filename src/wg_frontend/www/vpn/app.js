@@ -21,6 +21,7 @@ const peerForm = document.querySelector("#peer-form");
 const peerPublicKeyInput = document.querySelector("#peer-public-key");
 const peerAllowedIpInput = document.querySelector("#peer-allowed-ip");
 const peerCreateStatus = document.querySelector("#peer-create-status");
+const provisioningDebug = document.querySelector("#provisioning-debug");
 
 const adminNavButton = document.querySelector("#admin-nav-button");
 const adminPeerList = document.querySelector("#admin-peer-list");
@@ -180,6 +181,40 @@ function renderPeers(result) {
         peerList.append(card);
     }
 }
+
+async function refreshProvisioning() {
+    const client = window.wgFrontend.client;
+    if (!client) {
+        throw new Error("wg-client session is not initialized");
+    }
+
+    provisioningDebug.textContent = "Caricamento…";
+
+    const result = await client.provisioning();
+
+    if (!result.ok) {
+        throw new Error(
+            result.data?.message
+                ?? result.data?.error
+                ?? `wg-client returned HTTP ${result.status}`
+        );
+    }
+
+    const data = result.data ?? {};
+    provisioningDebug.textContent = [
+        `interface: ${data.interface ?? "?"}`,
+        `vpn_network: ${data.vpn_network ?? "?"}`,
+        `server_address: ${data.server_address ?? "(non configurato)"}`,
+        `server_public_key: ${data.server_public_key ?? "?"}`,
+        `listen_port: ${data.listen_port ?? "?"}`,
+        `used_ips: ${Array.isArray(data.used_ips) ? data.used_ips.join(", ") : ""}`,
+        `reserved_ips: ${Array.isArray(data.reserved_ips) ? data.reserved_ips.join(", ") : ""}`,
+        `available_ips: ${Array.isArray(data.available_ips) ? data.available_ips.join(", ") : ""}`,
+    ].join("\n");
+
+    return result;
+}
+
 
 async function refreshPeers() {
     const client = window.wgFrontend.client;
@@ -579,6 +614,15 @@ for (const viewButton of viewButtons) {
 
         for (const [name, panel] of Object.entries(panels)) {
             panel.hidden = name !== selected;
+        }
+
+        if (selected === "new-peer") {
+            try {
+                await refreshProvisioning();
+            } catch (error) {
+                provisioningDebug.textContent =
+                    error.message ?? String(error);
+            }
         }
 
         if (selected === "admin" && !adminNavButton.hidden) {
