@@ -1,0 +1,71 @@
+#!/bin/sh
+set -u
+
+fail=0
+warn=0
+
+ok()   { printf 'OK    %s\n' "$*"; }
+bad()  { printf 'FAIL  %s\n' "$*" >&2; fail=$((fail + 1)); }
+note() { printf 'WARN  %s\n' "$*" >&2; warn=$((warn + 1)); }
+
+if [ "$(id -u)" -ne 0 ]; then
+    bad "run this checker as root"
+    printf '\nSummary: %s failure(s), %s warning(s)\n' "$fail" "$warn"
+    exit 1
+fi
+
+if getent passwd wg-manager >/dev/null 2>&1; then
+    ok "system user wg-manager exists"
+else
+    bad "system user wg-manager is missing"
+fi
+
+if [ -f /etc/wg-manager/wg-manager.conf ]; then
+    ok "/etc/wg-manager/wg-manager.conf exists"
+else
+    bad "/etc/wg-manager/wg-manager.conf is missing"
+fi
+
+for file in     /etc/wg-manager/cert/ca.crt     /etc/wg-manager/cert/controller/server.crt     /etc/wg-manager/cert/controller/server.key
+do
+    if [ -f "$file" ]; then
+        ok "$file exists"
+    else
+        bad "$file is missing"
+    fi
+done
+
+for file in     /etc/wg-manager/cert/controller/server.crt     /etc/wg-manager/cert/controller/server.key
+do
+    if [ -f "$file" ] && runuser -u wg-manager -- test -r "$file"; then
+        ok "$file is readable by wg-manager"
+    else
+        bad "$file is not readable by wg-manager"
+    fi
+done
+
+iface=""
+if [ -f /etc/wg-manager/wg-manager.conf ]; then
+    iface=$(sed -n '/^[[:space:]]*\[manager\][[:space:]]*$/,/^[[:space:]]*\[/ {
+        s/^[[:space:]]*interface[[:space:]]*=[[:space:]]*//p
+    }' /etc/wg-manager/wg-manager.conf | head -n1)
+fi
+
+if [ -n "$iface" ]; then
+    if wg show "$iface" >/dev/null 2>&1; then
+        ok "WireGuard interface $iface is available to wg"
+    else
+        bad "configured WireGuard interface $iface is not available"
+    fi
+else
+    bad "could not determine [manager] interface"
+fi
+
+if systemctl is-enabled wg-manager.socket >/dev/null 2>&1; then
+    ok "wg-manager.socket is enabled"
+else
+    note "wg-manager.socket is not enabled"
+fi
+
+printf '\nSummary: %s failure(s), %s warning(s)\n' "$fail" "$warn"
+[ "$fail" -eq 0 ]

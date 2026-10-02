@@ -1,3 +1,11 @@
+wg-manager (0.1.0-5) unstable; urgency=medium
+
+  * Add production deployment and configuration documentation.
+  * Install read-only setup checkers for both package roles.
+  * Ensure installed administrative commands are executable.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 01:05:00 +0200
+
 wg-manager (0.1.0-4) unstable; urgency=medium
 
   * Allow auth/client and controller packages to be co-installed.

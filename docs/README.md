@@ -1,10 +1,18 @@
 # wg-manager documentation
 
-Automatically generated documentation for the `wg_manager` project.
+## Manuale operativo
 
-> This repository contains generated documentation and analysis artifacts.
-> It is observational documentation of the current project tree, not a
-> normative architecture specification.
+Questi documenti sono mantenuti manualmente e sono la reference per il
+deployment production:
+
+- [Deployment Debian](deployment.md)
+- [Configurazione production](configuration.md)
+
+## Documentazione generata
+
+`docs/ai/` contiene documentazione e snapshot generati automaticamente.
+È documentazione osservazionale del tree corrente e non sostituisce il manuale
+operativo sopra.
 
 ## Project analysis
 

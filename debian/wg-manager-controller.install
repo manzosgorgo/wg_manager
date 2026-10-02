@@ -9,3 +9,6 @@ systemd/production/wg-manager@.service usr/lib/systemd/system/
 config/production/wg-manager.conf etc/wg-manager/
 debian/certificates.README usr/share/doc/wg-manager-controller/
 debian/sysusers/wg-manager-controller.conf usr/lib/sysusers.d/
+tools/package/wg-manager-check-controller usr/sbin/
+docs/deployment.md usr/share/doc/wg-manager-controller/
+docs/configuration.md usr/share/doc/wg-manager-controller/

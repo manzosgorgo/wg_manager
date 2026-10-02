@@ -25,3 +25,6 @@ tools/manage_users.py usr/lib/wg-manager/tools/
 debian/wg-manager-users usr/sbin/
 debian/certificates.README usr/share/doc/wg-manager-auth-client/
 debian/sysusers/wg-manager-auth-client.conf usr/lib/sysusers.d/
+tools/package/wg-manager-check-auth-client usr/sbin/
+docs/deployment.md usr/share/doc/wg-manager-auth-client/
+docs/configuration.md usr/share/doc/wg-manager-auth-client/

@@ -1,14 +1,56 @@
 # Debian packaging
 
-Debian packaging metadata lives in the repository-level `debian/` directory.
+Il packaging Debian usa debhelper e vive nella directory `debian/`.
 
-The source package builds two binary packages:
+Il source package `wg-manager` produce due binary package:
 
-- `wg-manager-auth-client`: authentication service, per-session client,
-  frontend and Apache integration.
-- `wg-manager-controller`: privileged WireGuard controller for the host that
-  owns the WireGuard interface.
+- `wg-manager-auth-client`: autenticazione OPAQUE, client per-sessione,
+  frontend e integrazione Apache;
+- `wg-manager-controller`: controller WireGuard privilegiato.
 
-The old raw `dpkg-deb` staging roots were removed once the project switched
-to debhelper. The `debian/*.install` files are the authoritative file
-manifests for the two binary packages.
+## Build
+
+Dalla root della repository:
+
+```bash
+dpkg-buildpackage -us -uc -b
+```
+
+I file `debian/*.install` sono i manifest autorevoli dei file installati.
+
+## Comportamento all'installazione
+
+I package:
+
+- creano gli utenti di sistema necessari;
+- creano le directory runtime/state;
+- installano configurazioni production sotto `/etc/wg-manager`;
+- non installano certificati o private key;
+- non abilitano e non avviano automaticamente i servizi.
+
+Questo permette di completare configurazione e PKI prima del primo start.
+
+## Tool installati
+
+`wg-manager-auth-client` installa:
+
+```text
+/usr/sbin/wg-manager-users
+/usr/sbin/wg-manager-check-auth-client
+```
+
+`wg-manager-controller` installa:
+
+```text
+/usr/sbin/wg-manager-check-controller
+```
+
+I checker sono read-only.
+
+## Documentazione production
+
+- [Deployment](../docs/deployment.md)
+- [Configuration reference](../docs/configuration.md)
+
+Le stesse guide vengono incluse sotto `/usr/share/doc/<package>/` nei
+binary package.
