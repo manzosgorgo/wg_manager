@@ -9,8 +9,16 @@ import threading
 class WGAuthPeerRegistry:
     """Persistent global reservation table for WireGuard keys and IPs."""
 
-    def __init__(self, path):
+    def __init__(self, path, ip_path=None):
         self.path = path
+        self.ip_path = (
+            ip_path
+            if ip_path is not None
+            else os.path.join(
+                os.path.dirname(path) or ".",
+                ".ip_registry.json",
+            )
+        )
         self._lock = threading.RLock()
 
     def _load(self):
@@ -61,12 +69,61 @@ class WGAuthPeerRegistry:
         return obj
 
     def _write(self, obj):
-        directory = os.path.dirname(self.path) or "."
+        self._write_path(
+            self.path,
+            obj,
+            ".peer-registry.",
+        )
+
+    def _load_ips(self):
+        try:
+            with open(self.ip_path, "r", encoding="utf-8") as f:
+                obj = json.load(f)
+        except FileNotFoundError:
+            return {"ips": {}}
+
+        if not isinstance(obj, dict):
+            raise ValueError("IP registry must be a JSON object")
+
+        ips = obj.get("ips")
+        if not isinstance(ips, dict):
+            raise ValueError("IP registry ips must be an object")
+
+        for allowed_ip, entry in ips.items():
+            if not isinstance(allowed_ip, str) or not allowed_ip:
+                raise ValueError("IP registry contains invalid allowed_ip")
+
+            if not isinstance(entry, dict):
+                raise ValueError("IP registry entry must be an object")
+
+            public_key = entry.get("public_key")
+            username = entry.get("username")
+            state = entry.get("ownership_state")
+
+            if not isinstance(public_key, str) or not public_key:
+                raise ValueError("IP registry entry has invalid public_key")
+
+            if username is not None and (
+                not isinstance(username, str) or not username
+            ):
+                raise ValueError("IP registry entry has invalid username")
+
+            if state is None:
+                state = "consistent" if username is not None else "orphan"
+                entry["ownership_state"] = state
+
+            if state not in {"consistent", "orphan"}:
+                raise ValueError("IP registry entry has invalid ownership_state")
+
+        return obj
+
+    def _write_path(self, path, obj, prefix):
+        directory = os.path.dirname(path) or "."
         os.makedirs(directory, exist_ok=True)
 
         fd, tmp_path = tempfile.mkstemp(
             dir=directory,
-            prefix=".peer-registry.",
+            prefix=prefix,
             text=True,
         )
 
@@ -78,13 +135,25 @@ class WGAuthPeerRegistry:
                 os.fsync(f.fileno())
 
             os.chmod(tmp_path, 0o600)
-            os.replace(tmp_path, self.path)
+            os.replace(tmp_path, path)
 
         finally:
             try:
                 os.unlink(tmp_path)
             except FileNotFoundError:
                 pass
+
+    def _write_registries(self, peers_obj, ips_obj):
+        self._write_path(
+            self.path,
+            peers_obj,
+            ".peer-registry.",
+        )
+        self._write_path(
+            self.ip_path,
+            ips_obj,
+            ".ip-registry.",
+        )
 
     def reserve(self, username, public_key, allowed_ip):
         if not isinstance(username, str) or not username:
@@ -96,7 +165,9 @@ class WGAuthPeerRegistry:
 
         with self._lock:
             obj = self._load()
+            ip_obj = self._load_ips()
             peers = obj["peers"]
+            ips = ip_obj["ips"]
 
             existing = peers.get(public_key)
             if existing is not None:
@@ -108,9 +179,8 @@ class WGAuthPeerRegistry:
 
                 raise ValueError("public key is already reserved")
 
-            for entry in peers.values():
-                if entry.get("allowed_ip") == allowed_ip:
-                    raise ValueError("allowed IP is already reserved")
+            if allowed_ip in ips:
+                raise ValueError("allowed IP is already reserved")
 
             entry = {
                 "username": username,
@@ -118,7 +188,12 @@ class WGAuthPeerRegistry:
                 "ownership_state": "consistent",
             }
             peers[public_key] = entry
-            self._write(obj)
+            ips[allowed_ip] = {
+                "public_key": public_key,
+                "username": username,
+                "ownership_state": "consistent",
+            }
+            self._write_registries(obj, ip_obj)
             return dict(entry)
 
     def release(self, actor_username, public_key):
@@ -129,7 +204,9 @@ class WGAuthPeerRegistry:
 
         with self._lock:
             obj = self._load()
+            ip_obj = self._load_ips()
             peers = obj["peers"]
+            ips = ip_obj["ips"]
             existing = peers.get(public_key)
 
             if existing is None:
@@ -141,7 +218,8 @@ class WGAuthPeerRegistry:
                 raise PermissionError("peer reservation belongs to another user")
 
             del peers[public_key]
-            self._write(obj)
+            ips.pop(existing["allowed_ip"], None)
+            self._write_registries(obj, ip_obj)
 
             return dict(existing)
 
@@ -157,12 +235,20 @@ class WGAuthPeerRegistry:
                 for public_key, entry in self._load()["peers"].items()
             }
 
+    def snapshot_ips(self):
+        with self._lock:
+            return {
+                allowed_ip: dict(entry)
+                for allowed_ip, entry in self._load_ips()["ips"].items()
+            }
+
     def set_owner(self, public_key, username):
         if not isinstance(username, str) or not username:
             raise ValueError("username must be a non-empty string")
 
         with self._lock:
             obj = self._load()
+            ip_obj = self._load_ips()
             entry = obj["peers"].get(public_key)
 
             if entry is None:
@@ -170,7 +256,14 @@ class WGAuthPeerRegistry:
 
             entry["username"] = username
             entry["ownership_state"] = "consistent"
-            self._write(obj)
+
+            ip_entry = ip_obj["ips"].get(entry["allowed_ip"])
+            if ip_entry is None:
+                raise ValueError("IP registry is missing peer reservation")
+
+            ip_entry["username"] = username
+            ip_entry["ownership_state"] = "consistent"
+            self._write_registries(obj, ip_obj)
 
             return dict(entry)
 
@@ -189,6 +282,7 @@ class WGAuthPeerRegistry:
             raise ValueError("manager peer snapshot must be a list")
 
         target = {"peers": {}}
+        ip_target = {"ips": {}}
         used_ips = set()
 
         for peer in manager_peers:
@@ -213,17 +307,27 @@ class WGAuthPeerRegistry:
                 raise ValueError("manager peer snapshot contains duplicate allowed IP")
 
             used_ips.add(allowed_ip)
+            state = (
+                "consistent"
+                if isinstance(username, str) and username
+                else "orphan"
+            )
+
             target["peers"][public_key] = {
                 "username": username,
                 "allowed_ip": allowed_ip,
-                "ownership_state": (
-                    "consistent"
-                    if isinstance(username, str) and username
-                    else "orphan"
-                ),
+                "ownership_state": state,
+            }
+            ip_target["ips"][allowed_ip] = {
+                "public_key": public_key,
+                "username": username,
+                "ownership_state": state,
             }
 
         with self._lock:
-            self._write(target)
+            self._write_registries(
+                target,
+                ip_target,
+            )
 
         return target

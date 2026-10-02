@@ -27,7 +27,11 @@ class WGAuthAPI:
             config["auth"].get(
                 "peer_registry",
                 config["auth"]["login_dir"] + "/.peer_registry.json",
-            )
+            ),
+            config["auth"].get(
+                "ip_registry",
+                config["auth"]["login_dir"] + "/.ip_registry.json",
+            ),
         )
         self.ownership_service = WGAuthOwnershipService(
             self.user_store,

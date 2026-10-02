@@ -39,6 +39,7 @@ ENV_KEYS = (
 PATH_KEYS = {
     "login_dir",
     "peer_registry",
+    "ip_registry",
     "socket_path",
     "server_cert",
     "server_key",
@@ -312,9 +313,16 @@ def auth_report():
             str(login_dir / ".peer_registry.json"),
         )
     )
+    ip_registry = Path(
+        cfg["auth"].get(
+            "ip_registry",
+            str(login_dir / ".ip_registry.json"),
+        )
+    )
 
     print(f"login_dir: {login_dir} [{file_info(login_dir)}]")
     print(f"registry: {registry} [{file_info(registry)}]")
+    print(f"ip_registry: {ip_registry} [{file_info(ip_registry)}]")
 
     subheading("users")
     if login_dir.is_dir():
@@ -346,6 +354,22 @@ def auth_report():
                 for key, entry in sorted(peers.items()):
                     print(
                         f"{key}: ip={entry.get('allowed_ip')} "
+                        f"owner={entry.get('username')} "
+                        f"state={entry.get('ownership_state')}"
+                    )
+        except Exception as exc:
+            print(f"INVALID: {type(exc).__name__}: {exc}")
+
+    subheading("IP registry")
+    if ip_registry.exists():
+        try:
+            obj = json.loads(ip_registry.read_text(encoding="utf-8"))
+            ips = obj.get("ips", {})
+            print(f"entries: {len(ips) if isinstance(ips, dict) else 'INVALID'}")
+            if isinstance(ips, dict):
+                for allowed_ip, entry in sorted(ips.items()):
+                    print(
+                        f"{allowed_ip}: key={entry.get('public_key')} "
                         f"owner={entry.get('username')} "
                         f"state={entry.get('ownership_state')}"
                     )

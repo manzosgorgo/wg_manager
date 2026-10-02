@@ -157,3 +157,56 @@ def test_set_owner_repairs_orphan(tmp_path):
 
     assert updated["username"] == "alice"
     assert updated["ownership_state"] == "consistent"
+
+
+
+def test_reserve_updates_ip_registry(tmp_path):
+    peer_path = tmp_path / "peer-registry.json"
+    ip_path = tmp_path / "ip-registry.json"
+    registry = WGAuthPeerRegistry(
+        str(peer_path),
+        str(ip_path),
+    )
+
+    registry.reserve(
+        "alice",
+        "peer-a",
+        "10.8.0.2/32",
+    )
+
+    assert registry.snapshot_ips() == {
+        "10.8.0.2/32": {
+            "public_key": "peer-a",
+            "username": "alice",
+            "ownership_state": "consistent",
+        }
+    }
+
+    registry.release("alice", "peer-a")
+
+    assert registry.snapshot_ips() == {}
+
+
+def test_reconcile_rebuilds_ip_registry(tmp_path):
+    registry = WGAuthPeerRegistry(
+        str(tmp_path / "peer-registry.json"),
+        str(tmp_path / "ip-registry.json"),
+    )
+
+    registry.reconcile(
+        [
+            {
+                "public_key": "peer-a",
+                "allowed_ip": "10.8.0.2/32",
+            }
+        ],
+        {"peer-a": "alice"},
+    )
+
+    assert registry.snapshot_ips() == {
+        "10.8.0.2/32": {
+            "public_key": "peer-a",
+            "username": "alice",
+            "ownership_state": "consistent",
+        }
+    }
