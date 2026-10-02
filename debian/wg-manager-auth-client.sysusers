@@ -1,2 +1,0 @@
-u wg-client - "WG Manager session client" - /usr/sbin/nologin
-u wg-auth - "WG Manager authentication service" - /usr/sbin/nologin
