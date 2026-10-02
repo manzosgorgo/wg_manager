@@ -28,6 +28,7 @@ const peerConfigPreview = document.querySelector("#peer-config-preview");
 const peerDownloadConfigButton = document.querySelector("#peer-download-config");
 const peerNewProvisioningButton = document.querySelector("#peer-new-provisioning");
 const peerShowQrButton = document.querySelector("#peer-show-qr");
+const peerQrPanel = document.querySelector("#peer-qr-panel");
 const peerQrScannedButton = document.querySelector("#peer-qr-scanned");
 const peerQrStatus = document.querySelector("#peer-qr-status");
 const peerQrCode = document.querySelector("#peer-qr-code");
@@ -243,6 +244,8 @@ function renderPeers(result) {
                 generatedKeyPair = newKeyPair;
                 provisionedPeer = true;
                 setConfigPendingExport(true);
+                peerDownloadConfigButton.hidden = false;
+                peerQrPanel.hidden = false;
 
                 peerPublicKeyInput.value = newKeyPair.publicKey;
 
@@ -845,6 +848,8 @@ peerForm.addEventListener("submit", async (event) => {
         }
 
         provisionedPeer = true;
+        peerDownloadConfigButton.hidden = false;
+        peerQrPanel.hidden = false;
 
         peerPublicKeyInput.disabled = true;
         peerAllowedIpInput.disabled = true;
@@ -941,6 +946,8 @@ peerNewProvisioningButton.addEventListener("click", async () => {
     peerGenerateKeysButton.disabled = false;
     peerCreateButton.disabled = false;
     peerNewProvisioningButton.hidden = true;
+    peerDownloadConfigButton.hidden = true;
+    peerQrPanel.hidden = true;
 
     peerQrCode.hidden = true;
     peerQrCode.replaceChildren();

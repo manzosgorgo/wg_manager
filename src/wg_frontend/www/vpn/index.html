@@ -148,35 +148,49 @@
                     </span>
                 </div>
 
-                <div class="placeholder-card">
-                    <strong>Config client preview</strong>
-                    <pre id="peer-config-preview">Genera le chiavi per creare la configurazione.</pre>
-                    <div class="card-actions">
-                        <button id="peer-download-config" type="button" disabled>Scarica .conf</button>
-                        <button id="peer-new-provisioning" type="button" hidden>Prepara altro peer</button>
+                <section class="provisioning-section">
+                    <div class="subsection-heading">
+                        <div class="eyebrow">Dati client</div>
+                        <h3>Configurazione</h3>
                     </div>
-                </div>
 
-                <details class="advanced-info">
-                    <summary>Info avanzate / provisioning</summary>
                     <div class="placeholder-card">
-                        <pre id="provisioning-debug">Caricamento…</pre>
+                        <strong>Config client preview</strong>
+                        <pre id="peer-config-preview">Genera le chiavi per creare la configurazione.</pre>
+                        <div class="card-actions">
+                            <button id="peer-download-config" type="button" hidden disabled>Scarica .conf</button>
+                            <button id="peer-new-provisioning" type="button" hidden>Prepara altro peer</button>
+                        </div>
                     </div>
-                </details>
 
-                <div class="placeholder-card">
-                    <strong>QR WireGuard</strong>
-                    <span id="peer-qr-status">
-                        Il QR sarà disponibile quando la configurazione sarà completa.
-                    </span>
-                    <div class="card-actions">
-                        <button id="peer-show-qr" type="button" disabled>Mostra QR</button>
+                    <div id="peer-qr-panel" class="placeholder-card" hidden>
+                        <strong>QR WireGuard</strong>
+                        <span id="peer-qr-status">
+                            Il QR sarà disponibile quando la configurazione sarà completa.
+                        </span>
+                        <div class="card-actions">
+                            <button id="peer-show-qr" type="button" disabled>Mostra QR</button>
+                        </div>
+                        <div id="peer-qr-code" class="peer-qr-code" hidden></div>
+                        <div class="card-actions">
+                            <button id="peer-qr-scanned" type="button" hidden>Ho scansionato il QR</button>
+                        </div>
                     </div>
-                    <div id="peer-qr-code" class="peer-qr-code" hidden></div>
-                    <div class="card-actions">
-                        <button id="peer-qr-scanned" type="button" hidden>Ho scansionato il QR</button>
+                </section>
+
+                <section class="provisioning-section debug-section">
+                    <div class="subsection-heading">
+                        <div class="eyebrow">Debug</div>
+                        <h3>Provisioning</h3>
                     </div>
-                </div>
+
+                    <details class="advanced-info">
+                        <summary>Mostra dati avanzati</summary>
+                        <div class="placeholder-card">
+                            <pre id="provisioning-debug">Caricamento…</pre>
+                        </div>
+                    </details>
+                </section>
             </section>
 
             <section id="view-admin" class="postauth-panel" hidden>
