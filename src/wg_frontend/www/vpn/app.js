@@ -28,7 +28,6 @@ const peerConfigPanel = document.querySelector("#peer-config-panel");
 const peerConfigPreview = document.querySelector("#peer-config-preview");
 const peerDownloadConfigButton = document.querySelector("#peer-download-config");
 const peerNewProvisioningButton = document.querySelector("#peer-new-provisioning");
-const peerShowQrButton = document.querySelector("#peer-show-qr");
 const peerQrPanel = document.querySelector("#peer-qr-panel");
 const peerQrScannedButton = document.querySelector("#peer-qr-scanned");
 const peerQrStatus = document.querySelector("#peer-qr-status");
@@ -272,11 +271,11 @@ function renderPeers(result) {
                 peerCreateButton.disabled = true;
                 peerNewProvisioningButton.hidden = false;
 
-                peerQrCode.hidden = true;
                 peerQrCode.replaceChildren();
                 peerQrScannedButton.hidden = true;
 
                 renderClientConfigPreview();
+                renderQrCode();
                 await refreshPeers();
 
                 peerCreateStatus.className = "operation-status success";
@@ -401,14 +400,12 @@ function updateQrAvailability() {
     const configText = peerConfigPreview.textContent ?? "";
     const ready = provisionedPeer && configIsComplete(configText);
 
-    peerShowQrButton.disabled = !ready;
     peerDownloadConfigButton.disabled = !ready;
     peerQrStatus.textContent = ready
         ? "Configurazione completa: QR pronto per l'importazione."
         : "Il QR sarà disponibile quando la configurazione sarà completa.";
 
     if (!ready) {
-        peerQrCode.hidden = true;
         peerQrCode.replaceChildren();
         peerQrScannedButton.hidden = true;
     }
@@ -855,6 +852,7 @@ peerForm.addEventListener("submit", async (event) => {
         peerNewProvisioningButton.hidden = false;
 
         renderClientConfigPreview();
+        renderQrCode();
         await refreshPeers();
 
         peerCreateStatus.className = "operation-status success";
@@ -945,7 +943,6 @@ peerNewProvisioningButton.addEventListener("click", async () => {
     peerDownloadConfigButton.hidden = true;
     peerQrPanel.hidden = true;
 
-    peerQrCode.hidden = true;
     peerQrCode.replaceChildren();
     peerQrScannedButton.hidden = true;
     peerCreateStatus.className = "operation-status";
@@ -955,16 +952,15 @@ peerNewProvisioningButton.addEventListener("click", async () => {
     renderClientConfigPreview();
 });
 
-peerShowQrButton.addEventListener("click", () => {
+function renderQrCode() {
     const configText = peerConfigPreview.textContent ?? "";
 
-    if (!configIsComplete(configText)) {
+    if (!provisionedPeer || !configIsComplete(configText)) {
         updateQrAvailability();
         return;
     }
 
     peerQrCode.replaceChildren();
-    peerQrCode.hidden = false;
 
     new window.QRCode(peerQrCode, {
         text: configText,
@@ -974,7 +970,9 @@ peerShowQrButton.addEventListener("click", () => {
     });
 
     peerQrScannedButton.hidden = false;
-});
+    peerQrStatus.textContent =
+        "QR pronto per l'importazione.";
+}
 
 peerQrScannedButton.addEventListener("click", () => {
     setConfigPendingExport(false);
