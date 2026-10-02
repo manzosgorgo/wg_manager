@@ -89,10 +89,27 @@ export class WGClientAPI {
             await response.arrayBuffer(),
         );
 
+        const responseSessionId = response.headers.get("X-WG-Session-ID");
+        const responseCounter = response.headers.get("X-WG-Counter");
+        const responseMac = response.headers.get("X-WG-MAC");
+
+        if (
+            responseSessionId === null
+            || responseCounter === null
+            || responseMac === null
+        ) {
+            const diagnosticText = new TextDecoder().decode(responseBytes);
+
+            throw new Error(
+                `unauthenticated response from ${apiPath}: HTTP ${response.status}`
+                + (diagnosticText ? ` — ${diagnosticText}` : "")
+            );
+        }
+
         const responseAuth = {
-            session_id: response.headers.get("X-WG-Session-ID"),
-            counter: Number(response.headers.get("X-WG-Counter")),
-            mac: response.headers.get("X-WG-MAC"),
+            session_id: responseSessionId,
+            counter: Number(responseCounter),
+            mac: responseMac,
         };
 
         await this.session.verifyResponse(
