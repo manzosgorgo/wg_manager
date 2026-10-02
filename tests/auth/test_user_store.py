@@ -59,3 +59,43 @@ def test_remove_missing_peer_is_idempotent(tmp_path):
     store.remove_peer("alice", "peer-a")
 
     assert store.load("alice").peers == ()
+
+
+
+def test_create_and_delete_user(tmp_path):
+    store = WGAuthUserStore(str(tmp_path))
+
+    user = store.create_user(
+        "bob",
+        b"B" * 256,
+    )
+
+    assert user.username == "bob"
+    assert user.peers == ()
+    assert store.load("bob").credential_record == b"B" * 256
+
+    store.delete_user("bob")
+
+    assert not (tmp_path / "bob").exists()
+
+
+def test_create_user_is_exclusive(tmp_path):
+    store = WGAuthUserStore(str(tmp_path))
+
+    store.create_user("bob", b"B" * 256)
+
+    import pytest
+    with pytest.raises(FileExistsError):
+        store.create_user("bob", b"C" * 256)
+
+
+def test_delete_user_with_owned_peers_is_rejected(tmp_path):
+    store = WGAuthUserStore(str(tmp_path))
+    store.create_user("bob", b"B" * 256)
+    store.add_peer("bob", "peer-a")
+
+    import pytest
+    with pytest.raises(ValueError, match="owned peers"):
+        store.delete_user("bob")
+
+    assert (tmp_path / "bob").exists()

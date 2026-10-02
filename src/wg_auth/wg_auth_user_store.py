@@ -82,7 +82,7 @@ class WGAuthUserStore:
         )
 
 
-    def _write_user(self, user):
+    def _write_user(self, user, *, replace=True):
         path = self._path(user.username)
         record = {
             "opaque_record": base64.b64encode(
@@ -105,7 +105,12 @@ class WGAuthUserStore:
                 os.fsync(f.fileno())
 
             os.chmod(tmp_path, 0o600)
-            os.replace(tmp_path, path)
+
+            if replace:
+                os.replace(tmp_path, path)
+            else:
+                os.link(tmp_path, path)
+                os.unlink(tmp_path)
 
         finally:
             try:
@@ -153,3 +158,32 @@ class WGAuthUserStore:
 
             self._write_user(updated)
             return updated
+
+
+    def create_user(self, username, credential_record):
+        if not isinstance(credential_record, bytes):
+            raise ValueError("credential_record must be bytes")
+
+        if len(credential_record) != self.opaque_record_len:
+            raise ValueError("invalid OPAQUE record size")
+
+        with self._lock:
+            user = WGAuthUser(
+                username=username,
+                credential_record=credential_record,
+                peers=(),
+            )
+            self._path(username)
+            self._write_user(user, replace=False)
+            return user
+
+    def delete_user(self, username):
+        with self._lock:
+            user = self.load(username)
+
+            if user.peers:
+                raise ValueError(
+                    "cannot delete user while owned peers still exist"
+                )
+
+            os.unlink(self._path(username))

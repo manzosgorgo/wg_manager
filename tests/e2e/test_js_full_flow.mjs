@@ -31,6 +31,7 @@ const CLIENT_CONF = path.join(ROOT, "config/wg-client-test-auth.conf");
 
 const CERT = path.join(ROOT, "cert/client.crt");
 const KEY = path.join(ROOT, "cert/client.key");
+const LOGIN_DIR = path.join(ROOT, "login");
 
 function parseIni(filename) {
   const config = {};
@@ -165,6 +166,13 @@ async function secureRequest(session, listenPath, port, method, apiPath, object 
   return { status: response.status, data };
 }
 
+function userPeers(username) {
+  const filename = path.join(LOGIN_DIR, username);
+  const record = JSON.parse(fs.readFileSync(filename, "utf8"));
+  assert.ok(Array.isArray(record.peers), "user record peers must be an array");
+  return record.peers;
+}
+
 function findFreeIp(status) {
   const used = new Set();
 
@@ -293,6 +301,10 @@ async function main() {
     assert.equal(added.status, 200, JSON.stringify(added.data));
     assert.equal(added.data?.ok, true);
     assert.equal(added.data?.public_key, publicKey);
+    assert.ok(
+      userPeers(username).includes(publicKey),
+      "new peer ownership was not persisted",
+    );
 
     console.log("[5/8] GET verifies peer exists");
 
@@ -322,6 +334,10 @@ async function main() {
 
     assert.equal(removed.status, 200, JSON.stringify(removed.data));
     assert.equal(removed.data?.ok, true);
+    assert.ok(
+      !userPeers(username).includes(publicKey),
+      "deleted peer ownership is still persisted",
+    );
 
     createdPeer = null;
 
