@@ -333,6 +333,13 @@ class FakeIPC:
                     "ownership_state": "consistent",
                 }
             ],
+            "ips": {
+                "10.8.0.2/32": {
+                    "public_key": PUBLIC_KEY,
+                    "username": "alice",
+                    "ownership_state": "consistent",
+                }
+            },
         }
 
     def reassign_owner(self, public_key, username):
@@ -428,6 +435,7 @@ def test_admin_peer_status(api):
     assert data["users"] == ["admin", "alice"]
     assert data["peers"][0]["owner"] == "alice"
     assert data["peers"][0]["runtime"]["public_key"] == PUBLIC_KEY
+    assert data["ips"]["10.8.0.2/32"]["public_key"] == PUBLIC_KEY
 
 
 def test_admin_reassign_owner(api):

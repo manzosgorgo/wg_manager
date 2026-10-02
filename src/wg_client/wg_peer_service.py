@@ -158,12 +158,7 @@ class WGPeerService:
 
         try:
             self.ipc.unregister_peer(public_key)
-        except WGPeerPersistenceError as exc:
-            raise WGPeerError(
-                exc.status,
-                exc.message,
-            ) from exc
-        except WGProtocolError as exc:
+        except (WGPeerPersistenceError, WGProtocolError) as exc:
             log.error(
                 "peer removed but ownership cleanup failed: %s",
                 exc,
@@ -211,6 +206,7 @@ class WGPeerService:
             "ok": True,
             "users": ownership.get("users", []),
             "peers": rows,
+            "ips": ownership.get("ips", {}),
         }
 
     def reassign_owner(self, public_key, username):

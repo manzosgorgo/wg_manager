@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import pytest
+
 from src.wg_auth.wg_auth_ownership_service import WGAuthOwnershipService
 from src.wg_auth.wg_auth_peer_registry import WGAuthPeerRegistry
 from src.wg_auth.wg_auth_user_store import WGAuthUserStore
@@ -89,3 +91,47 @@ def test_reassign_moves_peer_between_users(tmp_path):
     assert store.load("alice").peers == ()
     assert store.load("bob").peers == ("peer-a",)
     assert registry.get("peer-a")["username"] == "bob"
+
+
+
+def test_reassign_rejects_missing_target_user(tmp_path):
+    store, registry, service = make_service(tmp_path)
+
+    registry.reconcile(
+        [
+            {
+                "public_key": "peer-a",
+                "allowed_ip": "10.8.0.2/32",
+            }
+        ],
+        {},
+    )
+
+    with pytest.raises(FileNotFoundError):
+        service.reassign("peer-a", "missing-user")
+
+    assert registry.get("peer-a")["username"] is None
+
+
+def test_admin_state_exposes_ip_registry(tmp_path):
+    store, registry, service = make_service(tmp_path)
+
+    store.create_user("alice", b"A" * 256)
+    store.add_peer("alice", "peer-a")
+    registry.reconcile(
+        [
+            {
+                "public_key": "peer-a",
+                "allowed_ip": "10.8.0.2/32",
+            }
+        ],
+        store.peer_owners(),
+    )
+
+    state = service.admin_state()
+
+    assert state["ips"]["10.8.0.2/32"] == {
+        "public_key": "peer-a",
+        "username": "alice",
+        "ownership_state": "consistent",
+    }

@@ -77,6 +77,7 @@ class FakeController:
             "peers": [],
         }
         self.add_error = None
+        self.remove_error = None
 
     def status(self):
         self.calls.append(("status",))
@@ -94,6 +95,8 @@ class FakeController:
 
     def remove_peer(self, public_key):
         self.calls.append(("remove", public_key))
+        if self.remove_error is not None:
+            raise self.remove_error
         return {"ok": True, "public_key": public_key}
 
 
@@ -323,3 +326,87 @@ def test_admin_cannot_delete_active_account():
         service.delete_user("admin")
 
     assert info.value.status == 409
+
+
+
+def test_add_reports_consistency_error_when_rollback_fails():
+    class RollbackFailIPC(FakeIPC):
+        def unregister_peer(self, public_key):
+            raise WGPeerPersistenceError(
+                500,
+                "synthetic rollback failure",
+            )
+
+    controller = FakeController()
+    controller.add_error = WGControllerError(
+        409,
+        "duplicate public key",
+    )
+    lifecycle = FakeLifecycle()
+    lifecycle.ipc = RollbackFailIPC()
+
+    service = WGPeerService(
+        controller,
+        FakeSession(),
+        lifecycle,
+        "wg0",
+    )
+
+    with pytest.raises(WGPeerError) as info:
+        service.add_peer("peer-a", "10.8.0.2/32")
+
+    assert info.value.status == 502
+    assert "rollback failed" in info.value.message
+
+
+def test_remove_controller_failure_does_not_touch_ownership():
+    controller = FakeController()
+    controller.remove_error = WGControllerError(
+        500,
+        "controller failure",
+    )
+    lifecycle = FakeLifecycle()
+
+    service = WGPeerService(
+        controller,
+        FakeSession(peers=("peer-a",)),
+        lifecycle,
+        "wg0",
+    )
+
+    with pytest.raises(WGPeerError) as info:
+        service.remove_peer("peer-a")
+
+    assert info.value.status == 500
+    assert lifecycle.ipc.calls == []
+
+
+def test_remove_persistence_failure_is_partial_success_502():
+    class CleanupFailIPC(FakeIPC):
+        def unregister_peer(self, public_key):
+            raise WGPeerPersistenceError(
+                409,
+                "synthetic cleanup conflict",
+            )
+
+    controller = FakeController()
+    lifecycle = FakeLifecycle()
+    lifecycle.ipc = CleanupFailIPC()
+    session = FakeSession(peers=("peer-a",))
+
+    service = WGPeerService(
+        controller,
+        session,
+        lifecycle,
+        "wg0",
+    )
+
+    with pytest.raises(WGPeerError) as info:
+        service.remove_peer("peer-a")
+
+    assert info.value.status == 502
+    assert info.value.message == (
+        "peer was removed but ownership cleanup failed"
+    )
+    assert controller.calls == [("remove", "peer-a")]
+    assert session.can_access_peer("peer-a")

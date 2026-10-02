@@ -210,3 +210,29 @@ def test_reconcile_rebuilds_ip_registry(tmp_path):
             "ownership_state": "consistent",
         }
     }
+
+
+
+def test_set_owner_updates_ip_registry(tmp_path):
+    registry = WGAuthPeerRegistry(
+        str(tmp_path / "peer-registry.json"),
+        str(tmp_path / "ip-registry.json"),
+    )
+
+    registry.reconcile(
+        [
+            {
+                "public_key": "peer-a",
+                "allowed_ip": "10.8.0.2/32",
+            }
+        ],
+        {},
+    )
+
+    registry.set_owner("peer-a", "alice")
+
+    assert registry.snapshot_ips()["10.8.0.2/32"] == {
+        "public_key": "peer-a",
+        "username": "alice",
+        "ownership_state": "consistent",
+    }
