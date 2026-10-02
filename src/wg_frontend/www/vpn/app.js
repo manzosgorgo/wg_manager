@@ -214,7 +214,7 @@ function renderAdminState(result) {
 
             const details = document.createElement("span");
             details.textContent =
-                `owner: ${peer.username ?? "nessuno"} · ip: ${peer.allowed_ip ?? "?"} · stato: ${peer.ownership_state ?? "?"}`;
+                `owner: ${peer.owner ?? "nessuno"} · ip: ${peer.allowed_ip ?? "?"} · stato: ${peer.ownership_state ?? "?"}`;
 
             const form = document.createElement("form");
             form.className = "inline-admin-form";
@@ -224,7 +224,7 @@ function renderAdminState(result) {
                 const option = document.createElement("option");
                 option.value = username;
                 option.textContent = username;
-                option.selected = username === peer.username;
+                option.selected = username === peer.owner;
                 select.append(option);
             }
 
