@@ -28,6 +28,8 @@ MAX_BODY_SIZE = 65536
 PEERS_PREFIX = "/v1/peers/"
 ADMIN_PEERS_PATH = "/v1/admin/peers"
 ADMIN_PEERS_PREFIX = "/v1/admin/peers/"
+ADMIN_USERS_PATH = "/v1/admin/users"
+ADMIN_USERS_PREFIX = "/v1/admin/users/"
 
 # Headers used to carry WGSecureSession authentication over HTTPS.
 # Not frozen yet as part of the wire protocol: convenient for this
@@ -417,11 +419,59 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         log.info("Received HTTP POST request: %s", self.path)
 
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            if not 0 <= length <= MAX_BODY_SIZE:
+                raise ValueError("invalid Content-Length")
+            raw_body = self.rfile.read(length)
+        except ValueError:
+            self.send_error(400, "Bad Request", "invalid Content-Length")
+            return
+
         with self.session_lock:
-            if not self.authenticate_request(b""):
+            if not self.authenticate_request(raw_body):
                 return
 
-            self.send_json(200, {"status": "ok"})
+            if self.api_path() != ADMIN_USERS_PATH:
+                self.send_error(404)
+                return
+
+            try:
+                obj = json.loads(raw_body.decode("utf-8"))
+                username = obj["username"]
+                password = obj["password"]
+
+                if not isinstance(username, str) or not username:
+                    raise ValueError("invalid username")
+                if not isinstance(password, str) or not password:
+                    raise ValueError("invalid password")
+
+                result = self.peer_service.create_user(
+                    username,
+                    password,
+                )
+            except (
+                UnicodeDecodeError,
+                json.JSONDecodeError,
+                KeyError,
+                TypeError,
+                ValueError,
+            ):
+                self.send_error(
+                    400,
+                    "Bad Request",
+                    "Invalid account request",
+                )
+                return
+            except WGPeerError as exc:
+                self.send_error(
+                    exc.status,
+                    "Peer service error",
+                    exc.message,
+                )
+                return
+
+            self.send_json(201, result)
 
     def do_DELETE(self):
         log.warning("Received HTTP DELETE request: %s", self.path)
@@ -430,7 +480,28 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             if not self.authenticate_request(b""):
                 return
 
-            public_key = self.peer_key(self.api_path())
+            path = self.api_path()
+
+            if path is not None and path.startswith(ADMIN_USERS_PREFIX):
+                username = unquote(path[len(ADMIN_USERS_PREFIX):])
+                if not username:
+                    self.send_error(404)
+                    return
+
+                try:
+                    result = self.peer_service.delete_user(username)
+                except WGPeerError as exc:
+                    self.send_error(
+                        exc.status,
+                        "Peer service error",
+                        exc.message,
+                    )
+                    return
+
+                self.send_json(200, result)
+                return
+
+            public_key = self.peer_key(path)
             if public_key is None:
                 self.send_error(404)
                 return

@@ -34,6 +34,7 @@ class WGAuthOwnershipService:
         return {
             "users": [u.username for u in self.user_store.list_users()],
             "peers": peers,
+            "ips": self.peer_registry.snapshot_ips(),
         }
 
     def reassign(self, public_key, target_username):

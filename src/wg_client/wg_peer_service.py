@@ -226,3 +226,30 @@ class WGPeerService:
             raise WGPeerError(exc.status, exc.message) from exc
         except WGProtocolError as exc:
             raise WGPeerError(502, "failed to update peer ownership") from exc
+
+
+    def create_user(self, username, password):
+        if not self.session.is_admin:
+            raise WGPeerError(403, "admin principal required")
+
+        try:
+            return self.ipc.create_user(username, password)
+        except WGPeerPersistenceError as exc:
+            raise WGPeerError(exc.status, exc.message) from exc
+        except WGProtocolError as exc:
+            raise WGPeerError(502, "failed to create account") from exc
+
+    def delete_user(self, username):
+        if not self.session.is_admin:
+            raise WGPeerError(403, "admin principal required")
+
+        current = self.session.principal.get("username")
+        if username == current:
+            raise WGPeerError(409, "cannot delete active admin account")
+
+        try:
+            return self.ipc.delete_user(username)
+        except WGPeerPersistenceError as exc:
+            raise WGPeerError(exc.status, exc.message) from exc
+        except WGProtocolError as exc:
+            raise WGPeerError(502, "failed to delete account") from exc

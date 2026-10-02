@@ -15,37 +15,7 @@ import opaque
 from src.wg_auth.wg_auth_user_store import WGAuthUserStore
 from src.wg_auth.wg_auth_peer_registry import WGAuthPeerRegistry
 from src.wg_auth.wg_auth_ownership_service import WGAuthOwnershipService
-
-
-SERVER_ID = b"wg-auth"
-
-
-def make_opaque_record(username, password):
-    if not password:
-        raise ValueError("password cannot be empty")
-
-    ids = opaque.Ids(
-        username.encode("utf-8"),
-        SERVER_ID,
-    )
-
-    sec_u, request = opaque.CreateRegistrationRequest(
-        password.encode("utf-8")
-    )
-    sec_s, response = opaque.CreateRegistrationResponse(request)
-    rec0, _export_key = opaque.FinalizeRequest(
-        sec_u,
-        response,
-        ids,
-    )
-    record = opaque.StoreUserRecord(sec_s, rec0)
-
-    if len(record) != opaque.OPAQUE_USER_RECORD_LEN:
-        raise RuntimeError(
-            f"unexpected OPAQUE record size: {len(record)}"
-        )
-
-    return record
+from src.wg_auth.wg_auth_account_service import WGAuthAccountService
 
 
 def read_password_from_tty():
@@ -106,6 +76,9 @@ def main():
         store,
         registry,
     )
+    accounts = WGAuthAccountService(
+        store,
+    )
 
     try:
         if args.command == "create":
@@ -114,19 +87,15 @@ def main():
             else:
                 password = read_password_from_tty()
 
-            record = make_opaque_record(
+            accounts.create(
                 args.username,
                 password,
-            )
-            store.create_user(
-                args.username,
-                record,
             )
             print(f"created user '{args.username}'")
             return 0
 
         if args.command == "delete":
-            store.delete_user(args.username)
+            accounts.delete(args.username)
             print(f"deleted user '{args.username}'")
             return 0
 

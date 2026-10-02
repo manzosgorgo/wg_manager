@@ -342,6 +342,14 @@ class FakeIPC:
             "owner": username,
         }
 
+    def create_user(self, username, password):
+        self.calls.append(("create_user", username, password))
+        return {"username": username, "peers": []}
+
+    def delete_user(self, username):
+        self.calls.append(("delete_user", username))
+        return {"username": username, "deleted": True}
+
 
 @pytest.fixture
 def api(lifecycle):
@@ -442,6 +450,41 @@ def test_admin_reassign_owner(api):
     assert (
         "reassign_owner",
         PUBLIC_KEY,
+        "alice",
+    ) in api.lifecycle.ipc.calls
+
+
+def test_admin_create_user(api):
+    status, body = request(
+        api,
+        "POST",
+        LISTEN_PATH + "/v1/admin/users",
+        body=json.dumps({
+            "username": "bob",
+            "password": "secret",
+        }),
+    )
+
+    assert status == 201
+    assert json.loads(body)["username"] == "bob"
+    assert (
+        "create_user",
+        "bob",
+        "secret",
+    ) in api.lifecycle.ipc.calls
+
+
+def test_admin_delete_user(api):
+    status, body = request(
+        api,
+        "DELETE",
+        LISTEN_PATH + "/v1/admin/users/alice",
+    )
+
+    assert status == 200
+    assert json.loads(body)["deleted"] is True
+    assert (
+        "delete_user",
         "alice",
     ) in api.lifecycle.ipc.calls
 

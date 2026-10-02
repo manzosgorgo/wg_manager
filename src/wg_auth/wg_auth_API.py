@@ -9,6 +9,7 @@ from src.wg_auth.wg_auth_errors import WGAuthSessionError, WGAuthAuthenticationE
 from src.wg_auth.wg_auth_user_store import WGAuthUserStore
 from src.wg_auth.wg_auth_peer_registry import WGAuthPeerRegistry
 from src.wg_auth.wg_auth_ownership_service import WGAuthOwnershipService
+from src.wg_auth.wg_auth_account_service import WGAuthAccountService
 
 log = logging.getLogger("wg_auth.API")
 
@@ -36,6 +37,9 @@ class WGAuthAPI:
         self.ownership_service = WGAuthOwnershipService(
             self.user_store,
             self.peer_registry,
+        )
+        self.account_service = WGAuthAccountService(
+            self.user_store,
         )
 
         self.session = None
@@ -167,6 +171,8 @@ class WGAuthAPI:
                 state_reconcile=self._reconcile_peer_state,
                 ownership_state=self._ownership_state,
                 ownership_reassign=self._reassign_ownership,
+                account_create=self._create_account,
+                account_delete=self._delete_account,
             )
 
             self.ipc = ipc
@@ -263,6 +269,17 @@ class WGAuthAPI:
     def _reassign_ownership(self, public_key, username):
         return self.ownership_service.reassign(
             public_key,
+            username,
+        )
+
+    def _create_account(self, username, password):
+        return self.account_service.create(
+            username,
+            password,
+        )
+
+    def _delete_account(self, username):
+        return self.account_service.delete(
             username,
         )
 

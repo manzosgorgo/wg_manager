@@ -69,7 +69,7 @@ class WGClientIPC:
                     self.lifecycle.request_shutdown(notify_shutdown=False)
                     return
 
-                if command in ("PEER_RESULT", "OWNERSHIP_RESULT"):
+                if command in ("PEER_RESULT", "OWNERSHIP_RESULT", "ACCOUNT_RESULT"):
                     self._complete_pending(request)
                     continue
 
@@ -431,6 +431,85 @@ class WGClientIPC:
         return self._ownership_request(
             "OWNERSHIP_REASSIGN",
             public_key=public_key,
+            username=username,
+        )
+
+    def _account_request(self, command, **fields):
+        if command not in ("ACCOUNT_CREATE", "ACCOUNT_DELETE"):
+            raise WGProtocolError("invalid account IPC command")
+
+        event = threading.Event()
+
+        with self._pending_lock:
+            request_id = self._next_request_id
+            self._next_request_id += 1
+            self._pending[request_id] = {
+                "event": event,
+                "response": None,
+                "error": None,
+            }
+
+        packet = {
+            "protocol_version": PROTOCOL_VERSION,
+            "type": command,
+            "request_id": request_id,
+            **fields,
+        }
+
+        try:
+            sock = self.sock
+            if sock is None:
+                raise WGProtocolError("IPC connection is closed")
+
+            with self._send_lock:
+                sock.sendall(self._encode_packet(packet))
+
+            if not event.wait(IPC_RESPONSE_TIMEOUT):
+                raise WGProtocolError("account IPC request timed out")
+
+            with self._pending_lock:
+                pending = self._pending.get(request_id)
+
+            if pending is None:
+                raise WGProtocolError("account IPC request disappeared")
+
+            if pending["error"] is not None:
+                raise WGProtocolError(pending["error"])
+
+            response = pending["response"]
+            if not isinstance(response, dict):
+                raise WGProtocolError("missing ACCOUNT_RESULT")
+
+            if response.get("status") != "OK":
+                status_code = response.get("status_code", 502)
+                if type(status_code) is not int:
+                    status_code = 502
+                raise WGPeerPersistenceError(
+                    status_code,
+                    response.get("error", "account request failed"),
+                )
+
+            return response.get("result")
+
+        except OSError as exc:
+            raise WGProtocolError(
+                f"account IPC request failed: {exc}"
+            ) from exc
+
+        finally:
+            with self._pending_lock:
+                self._pending.pop(request_id, None)
+
+    def create_user(self, username, password):
+        return self._account_request(
+            "ACCOUNT_CREATE",
+            username=username,
+            password=password,
+        )
+
+    def delete_user(self, username):
+        return self._account_request(
+            "ACCOUNT_DELETE",
             username=username,
         )
 

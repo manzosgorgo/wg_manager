@@ -54,6 +54,14 @@ class FakeIPC:
             "owner": username,
         }
 
+    def create_user(self, username, password):
+        self.calls.append(("create_user", username, password))
+        return {"username": username, "peers": []}
+
+    def delete_user(self, username):
+        self.calls.append(("delete_user", username))
+        return {"username": username, "deleted": True}
+
 
 class FakeLifecycle:
     def __init__(self):
@@ -283,3 +291,35 @@ def test_admin_can_reassign_owner():
     assert lifecycle.ipc.calls == [
         ("reassign_owner", "peer-a", "alice"),
     ]
+
+
+
+def test_admin_can_create_user():
+    lifecycle = FakeLifecycle()
+    service = WGPeerService(
+        FakeController(),
+        FakeSession(username="admin", admin=True),
+        lifecycle,
+        "wg0",
+    )
+
+    result = service.create_user("bob", "secret")
+
+    assert result["username"] == "bob"
+    assert lifecycle.ipc.calls == [
+        ("create_user", "bob", "secret"),
+    ]
+
+
+def test_admin_cannot_delete_active_account():
+    service = WGPeerService(
+        FakeController(),
+        FakeSession(username="admin", admin=True),
+        FakeLifecycle(),
+        "wg0",
+    )
+
+    with pytest.raises(WGPeerError) as info:
+        service.delete_user("admin")
+
+    assert info.value.status == 409
