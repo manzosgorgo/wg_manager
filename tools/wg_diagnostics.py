@@ -15,12 +15,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_DIR = ROOT / "config"
 
-UNITS = (
+SOCKET_UNITS = (
     "wg-client-test.socket",
-    "wg-client-test@.service",
     "wg-controller-test.socket",
+)
+
+SERVICE_TEMPLATES = (
+    "wg-client-test@.service",
     "wg-controller-test@.service",
 )
+
+UNITS = SOCKET_UNITS + SERVICE_TEMPLATES
 
 ENV_KEYS = (
     "WG_CLIENT_CONFIG",
@@ -102,50 +107,143 @@ def parse_env(text):
     return result
 
 
+def parse_unit_file(text):
+    env = {}
+    exec_start = []
+
+    for raw in text.splitlines():
+        line = raw.strip()
+
+        if not line or line.startswith("#"):
+            continue
+
+        if line.startswith("Environment="):
+            value = line.split("=", 1)[1]
+            env.update(parse_env(value))
+
+        elif line.startswith("ExecStart="):
+            exec_start.append(line.split("=", 1)[1])
+
+    return env, exec_start
+
+
+def template_instances(template):
+    prefix = template.split("@", 1)[0]
+    suffix = template.rsplit(".", 1)[1]
+    pattern = f"{prefix}@*.{suffix}"
+
+    rc, out, _ = run([
+        "systemctl",
+        "list-units",
+        pattern,
+        "--all",
+        "--plain",
+        "--no-legend",
+        "--no-pager",
+    ])
+
+    if rc:
+        return []
+
+    result = []
+    for line in out.splitlines():
+        fields = line.split()
+        if fields:
+            result.append(fields[0])
+
+    return sorted(set(result))
+
+
+def show_runtime_unit(unit, selected):
+    rc, out, err = run([
+        "systemctl", "show", unit,
+        "--property=LoadState,ActiveState,SubState,UnitFileState,"
+        "FragmentPath,Environment,ExecStart",
+        "--no-pager",
+    ])
+
+    if rc:
+        print(err.strip() or "unavailable")
+        return
+
+    data = {}
+    for line in out.splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            data[key] = value
+
+    for key in (
+        "LoadState",
+        "ActiveState",
+        "SubState",
+        "UnitFileState",
+        "FragmentPath",
+        "ExecStart",
+    ):
+        if data.get(key):
+            print(f"{key}: {data[key]}")
+
+    env = parse_env(data.get("Environment", ""))
+    if env:
+        print("Environment:")
+        for key, value in sorted(env.items()):
+            print(f"  {key}={value}")
+            if key in ENV_KEYS:
+                selected[key] = value
+
+
 def unit_report():
     heading("SYSTEMD / RUNTIME SELECTION")
     selected = {}
 
-    for unit in UNITS:
+    for unit in SOCKET_UNITS:
         subheading(unit)
+        show_runtime_unit(unit, selected)
+
+    for template in SERVICE_TEMPLATES:
+        subheading(template + " [template]")
+
         rc, out, err = run([
-            "systemctl", "show", unit,
-            "--property=LoadState,ActiveState,SubState,UnitFileState,"
-            "FragmentPath,Environment,ExecStart",
+            "systemctl",
+            "cat",
+            template,
             "--no-pager",
         ])
 
         if rc:
-            print(err.strip() or "unavailable")
+            print(err.strip() or "template unavailable")
+        else:
+            env, exec_start = parse_unit_file(out)
+
+            print("installed template: yes")
+
+            if exec_start:
+                print("ExecStart:")
+                for value in exec_start:
+                    print(f"  {value}")
+
+            if env:
+                print("Environment:")
+                for key, value in sorted(env.items()):
+                    print(f"  {key}={value}")
+                    if key in ENV_KEYS:
+                        selected[key] = value
+
+        instances = template_instances(template)
+
+        if not instances:
+            print("active/known instances: none")
             continue
 
-        data = {}
-        for line in out.splitlines():
-            if "=" in line:
-                key, value = line.split("=", 1)
-                data[key] = value
+        print("active/known instances:")
+        for instance in instances:
+            print(f"  {instance}")
 
-        for key in (
-            "LoadState",
-            "ActiveState",
-            "SubState",
-            "UnitFileState",
-            "FragmentPath",
-            "ExecStart",
-        ):
-            if data.get(key):
-                print(f"{key}: {data[key]}")
-
-        env = parse_env(data.get("Environment", ""))
-        if env:
-            print("Environment:")
-            for key, value in sorted(env.items()):
-                print(f"  {key}={value}")
-                if key in ENV_KEYS:
-                    selected[key] = value
+        for instance in instances:
+            subheading(instance + " [instance]")
+            show_runtime_unit(instance, selected)
 
     return selected
-
 
 def read_ini(path):
     cfg = configparser.ConfigParser()
@@ -320,14 +418,27 @@ def logs_report(selected, lines):
         else:
             print("(missing)")
 
-    for unit in UNITS:
+    journal_units = list(SOCKET_UNITS)
+
+    for template in SERVICE_TEMPLATES:
+        instances = template_instances(template)
+        if instances:
+            journal_units.extend(instances)
+        else:
+            journal_units.append(template)
+
+    for unit in journal_units:
         subheading(f"journal: {unit}")
         rc, out, err = run([
             "journalctl", "-u", unit,
             "-n", str(lines),
             "--no-pager", "-o", "short-iso",
         ])
-        print(out.rstrip() if rc == 0 and out.strip() else err.strip() or "(no entries)")
+        print(
+            out.rstrip()
+            if rc == 0 and out.strip()
+            else err.strip() or "(no entries)"
+        )
 
 
 def source_fallbacks():
