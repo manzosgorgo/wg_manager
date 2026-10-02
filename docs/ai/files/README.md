@@ -6,9 +6,9 @@ The directory structure mirrors the original project tree.
 
 Sensitive files and generated/build directories are deliberately excluded.
 
-- Project files in inventory: 104
-- Text files indexed: 84
-- Files without source snapshot: 20
+- Project files in inventory: 124
+- Text files indexed: 96
+- Files without source snapshot: 28
 
 ## Files without source snapshot
 
@@ -27,6 +27,14 @@ Sensitive files and generated/build directories are deliberately excluded.
 - `cert.old-20260930-145739/server.csr`
 - `cert.old-20260930-145739/server.ext`
 - `cert.old-20260930-145739/server.key`
+- `src/wg_frontend/vendor/LICENSE.libopaque`
+- `src/wg_frontend/www/vpn/vendor/qrcode.LICENSE`
+- `systemd/production/wg-auth.service`
+- `systemd/production/wg-client.socket`
+- `systemd/production/wg-client@.service`
+- `systemd/production/wg-manager.socket`
+- `systemd/production/wg-manager@.service`
+- `systemd/wg-auth.service`
 - `systemd/wg-client-test.socket`
 - `systemd/wg-client-test@.service`
 - `systemd/wg-client-test@.service.bak`

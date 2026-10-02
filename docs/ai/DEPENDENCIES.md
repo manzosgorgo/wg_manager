@@ -6,6 +6,7 @@ This file is generated automatically.
 
 - `configparser`
 - `logging`
+- `os`
 - `src.wg_auth.wg_auth_IPC`
 - `src.wg_auth.wg_auth_lifecycle`
 - `sys`
@@ -154,6 +155,7 @@ This file is generated automatically.
 
 ## `src/wg_client/wg_peer_service.py`
 
+- `ipaddress`
 - `logging`
 - `src.wg_client.wg_client_errors`
 
@@ -178,6 +180,15 @@ This file is generated automatically.
 - `./wg_secure_session.js`
 - `node:crypto`
 - `node:fs`
+
+## `src/wg_frontend/wg_auth_session.js`
+
+- `./wg_opaque_client.js`
+
+## `src/wg_frontend/www/vpn/app.js`
+
+- `/js/wg_auth_session.js`
+- `/js/wg_client_api.js`
 
 ## `src/wg_manager/wg_manager.py`
 

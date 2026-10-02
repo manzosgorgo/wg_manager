@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_lifecycle.py`
 - Language: `python`
-- Lines: 49
-- SHA256: `7e5c95c1cc4405da2c5d5515e3fe16dbf3a4387d47984a9bc24d7fc2d2d42d85`
+- Lines: 56
+- SHA256: `f6815a006fb7b11dd42948071cc8807dfbacbe9abd679e9aebeefd5c144136c0`
 - Imports:
   - `logging`
   - `threading`
@@ -24,6 +24,13 @@ class WGClientLifecycle:
 
         self.stop_event = threading.Event()
         self.shutdown_lock = threading.Lock()
+
+    def notify_activity(self):
+        ipc = self.ipc
+        if ipc is None:
+            return
+
+        ipc.keepalive()
 
     def request_shutdown(self, notify_shutdown=True):
         with self.shutdown_lock:

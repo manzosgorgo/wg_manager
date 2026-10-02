@@ -4,8 +4,8 @@
 
 - Path: `src/wg_manager/wg_manager.py`
 - Language: `python`
-- Lines: 231
-- SHA256: `db21f0273fc91786a24abe447a6f6f578f287cde044062487d3340302d15319a`
+- Lines: 271
+- SHA256: `7681864aa7b95fad1c93521b79013a63919f240b81c8d2e87898f934c953e744`
 - Imports:
   - `base64`
   - `configparser`
@@ -53,6 +53,7 @@ def cfg():
         "server_key": c["tls"]["server_key"].strip(),
         "client_ca": c["tls"]["client_ca"].strip(),
         "net": ipaddress.ip_network(c["policy"]["vpn_network"].strip(), strict=False),
+        "server_address": c["policy"].get("server_address", "").strip() or None,
     }
 
 
@@ -143,6 +144,43 @@ def peers(interface):
     return r
 
 
+def provisioning(c):
+    out = wg(["show", c["if"], "dump"])
+    lines = out.splitlines()
+
+    if not lines:
+        raise E(500, "WireGuard interface state unavailable")
+
+    interface = lines[0].split("\t")
+    if len(interface) < 4:
+        raise E(500, "invalid WireGuard interface state")
+
+    used_ips = []
+    for peer in peers(c["if"]):
+        for allowed_ip in peer.get("allowed_ips", []):
+            try:
+                candidate = ipaddress.ip_interface(allowed_ip)
+            except ValueError:
+                continue
+
+            if (
+                candidate.version == c["net"].version
+                and candidate.network.prefixlen == candidate.max_prefixlen
+                and candidate.ip in c["net"]
+            ):
+                used_ips.append(str(candidate))
+
+    return {
+        "ok": True,
+        "interface": c["if"],
+        "server_public_key": interface[1],
+        "listen_port": int(interface[2]) if interface[2].isdigit() else 0,
+        "vpn_network": str(c["net"]),
+        "server_address": c["server_address"],
+        "used_ips": sorted(set(used_ips)),
+    }
+
+
 def add(c, o):
     if not isinstance(o, dict):
         raise E(400, "JSON object required")
@@ -174,6 +212,8 @@ def remove(c, pk):
 def dispatch(c, m, t, b):
     if m == "GET" and t == "/v1/status":
         return 200, {"ok": True, "interface": c["if"], "peers": peers(c["if"])}
+    if m == "GET" and t == "/v1/provisioning":
+        return 200, provisioning(c)
     if m == "POST" and t == "/v1/peers":
         try:
             o = json.loads(b.decode())

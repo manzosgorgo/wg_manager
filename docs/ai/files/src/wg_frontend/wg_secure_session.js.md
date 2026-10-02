@@ -4,8 +4,8 @@
 
 - Path: `src/wg_frontend/wg_secure_session.js`
 - Language: `javascript`
-- Lines: 679
-- SHA256: `53bf9bc7e1530553197838fd1990b95786ee4779116d58c4a2217920479c616f`
+- Lines: 689
+- SHA256: `699cf2860db996d2258ab9508c5b138dfaf7abfef94dc566bd168c9116f0588e`
 
 ## Source
 
@@ -377,6 +377,16 @@ export class WGSecureSession {
     };
     this._pendingRequests[counter] = { ...auth };
     return auth;
+  }
+
+  abandonRequest(requestAuth) {
+    const validated = this._validateRequestAuth(requestAuth);
+
+    if (!bytesEqual(validated.session_id, this._sessionId)) {
+      throw new WGSessionMismatchError("invalid request session id");
+    }
+
+    delete this._pendingRequests[validated.counter];
   }
 
   async verifyRequest(auth, method, path, body = new Uint8Array(0)) {

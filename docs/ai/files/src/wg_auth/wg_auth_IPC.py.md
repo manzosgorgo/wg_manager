@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_IPC.py`
 - Language: `python`
-- Lines: 546
-- SHA256: `3e8bf05c82bba4f2e826655d30d4dcb33348649db9339822aa6b1de57a5f8a40`
+- Lines: 595
+- SHA256: `d17184fb55151986627eb322cf75ebe796396b089d6506e813d11f414c1de77b`
 - Imports:
   - `json`
   - `logging`
@@ -43,6 +43,7 @@ class WGAuthIPC:
         peer_register=None,
         peer_unregister=None,
         state_reconcile=None,
+        provisioning_state=None,
         ownership_state=None,
         ownership_reassign=None,
         account_create=None,
@@ -57,12 +58,14 @@ class WGAuthIPC:
         self.peer_register = peer_register
         self.peer_unregister = peer_unregister
         self.state_reconcile = state_reconcile
+        self.provisioning_state = provisioning_state
         self.ownership_state = ownership_state
         self.ownership_reassign = ownership_reassign
         self.account_create = account_create
         self.account_delete = account_delete
 
         self.sock = None
+        self._recv_buffer = bytearray()
     @property
     def active(self):
         return self.sock is not None
@@ -97,8 +100,16 @@ class WGAuthIPC:
                     self.lifecycle.request_session_shutdown(notify_client=False)
                     return
 
+                if command == "KEEPALIVE":
+                    self.lifecycle.touch_session()
+                    continue
+
                 if command in ("PEER_REGISTER", "PEER_UNREGISTER"):
                     self._handle_peer_request(request)
+                    continue
+
+                if command == "PROVISIONING_STATE":
+                    self._handle_provisioning_request(request)
                     continue
 
                 if command in ("OWNERSHIP_STATE", "OWNERSHIP_REASSIGN"):
@@ -217,6 +228,36 @@ class WGAuthIPC:
             "type": "PEER_RESULT",
             "request_id": request_id,
             "status": "OK",
+        })
+
+    def _handle_provisioning_request(self, request):
+        request_id = request.get("request_id")
+
+        if type(request_id) is not int or request_id < 1:
+            raise WGAuthProtocolError("invalid request_id")
+
+        try:
+            if self.provisioning_state is None:
+                raise RuntimeError("provisioning state callback is unavailable")
+            result = self.provisioning_state()
+        except Exception as exc:
+            log.exception("provisioning request failed")
+            self.send_packet({
+                "protocol_version": PROTOCOL_VERSION,
+                "type": "PROVISIONING_RESULT",
+                "request_id": request_id,
+                "status": "ERROR",
+                "status_code": 500,
+                "error": str(exc),
+            })
+            return
+
+        self.send_packet({
+            "protocol_version": PROTOCOL_VERSION,
+            "type": "PROVISIONING_RESULT",
+            "request_id": request_id,
+            "status": "OK",
+            "result": result,
         })
 
     def _handle_ownership_request(self, request):
@@ -401,33 +442,39 @@ class WGAuthIPC:
         })
 
     def receive_packet(self):
-        data = bytearray()
-
         while True:
-            chunk = self.sock.recv(4096)
+            newline = self._recv_buffer.find(b"\n")
 
-            if not chunk:
-                break
+            if newline >= 0:
+                if newline > MAX_PACKET_SIZE:
+                    raise WGAuthProtocolError(
+                        "packet too large"
+                    )
 
-            data.extend(chunk)
+                packet = bytes(
+                    self._recv_buffer[:newline]
+                )
+                del self._recv_buffer[:newline + 1]
+                return packet
 
-            if len(data) > MAX_PACKET_SIZE:
+            if len(self._recv_buffer) > MAX_PACKET_SIZE:
                 raise WGAuthProtocolError(
                     "packet too large"
                 )
 
-            if b"\n" in data:
-                break
+            chunk = self.sock.recv(4096)
 
-        if not data:
-            raise WGAuthProtocolError(
-                "empty packet"
-            )
+            if not chunk:
+                if not self._recv_buffer:
+                    raise WGAuthProtocolError(
+                        "empty packet"
+                    )
 
-        return bytes(data).split(
-            b"\n",
-            1,
-        )[0]
+                packet = bytes(self._recv_buffer)
+                self._recv_buffer.clear()
+                return packet
+
+            self._recv_buffer.extend(chunk)
 
     def parse_packet(self, packet):
         try:
@@ -460,6 +507,8 @@ class WGAuthIPC:
 
         if self.sock is not None:
             raise RuntimeError("IPC already active")
+
+        self._recv_buffer.clear()
 
         self.sock = socket.socket(
             socket.AF_UNIX,

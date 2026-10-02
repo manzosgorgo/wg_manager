@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_controller_client.py`
 - Language: `python`
-- Lines: 215
-- SHA256: `6aa39c62770ab2cfa21701888c7f6c5fba464b9307de6bf432405cd77d9a5117`
+- Lines: 219
+- SHA256: `ba61751e1b092ff059c586c008f9cc7c9bec19babfa5a5be6e5e8946b8e09b59`
 - Imports:
   - `http.client`
   - `json`
@@ -96,6 +96,10 @@ class WGControllerClient:
     def status(self):
         status, obj = self._request("GET", "/v1/status")
 
+        return obj
+
+    def provisioning(self):
+        status, obj = self._request("GET", "/v1/provisioning")
         return obj
 
     def add_peer(self, public_key, allowed_ip):

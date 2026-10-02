@@ -4,11 +4,12 @@
 
 - Path: `src/wg_auth/wg_auth.py`
 - Language: `python`
-- Lines: 39
-- SHA256: `4b47f635f1af649b3db5b1ad4d768956b988b8ce2caaf454943c114cd0ece4c8`
+- Lines: 50
+- SHA256: `43563bcd4f5e01c32b19cc43dd5cba8d9b01a7a61df6dc9d18c5f765162eec6a`
 - Imports:
   - `configparser`
   - `logging`
+  - `os`
   - `src.wg_auth.wg_auth_IPC`
   - `src.wg_auth.wg_auth_lifecycle`
   - `sys`
@@ -21,6 +22,7 @@
 ```python
 import configparser
 import logging
+import os
 import sys
 import threading
 
@@ -30,7 +32,11 @@ from wg_auth_session import WGAuthSession
 from wg_auth_API import WGAuthAPI
 
 log = logging.getLogger("wg-auth")
-config_path = "/home/main/Desktop/wg_manager/config/wg-auth.conf"
+config_path = os.environ.get(
+    "WG_AUTH_CONFIG",
+    "/home/main/Desktop/wg_manager/config/wg-auth.conf",
+)
+
 def load_config(path):
     config = configparser.ConfigParser()
     config.read(path)
@@ -41,7 +47,13 @@ def main():
 
     config = load_config(config_path)
 
-    lifecycle = WGAuthLifecycle()
+    lifecycle = WGAuthLifecycle(
+        idle_timeout=config.getint(
+            "client",
+            "idle_timeout",
+            fallback=45,
+        ),
+    )
 
     with WGAuthAPI(
         config,

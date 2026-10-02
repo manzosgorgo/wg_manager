@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_API.py`
 - Language: `python`
-- Lines: 425
-- SHA256: `9726b391cee245d09d8b969223e31f5f03caac786c4a7ac539a33008bd0feda4`
+- Lines: 433
+- SHA256: `97bd584f59c9bb8c638c56143c35fbeb1020cbb19cfeff11835b4ac5084159bf`
 - Imports:
   - `http.server`
   - `json`
@@ -195,6 +195,7 @@ class WGAuthAPI:
                 peer_register=self._register_peer,
                 peer_unregister=self._unregister_peer,
                 state_reconcile=self._reconcile_peer_state,
+                provisioning_state=self._provisioning_state,
                 ownership_state=self._ownership_state,
                 ownership_reassign=self._reassign_ownership,
                 account_create=self._create_account,
@@ -288,6 +289,13 @@ class WGAuthAPI:
             manager_peers,
             owners,
         )
+
+    def _provisioning_state(self):
+        return {
+            "reserved_ips": sorted(
+                self.peer_registry.snapshot_ips().keys()
+            ),
+        }
 
     def _ownership_state(self):
         return self.ownership_service.admin_state()
