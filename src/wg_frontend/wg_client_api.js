@@ -143,6 +143,10 @@ export class WGClientAPI {
         return this.request("GET", "/v1/status");
     }
 
+    heartbeat() {
+        return this.request("GET", "/v1/heartbeat");
+    }
+
     logout() {
         this.discardPreparedLogout();
         return this.request("DELETE", "/v1/session");

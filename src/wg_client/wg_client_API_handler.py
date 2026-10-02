@@ -31,6 +31,7 @@ ADMIN_PEERS_PREFIX = "/v1/admin/peers/"
 ADMIN_USERS_PATH = "/v1/admin/users"
 ADMIN_USERS_PREFIX = "/v1/admin/users/"
 SESSION_PATH = "/v1/session"
+HEARTBEAT_PATH = "/v1/heartbeat"
 
 # Headers used to carry WGSecureSession authentication over HTTPS.
 # Not frozen yet as part of the wire protocol: convenient for this
@@ -421,11 +422,22 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         log.info("Received HTTP GET request: %s", self.path)
 
-        with self.session_lock:
+        path = self.api_path()
+
+        # Heartbeat is intentionally independent from the application
+        # transaction lock. WGSecureSession protects its own counters,
+        # replay window and MAC state internally, and authenticate_request()
+        # already refreshes the auth-side idle timer.
+        if path == HEARTBEAT_PATH:
             if not self.authenticate_request(b""):
                 return
 
-            path = self.api_path()
+            self.send_json(200, {"ok": True})
+            return
+
+        with self.session_lock:
+            if not self.authenticate_request(b""):
+                return
 
             try:
                 if path == "/v1/status":

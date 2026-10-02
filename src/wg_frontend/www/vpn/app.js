@@ -58,7 +58,16 @@ function startHeartbeat() {
         }
 
         try {
-            await client.status();
+            const heartbeat = await client.heartbeat();
+
+            if (!heartbeat.ok || !heartbeat.data?.ok) {
+                throw new Error(
+                    heartbeat.data?.message
+                        ?? heartbeat.data?.error
+                        ?? `wg-client heartbeat returned HTTP ${heartbeat.status}`
+                );
+            }
+
             await client.prepareFastLogout();
         } catch (error) {
             stopHeartbeat();
