@@ -4,7 +4,7 @@ Section: net
 Priority: optional
 Architecture: all
 Maintainer: wg_manager local package <root@localhost>
-Depends: python3, python3-opaque, python3-systemd, apache2, systemd, util-linux
+Depends: python3, python3-opaque, python3-systemd, python3-cryptography, apache2, systemd, util-linux
 Description: wg_manager authentication, session client and web frontend
  Provides the OPAQUE authentication service, per-session wg-client service,
  browser frontend and Apache reverse-proxy integration for wg_manager.

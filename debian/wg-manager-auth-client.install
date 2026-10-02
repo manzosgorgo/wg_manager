@@ -1,0 +1,23 @@
+# Python runtime package root.
+src/__init__.py usr/lib/wg-manager/src/
+src/wg_auth/*.py usr/lib/wg-manager/src/wg_auth/
+src/wg_client/*.py usr/lib/wg-manager/src/wg_client/
+
+# Browser frontend.
+src/wg_frontend/www/vpn/* usr/share/wg-manager/frontend/
+src/wg_frontend/wg_auth_session.js usr/share/wg-manager/js/
+src/wg_frontend/wg_opaque_client.js usr/share/wg-manager/js/
+src/wg_frontend/wg_client_api.js usr/share/wg-manager/js/
+src/wg_frontend/wg_secure_session.js usr/share/wg-manager/js/
+src/wg_frontend/wg_client_errors.js usr/share/wg-manager/js/
+
+# Production systemd units.
+systemd/production/wg-auth.service usr/lib/systemd/system/
+systemd/production/wg-client.socket usr/lib/systemd/system/
+systemd/production/wg-client@.service usr/lib/systemd/system/
+
+# NOTE: libopaque.js is intentionally not listed yet.
+# vendor/libopaque is currently an absolute development symlink and must be
+# replaced by a real vendored runtime file before the package is buildable.
+# Production config and Apache files will be added once their final paths are
+# committed.
