@@ -249,7 +249,7 @@ function renderClientConfigPreview() {
         "",
         "[Peer]",
         `PublicKey = ${data.server_public_key ?? "<server public key>"}`,
-        `Endpoint = <server endpoint>:${data.listen_port ?? "?"}`,
+        `Endpoint = ${data.endpoint ?? "<server endpoint>"}`,
         `AllowedIPs = ${allowedIps.join(", ")}`,
         ...(keepalive > 0
             ? [`PersistentKeepalive = ${keepalive}`]
@@ -311,6 +311,7 @@ async function refreshProvisioning() {
         `server_address: ${data.server_address ?? "(non configurato)"}`,
         `server_public_key: ${data.server_public_key ?? "?"}`,
         `listen_port: ${data.listen_port ?? "?"}`,
+        `endpoint: ${data.endpoint ?? "(non configurato)"}`,
         `used_ips: ${Array.isArray(data.used_ips) ? data.used_ips.join(", ") : ""}`,
         `reserved_ips: ${Array.isArray(data.reserved_ips) ? data.reserved_ips.join(", ") : ""}`,
         `available_ips: ${Array.isArray(data.available_ips) ? data.available_ips.join(", ") : ""}`,

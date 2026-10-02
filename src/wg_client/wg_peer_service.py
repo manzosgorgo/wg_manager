@@ -16,7 +16,7 @@ log = logging.getLogger("wg_manager.peer_service")
 class WGPeerService:
     """Authorization and consistency boundary for peer operations."""
 
-    def __init__(self, controller, session, lifecycle, interface):
+    def __init__(self, controller, session, lifecycle, interface, endpoint=None):
         if session is None:
             raise RuntimeError("WGPeerService requires a secure session")
 
@@ -27,6 +27,7 @@ class WGPeerService:
         self.session = session
         self.lifecycle = lifecycle
         self.interface = interface
+        self.endpoint = endpoint
 
     @property
     def ipc(self):
@@ -122,6 +123,7 @@ class WGPeerService:
                 available.append(candidate)
 
         result = dict(controller)
+        result["endpoint"] = self.endpoint
         result["reserved_ips"] = sorted(occupied)
         result["available_ips"] = available
         return result

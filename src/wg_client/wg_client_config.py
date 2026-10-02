@@ -70,6 +70,12 @@ def load_config():
     if controller_timeout <= 0:
         raise RuntimeError("invalid controller timeout")
 
+    wireguard_endpoint = config.get(
+        "wireguard",
+        "endpoint",
+        fallback="",
+    ).strip()
+
     # Secure Session configuration.
     # The whole section is optional; defaults are used when absent.
     secure_session_enabled = config.getboolean(
@@ -181,6 +187,7 @@ def load_config():
         },
         "wireguard": {
             "interface": config["wireguard"]["interface"].strip(),
+            "endpoint": wireguard_endpoint or None,
         },
         "secure_session": {
             "enabled": secure_session_enabled,

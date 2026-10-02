@@ -31,6 +31,7 @@ class WGClientAPI:
         self.cafile = config["api"]["ca"]
         log.debug("interface")
         self.interface = config["wireguard"]["interface"]
+        self.endpoint = config["wireguard"].get("endpoint")
 
         # Every endpoint lives below listen_path, e.g.
         # <listen_path>/v1/status.
@@ -67,6 +68,7 @@ class WGClientAPI:
             self.session,
             self.lifecycle,
             self.interface,
+            self.endpoint,
         )
 
     def start(self):
