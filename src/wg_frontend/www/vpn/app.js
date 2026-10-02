@@ -278,6 +278,10 @@ function renderPeers(result) {
                 renderQrCode();
                 await refreshPeers();
 
+                for (const [name, panel] of Object.entries(panels)) {
+                    panel.hidden = name !== "new-peer";
+                }
+
                 peerCreateStatus.className = "operation-status success";
                 peerCreateStatus.textContent =
                     "Peer rigenerato. Scarica la nuova configurazione o acquisisci il QR.";
@@ -883,6 +887,7 @@ peerGenerateKeysButton.addEventListener("click", async () => {
         peerCreateStatus.className = "operation-status success";
         peerCreateStatus.textContent =
             "Chiavi generate nel browser. La private key non verrà inviata al server.";
+        peerGenerateKeysButton.disabled = false;
     } catch (error) {
         generatedKeyPair = null;
         peerPublicKeyInput.value = "";
