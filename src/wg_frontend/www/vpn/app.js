@@ -1,12 +1,21 @@
 import { WGAuthSession } from "/js/wg_auth_session.js";
 import { WGClientAPI } from "/js/wg_client_api.js";
 
+const authView = document.querySelector("#auth-view");
+const postauthView = document.querySelector("#postauth-view");
+
 const form = document.querySelector("#login-form");
 const usernameInput = document.querySelector("#username");
 const passwordInput = document.querySelector("#password");
 const button = document.querySelector("#login-button");
 const status = document.querySelector("#auth-status");
+const authConnectionStatus = document.querySelector("#auth-connection-status");
+
+const sessionUser = document.querySelector("#session-user");
 const connectionStatus = document.querySelector("#connection-status");
+const logoutButton = document.querySelector("#logout-button");
+const refreshPeersButton = document.querySelector("#refresh-peers");
+const peerList = document.querySelector("#peer-list");
 
 const auth = new WGAuthSession("");
 
@@ -15,17 +24,84 @@ window.wgFrontend = {
     client: null,
 };
 
+function showAuthView() {
+    postauthView.hidden = true;
+    authView.hidden = false;
+    document.title = "Malandrino · Accesso";
+}
+
+function showPostauthView() {
+    authView.hidden = true;
+    postauthView.hidden = false;
+    sessionUser.textContent = auth.username ?? "";
+    connectionStatus.textContent = "Online";
+    document.title = "Malandrino · WireGuard";
+}
+
+function renderPeers(result) {
+    const peers = result?.data?.peers;
+
+    if (!Array.isArray(peers) || peers.length === 0) {
+        peerList.innerHTML = [
+            '<article class="placeholder-card">',
+            "<strong>Nessun peer</strong>",
+            "<span>Non risultano peer associati a questa sessione.</span>",
+            "</article>",
+        ].join("");
+        return;
+    }
+
+    peerList.innerHTML = "";
+
+    for (const peer of peers) {
+        const card = document.createElement("article");
+        card.className = "placeholder-card";
+
+        const key = document.createElement("strong");
+        key.textContent = peer.public_key ?? "peer senza public key";
+
+        const details = document.createElement("span");
+        const allowed = Array.isArray(peer.allowed_ips)
+            ? peer.allowed_ips.join(", ")
+            : "";
+        details.textContent = allowed || "Nessun allowed IP";
+
+        card.append(key, details);
+        peerList.append(card);
+    }
+}
+
+async function refreshPeers() {
+    const client = window.wgFrontend.client;
+    if (!client) {
+        throw new Error("wg-client session is not initialized");
+    }
+
+    const result = await client.status();
+
+    if (!result.ok || !result.data?.ok) {
+        throw new Error(
+            result.data?.message
+                ?? result.data?.error
+                ?? `wg-client returned HTTP ${result.status}`
+        );
+    }
+
+    renderPeers(result);
+    return result;
+}
+
 async function refreshAuthStatus() {
     try {
         const result = await auth.status();
 
         if (result.ok && result.data?.ok) {
-            connectionStatus.textContent = result.data.authenticated
-                ? "Autenticato"
-                : "Non autenticato";
+            authConnectionStatus.textContent = result.data.authenticated
+                ? "Sessione auth già attiva"
+                : "Auth online";
         }
     } catch {
-        connectionStatus.textContent = "Auth non raggiungibile";
+        authConnectionStatus.textContent = "Auth non raggiungibile";
     }
 }
 
@@ -55,22 +131,62 @@ form.addEventListener("submit", async (event) => {
             );
         }
 
-        status.className = "auth-status success";
-        status.textContent =
-            "Autenticazione riuscita; sessione wg-client attiva.";
-
-        connectionStatus.textContent = "Online";
-
-        // Keep credentials out of persistent browser storage.
         passwordInput.value = "";
+        renderPeers(clientStatus);
+        showPostauthView();
 
     } catch (error) {
         status.className = "auth-status error";
         status.textContent = error.message ?? String(error);
-        connectionStatus.textContent = "Offline";
+        authConnectionStatus.textContent = "Offline";
     } finally {
         button.disabled = false;
     }
 });
 
+logoutButton.addEventListener("click", async () => {
+    logoutButton.disabled = true;
+
+    try {
+        await auth.logout();
+    } finally {
+        window.wgFrontend.client = null;
+        connectionStatus.textContent = "Offline";
+        showAuthView();
+        logoutButton.disabled = false;
+    }
+});
+
+refreshPeersButton.addEventListener("click", async () => {
+    refreshPeersButton.disabled = true;
+
+    try {
+        await refreshPeers();
+        connectionStatus.textContent = "Online";
+    } catch (error) {
+        connectionStatus.textContent =
+            error.message ?? String(error);
+    } finally {
+        refreshPeersButton.disabled = false;
+    }
+});
+
+const viewButtons = document.querySelectorAll("[data-view]");
+const panels = {
+    peers: document.querySelector("#view-peers"),
+    "new-peer": document.querySelector("#view-new-peer"),
+    admin: document.querySelector("#view-admin"),
+};
+
+for (const viewButton of viewButtons) {
+    viewButton.addEventListener("click", () => {
+        const selected = viewButton.dataset.view;
+
+        for (const [name, panel] of Object.entries(panels)) {
+            panel.hidden = name !== selected;
+        }
+    });
+}
+
+showAuthView();
 refreshAuthStatus();
