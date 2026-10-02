@@ -382,3 +382,39 @@ body {
 .auth-card input + .auth-label {
   margin-top: 14px;
 }
+
+
+.operation-status {
+  min-height: 18px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.operation-status.success {
+  color: var(--online);
+}
+
+.operation-status.error {
+  color: var(--offline);
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.card-actions button {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.card-actions button:disabled {
+  opacity: .55;
+  cursor: wait;
+}

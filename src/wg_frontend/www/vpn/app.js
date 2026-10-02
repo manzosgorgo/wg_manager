@@ -16,6 +16,11 @@ const connectionStatus = document.querySelector("#connection-status");
 const logoutButton = document.querySelector("#logout-button");
 const refreshPeersButton = document.querySelector("#refresh-peers");
 const peerList = document.querySelector("#peer-list");
+const peerStatus = document.querySelector("#peer-status");
+const peerForm = document.querySelector("#peer-form");
+const peerPublicKeyInput = document.querySelector("#peer-public-key");
+const peerAllowedIpInput = document.querySelector("#peer-allowed-ip");
+const peerCreateStatus = document.querySelector("#peer-create-status");
 
 const auth = new WGAuthSession("");
 
@@ -102,7 +107,52 @@ function renderPeers(result) {
             : "";
         details.textContent = allowed || "Nessun allowed IP";
 
-        card.append(key, details);
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.textContent = "Elimina";
+        removeButton.addEventListener("click", async () => {
+            const publicKey = peer.public_key;
+
+            if (!publicKey) {
+                return;
+            }
+
+            if (!window.confirm("Eliminare questo peer?")) {
+                return;
+            }
+
+            removeButton.disabled = true;
+            peerStatus.className = "operation-status";
+            peerStatus.textContent = "Eliminazione peer in corso…";
+
+            try {
+                const client = window.wgFrontend.client;
+                const result = await client.removePeer(publicKey);
+
+                if (!result.ok || !result.data?.ok) {
+                    throw new Error(
+                        result.data?.message
+                            ?? result.data?.error
+                            ?? `wg-client returned HTTP ${result.status}`
+                    );
+                }
+
+                await refreshPeers();
+                peerStatus.className = "operation-status success";
+                peerStatus.textContent = "Peer eliminato.";
+
+            } catch (error) {
+                peerStatus.className = "operation-status error";
+                peerStatus.textContent = error.message ?? String(error);
+                removeButton.disabled = false;
+            }
+        });
+
+        actions.append(removeButton);
+        card.append(key, details, actions);
         peerList.append(card);
     }
 }
@@ -230,6 +280,47 @@ logoutButton.addEventListener("click", async () => {
         showAuthView();
         logoutButton.disabled = false;
         refreshAuthStatus();
+    }
+});
+
+peerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const client = window.wgFrontend.client;
+    if (!client) {
+        return;
+    }
+
+    const publicKey = peerPublicKeyInput.value.trim();
+    const allowedIp = peerAllowedIpInput.value.trim();
+    const submitButton = peerForm.querySelector('button[type="submit"]');
+
+    submitButton.disabled = true;
+    peerCreateStatus.className = "operation-status";
+    peerCreateStatus.textContent = "Creazione peer in corso…";
+
+    try {
+        const result = await client.addPeer(publicKey, allowedIp);
+
+        if (!result.ok || !result.data?.ok) {
+            throw new Error(
+                result.data?.message
+                    ?? result.data?.error
+                    ?? `wg-client returned HTTP ${result.status}`
+            );
+        }
+
+        peerForm.reset();
+        await refreshPeers();
+
+        peerCreateStatus.className = "operation-status success";
+        peerCreateStatus.textContent = "Peer creato.";
+
+    } catch (error) {
+        peerCreateStatus.className = "operation-status error";
+        peerCreateStatus.textContent = error.message ?? String(error);
+    } finally {
+        submitButton.disabled = false;
     }
 });
 
