@@ -14,6 +14,8 @@ Pipeline:
         +--> protocol_flow.py src/wg_client
         +--> protocol_flow.py src/wg_manager
         |
+        +--> build_pydoc.py
+        |
         +--> docs/
                 |
                 +--> validation
@@ -80,6 +82,7 @@ AI_DIR = DOCS_DIR / "ai"
 
 PROJECT_INDEX = TOOLS_DIR / "project_index.py"
 PROTOCOL_FLOW = TOOLS_DIR / "protocol_flow.py"
+BUILD_PYDOC = TOOLS_DIR / "build_pydoc.py"
 
 
 # ---------------------------------------------------------------------------
@@ -212,6 +215,21 @@ def generate_protocol_snapshots() -> None:
         generate_protocol(name, source_relative)
 
 
+def generate_pydoc() -> None:
+    print("\n[3/7] Generating Python API documentation")
+
+    if not BUILD_PYDOC.is_file():
+        fail(f"build_pydoc.py not found: {BUILD_PYDOC}")
+
+    run(
+        [
+            sys.executable,
+            str(BUILD_PYDOC),
+        ],
+        cwd=PROJECT_ROOT,
+    )
+
+
 def generate_readme() -> None:
     """
     Generate docs/README.md.
@@ -219,7 +237,7 @@ def generate_readme() -> None:
     This becomes README.md at the root of the public GitHub repository.
     """
 
-    print("\n[3/6] Generating documentation README")
+    print("\n[4/7] Generating documentation README")
 
     readme = """# wg-manager documentation
 
@@ -244,6 +262,13 @@ Automatically generated documentation for the `wg_manager` project.
 - [wg-client protocol](ai/wg_client_proto.md)
 - [wg-manager protocol](ai/wg_manager_proto.md)
 - [wg-all protocol](ai/wg_all_proto.md)
+
+## Python API documentation
+
+- [pydoc API index](ai/pydoc/index.html)
+
+The Python API reference is generated from module/class/function docstrings
+with `tools/build_pydoc.py`.
 
 ## Source documentation
 
@@ -286,7 +311,7 @@ The protocol snapshots are generated independently for:
 # ---------------------------------------------------------------------------
 
 def validate_required_files() -> None:
-    print("\n[4/6] Validating generated documentation")
+    print("\n[5/7] Validating generated documentation")
 
     required = [
         DOCS_DIR / "README.md",
@@ -300,6 +325,7 @@ def validate_required_files() -> None:
         AI_DIR / "wg_client_proto.md",
         AI_DIR / "wg_manager_proto.md",
         AI_DIR / "wg_all_proto.md",
+        AI_DIR / "pydoc" / "index.html",
     ]
 
     missing = [path for path in required if not path.is_file()]
@@ -775,6 +801,7 @@ def main() -> int:
 
     generate_project_index()
     generate_protocol_snapshots()
+    generate_pydoc()
     generate_readme()
 
     # ------------------------------------------------------------------
@@ -801,7 +828,7 @@ def main() -> int:
     # Temporary staging repository
     # ------------------------------------------------------------------
 
-    print("\n[5/6] Preparing temporary Git staging area")
+    print("\n[6/7] Preparing temporary Git staging area")
 
     with tempfile.TemporaryDirectory(
         prefix="wg-manager-docs-publish-"
@@ -823,7 +850,7 @@ def main() -> int:
     if not args.no_pages:
         configure_pages(branch)
 
-    print("\n[6/6] Publication complete")
+    print("\n[7/7] Publication complete")
 
     if pushed:
         print(f"Published: https://github.com/{GITHUB_REPO}")
