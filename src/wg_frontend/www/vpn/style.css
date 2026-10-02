@@ -220,3 +220,154 @@ body {
   }
 
 }
+
+
+/* ============================================================
+   Post-auth shell
+   ============================================================ */
+
+.postauth-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.postauth-header,
+.postauth-main,
+.postauth-shell footer {
+  width: min(1180px, calc(100% - 40px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.postauth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 0 18px;
+}
+
+.postauth-header h1,
+.section-heading h2,
+.postauth-panel h3 {
+  margin: 0;
+}
+
+.session-actions,
+.section-heading,
+.postauth-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.postauth-main {
+  flex: 1;
+  padding: 18px 0 40px;
+}
+
+.postauth-nav {
+  margin-bottom: 18px;
+}
+
+.postauth-nav button,
+.session-actions button,
+.section-heading button,
+.postauth-form button {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 9px 13px;
+  cursor: pointer;
+}
+
+.postauth-panel {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(17, 22, 30, .9);
+  padding: 24px;
+}
+
+.section-heading {
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.placeholder-list,
+.admin-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.placeholder-card {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  color: var(--muted);
+}
+
+.placeholder-card strong,
+.placeholder-card span {
+  display: block;
+}
+
+.placeholder-card strong {
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.postauth-form {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.postauth-form label {
+  display: grid;
+  gap: 7px;
+  color: #b9c3d0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.postauth-form input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(17, 22, 30, .75);
+  color: var(--text);
+  padding: 11px 12px;
+  font: inherit;
+}
+
+.postauth-shell footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0 26px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+@media (max-width: 760px) {
+  .postauth-header,
+  .section-heading,
+  .postauth-shell footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .postauth-nav {
+    flex-wrap: wrap;
+  }
+}
