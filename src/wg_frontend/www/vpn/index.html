@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Malandrino · Accesso</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="shell auth-shell">
+
+
+
+        <main class="auth-main">
+
+            <section class="auth-card">
+
+                <div class="auth-icon">🔐</div>
+
+                <div class="auth-heading">
+                    <div class="eyebrow">Zona Protetta</div>
+                    <h2>Wireguard VPN Manager</h2>
+                    <p>
+                        Inserisci la password per accedere alle impostazioni 
+						della VPN.
+                    </p>
+                </div>
+
+                <form id="login-form">
+
+                    <label class="auth-label" for="password">
+                        Password
+                    </label>
+
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                        autofocus
+                    >
+
+                    <button
+                        id="login-button"
+                        type="submit"
+                        class="auth-button"
+                    >
+                        Accedi
+                    </button>
+
+                </form>
+
+                <div
+                    id="auth-status"
+                    class="auth-status"
+                    aria-live="polite"
+                ></div>
+
+            </section>
+
+        </main>
+
+
+        <footer>
+            <span id="connection-status"></span>
+            <span>Solo per i veri malandrini</span>
+        </footer>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
