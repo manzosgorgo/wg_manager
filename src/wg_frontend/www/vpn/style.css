@@ -343,7 +343,8 @@ body {
   font-weight: 700;
 }
 
-.postauth-form input {
+.postauth-form input,
+.postauth-form select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -351,6 +352,14 @@ body {
   color: var(--text);
   padding: 11px 12px;
   font: inherit;
+}
+
+.placeholder-card pre {
+  margin: 10px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #b9c3d0;
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 .postauth-shell footer {

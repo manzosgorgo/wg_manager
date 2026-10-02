@@ -20,8 +20,13 @@ const peerStatus = document.querySelector("#peer-status");
 const peerForm = document.querySelector("#peer-form");
 const peerPublicKeyInput = document.querySelector("#peer-public-key");
 const peerAllowedIpInput = document.querySelector("#peer-allowed-ip");
+const peerRoutingModeInput = document.querySelector("#peer-routing-mode");
+const peerKeepaliveInput = document.querySelector("#peer-keepalive");
+const peerConfigPreview = document.querySelector("#peer-config-preview");
 const peerCreateStatus = document.querySelector("#peer-create-status");
 const provisioningDebug = document.querySelector("#provisioning-debug");
+
+let provisioningState = null;
 
 const adminNavButton = document.querySelector("#admin-nav-button");
 const adminPeerList = document.querySelector("#admin-peer-list");
@@ -182,6 +187,48 @@ function renderPeers(result) {
     }
 }
 
+function clientAllowedIpsForMode(data, mode) {
+    if (mode === "full") {
+        return ["0.0.0.0/0", "::/0"];
+    }
+
+    return data?.vpn_network
+        ? [data.vpn_network]
+        : [];
+}
+
+function renderClientConfigPreview() {
+    const data = provisioningState ?? {};
+    const address = peerAllowedIpInput.value;
+    const routingMode = peerRoutingModeInput.value;
+    const keepalive = Number(peerKeepaliveInput.value);
+
+    if (!address) {
+        peerConfigPreview.textContent =
+            "Seleziona un IP per generare la preview.";
+        return;
+    }
+
+    const allowedIps = clientAllowedIpsForMode(
+        data,
+        routingMode,
+    );
+
+    peerConfigPreview.textContent = [
+        "[Interface]",
+        "PrivateKey = <generata nel browser>",
+        `Address = ${address}`,
+        "",
+        "[Peer]",
+        `PublicKey = ${data.server_public_key ?? "<server public key>"}`,
+        `Endpoint = <server endpoint>:${data.listen_port ?? "?"}`,
+        `AllowedIPs = ${allowedIps.join(", ")}`,
+        ...(keepalive > 0
+            ? [`PersistentKeepalive = ${keepalive}`]
+            : []),
+    ].join("\n");
+}
+
 async function refreshProvisioning() {
     const client = window.wgFrontend.client;
     if (!client) {
@@ -201,6 +248,33 @@ async function refreshProvisioning() {
     }
 
     const data = result.data ?? {};
+    provisioningState = data;
+
+    const availableIps = Array.isArray(data.available_ips)
+        ? data.available_ips
+        : [];
+
+    peerAllowedIpInput.innerHTML = "";
+
+    if (availableIps.length === 0) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "Nessun IP disponibile";
+        peerAllowedIpInput.append(option);
+        peerAllowedIpInput.disabled = true;
+    } else {
+        peerAllowedIpInput.disabled = false;
+
+        for (const ip of availableIps) {
+            const option = document.createElement("option");
+            option.value = ip;
+            option.textContent = ip;
+            peerAllowedIpInput.append(option);
+        }
+    }
+
+    renderClientConfigPreview();
+
     provisioningDebug.textContent = [
         `interface: ${data.interface ?? "?"}`,
         `vpn_network: ${data.vpn_network ?? "?"}`,
@@ -534,6 +608,7 @@ peerForm.addEventListener("submit", async (event) => {
 
         peerForm.reset();
         await refreshPeers();
+        await refreshProvisioning();
 
         peerCreateStatus.className = "operation-status success";
         peerCreateStatus.textContent = "Peer creato.";
@@ -545,6 +620,10 @@ peerForm.addEventListener("submit", async (event) => {
         submitButton.disabled = false;
     }
 });
+
+peerAllowedIpInput.addEventListener("change", renderClientConfigPreview);
+peerRoutingModeInput.addEventListener("change", renderClientConfigPreview);
+peerKeepaliveInput.addEventListener("change", renderClientConfigPreview);
 
 userForm.addEventListener("submit", async (event) => {
     event.preventDefault();

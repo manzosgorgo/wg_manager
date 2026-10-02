@@ -109,14 +109,37 @@
                     </label>
 
                     <label>
-                        Allowed IP
-                        <input id="peer-allowed-ip" name="allowed_ip" type="text">
+                        IP VPN
+                        <select id="peer-allowed-ip" name="allowed_ip" required>
+                            <option value="">Caricamento indirizzi…</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Routing
+                        <select id="peer-routing-mode" name="routing_mode">
+                            <option value="vpn">Solo rete VPN</option>
+                            <option value="full">Full tunnel</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Persistent keepalive
+                        <select id="peer-keepalive" name="persistent_keepalive">
+                            <option value="0">Off</option>
+                            <option value="25" selected>25 secondi</option>
+                        </select>
                     </label>
 
                     <button type="submit">Crea peer</button>
                 </form>
 
                 <div id="peer-create-status" class="operation-status" aria-live="polite"></div>
+
+                <div class="placeholder-card">
+                    <strong>Config client preview</strong>
+                    <pre id="peer-config-preview">Seleziona un IP per generare la preview.</pre>
+                </div>
 
                 <div class="placeholder-card">
                     <strong>Provisioning debug</strong>
