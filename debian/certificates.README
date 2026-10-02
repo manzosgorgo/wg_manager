@@ -1,0 +1,42 @@
+WG Manager certificate layout
+=============================
+
+The Debian packages do not ship private keys or certificates.
+
+Authentication/frontend host
+----------------------------
+
+/etc/wg-manager/cert/ca.crt
+    root:root, mode 0644
+
+/etc/wg-manager/cert/auth/auth.crt
+    root:wg-auth, mode 0644
+/etc/wg-manager/cert/auth/auth.key
+    root:wg-auth, mode 0640
+
+/etc/wg-manager/cert/client/client.crt
+    root:wg-client, mode 0644
+/etc/wg-manager/cert/client/client.key
+    root:wg-client, mode 0640
+
+/etc/wg-manager/cert/apache/apache-client.pem
+    root:www-data, mode 0640
+
+Controller host
+---------------
+
+/etc/wg-manager/cert/ca.crt
+    root:root, mode 0644
+
+/etc/wg-manager/cert/controller/server.crt
+    root:wg-manager, mode 0644
+/etc/wg-manager/cert/controller/server.key
+    root:wg-manager, mode 0640
+
+The package postinst scripts correct ownership and mode for files that already
+exist when the package is configured. Certificates copied later must be given
+the same ownership and permissions before the services are enabled.
+
+Services are deliberately not enabled or started automatically by the package.
+After installing certificates and editing the production configuration, enable
+the required units explicitly.
