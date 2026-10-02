@@ -105,8 +105,10 @@
                 <form id="peer-form" class="postauth-form">
                     <label>
                         Public key
-                        <input id="peer-public-key" name="public_key" type="text">
+                        <input id="peer-public-key" name="public_key" type="text" readonly placeholder="Generata nel browser">
                     </label>
+
+                    <button id="peer-generate-keys" type="button">Genera chiavi</button>
 
                     <label>
                         IP VPN
@@ -133,7 +135,7 @@
                         </select>
                     </label>
 
-                    <button type="submit">Crea peer</button>
+                    <button id="peer-create-button" type="submit">Crea peer</button>
                 </form>
 
                 <div id="peer-create-status" class="operation-status" aria-live="polite"></div>
@@ -148,7 +150,11 @@
 
                 <div class="placeholder-card">
                     <strong>Config client preview</strong>
-                    <pre id="peer-config-preview">Seleziona un IP per generare la preview.</pre>
+                    <pre id="peer-config-preview">Genera le chiavi per creare la configurazione.</pre>
+                    <div class="card-actions">
+                        <button id="peer-download-config" type="button" disabled>Scarica .conf</button>
+                        <button id="peer-new-provisioning" type="button" hidden>Prepara altro peer</button>
+                    </div>
                 </div>
 
                 <details class="advanced-info">
