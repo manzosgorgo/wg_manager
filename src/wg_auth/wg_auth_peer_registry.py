@@ -143,10 +143,7 @@ class WGAuthPeerRegistry:
             del peers[public_key]
             self._write(obj)
 
-            return {
-                "username": owner,
-                "allowed_ip": existing["allowed_ip"],
-            }
+            return dict(existing)
 
     def get(self, public_key):
         with self._lock:
@@ -185,8 +182,8 @@ class WGAuthPeerRegistry:
         manager_peers is a list of {"public_key": str, "allowed_ip": str}.
         owners maps public_key -> username.
 
-        A live manager peer without exactly one persisted owner is unsafe:
-        ownership cannot be invented, so reconciliation fails.
+        Live peers without a persisted owner are retained as orphan
+        reservations so an administrator can claim or reassign them.
         """
         if not isinstance(manager_peers, list):
             raise ValueError("manager peer snapshot must be a list")
