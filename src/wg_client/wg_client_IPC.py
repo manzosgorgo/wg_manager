@@ -32,6 +32,7 @@ class WGClientIPC:
         self.lifecycle = lifecycle
 
         self._send_lock = threading.Lock()
+        self._recv_buffer = bytearray()
         self._pending_lock = threading.Lock()
         self._pending = {}
         self._next_request_id = 1
@@ -91,26 +92,31 @@ class WGClientIPC:
 
 
     def receive_packet(self):
-        data = bytearray()
-
         while True:
+            newline = self._recv_buffer.find(b"\n")
+
+            if newline >= 0:
+                if newline > MAX_PACKET_SIZE:
+                    raise WGProtocolError("packet too large")
+
+                packet = bytes(self._recv_buffer[:newline])
+                del self._recv_buffer[:newline + 1]
+                return packet
+
+            if len(self._recv_buffer) > MAX_PACKET_SIZE:
+                raise WGProtocolError("packet too large")
+
             chunk = self.sock.recv(4096)
 
             if not chunk:
-                break
+                if not self._recv_buffer:
+                    raise WGProtocolError("empty packet")
 
-            data.extend(chunk)
+                packet = bytes(self._recv_buffer)
+                self._recv_buffer.clear()
+                return packet
 
-            if len(data) > MAX_PACKET_SIZE:
-                raise WGProtocolError("packet too large")
-
-            if b"\n" in data:
-                break
-
-        if not data:
-            raise WGProtocolError("empty packet")
-
-        return bytes(data).split(b"\n", 1)[0]
+            self._recv_buffer.extend(chunk)
 
 
     def parse_packet(self,packet):

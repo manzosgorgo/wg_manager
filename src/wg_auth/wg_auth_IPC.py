@@ -45,6 +45,7 @@ class WGAuthIPC:
         self.account_delete = account_delete
 
         self.sock = None
+        self._recv_buffer = bytearray()
     @property
     def active(self):
         return self.sock is not None
@@ -387,33 +388,39 @@ class WGAuthIPC:
         })
 
     def receive_packet(self):
-        data = bytearray()
-
         while True:
-            chunk = self.sock.recv(4096)
+            newline = self._recv_buffer.find(b"\n")
 
-            if not chunk:
-                break
+            if newline >= 0:
+                if newline > MAX_PACKET_SIZE:
+                    raise WGAuthProtocolError(
+                        "packet too large"
+                    )
 
-            data.extend(chunk)
+                packet = bytes(
+                    self._recv_buffer[:newline]
+                )
+                del self._recv_buffer[:newline + 1]
+                return packet
 
-            if len(data) > MAX_PACKET_SIZE:
+            if len(self._recv_buffer) > MAX_PACKET_SIZE:
                 raise WGAuthProtocolError(
                     "packet too large"
                 )
 
-            if b"\n" in data:
-                break
+            chunk = self.sock.recv(4096)
 
-        if not data:
-            raise WGAuthProtocolError(
-                "empty packet"
-            )
+            if not chunk:
+                if not self._recv_buffer:
+                    raise WGAuthProtocolError(
+                        "empty packet"
+                    )
 
-        return bytes(data).split(
-            b"\n",
-            1,
-        )[0]
+                packet = bytes(self._recv_buffer)
+                self._recv_buffer.clear()
+                return packet
+
+            self._recv_buffer.extend(chunk)
 
     def parse_packet(self, packet):
         try:
@@ -446,6 +453,8 @@ class WGAuthIPC:
 
         if self.sock is not None:
             raise RuntimeError("IPC already active")
+
+        self._recv_buffer.clear()
 
         self.sock = socket.socket(
             socket.AF_UNIX,
