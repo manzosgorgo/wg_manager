@@ -1,5 +1,13 @@
 # src/wg_auth/wg_auth_API_handler.py
 
+"""
+HTTPS request handler for the public wg-auth endpoints.
+
+POST /auth starts OPAQUE, POST /auth/verify completes it and activates
+wg-client, and GET /status exposes coarse session state. Logout is intentionally
+performed through the authenticated wg-client session rather than this API.
+"""
+
 import json
 import logging
 from http.server import BaseHTTPRequestHandler
@@ -9,6 +17,9 @@ from src.wg_auth.wg_auth_errors import WGAuthSessionError, WGAuthAuthenticationE
 log = logging.getLogger("WGAuth.API_Handler")
 
 class WGAuthAPIHandler(BaseHTTPRequestHandler):
+    """
+    Translate wg-auth HTTP requests into WGAuthAPI operations and JSON responses.
+    """
     api = None
 
     def _send_json(self, status, payload):
@@ -186,6 +197,9 @@ class WGAuthAPIHandler(BaseHTTPRequestHandler):
             )
 
     def do_POST(self):
+        """
+        Dispatch POST /auth and POST /auth/verify; return JSON protocol errors otherwise.
+        """
         if self.path == "/auth":
             self._handle_auth_start()
             return
@@ -200,6 +214,9 @@ class WGAuthAPIHandler(BaseHTTPRequestHandler):
         )
 
     def do_DELETE(self):
+        """
+        Reject direct auth logout because logout requires the authenticated client session.
+        """
         if self.path != "/auth":
             self._send_json(
                 404,
@@ -219,6 +236,9 @@ class WGAuthAPIHandler(BaseHTTPRequestHandler):
         )
 
     def do_GET(self):
+        """
+        Return session status for /status and 404 for other paths.
+        """
         if self.path != "/status":
             self._send_json(
                 404,
