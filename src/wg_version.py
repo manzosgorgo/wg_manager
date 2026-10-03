@@ -1,4 +1,5 @@
 """Package/protocol version shared by wg-manager runtime components."""
 
-PACKAGE_VERSION = "0.1.0-9"
+# debian/rules rewrites this value in package staging from debian/changelog.
+PACKAGE_VERSION = "0.1.0-10"
 PROTOCOL_VERSION_HEADER = "X-WG-Protocol-Version"

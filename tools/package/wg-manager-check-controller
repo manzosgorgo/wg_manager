@@ -22,6 +22,11 @@ fi
 
 if [ -f /etc/wg-manager/wg-manager.conf ]; then
     ok "/etc/wg-manager/wg-manager.conf exists"
+    if runuser -u wg-manager -- test -r /etc/wg-manager/wg-manager.conf; then
+        ok "/etc/wg-manager/wg-manager.conf is readable by wg-manager"
+    else
+        bad "/etc/wg-manager/wg-manager.conf is not readable by wg-manager"
+    fi
 else
     bad "/etc/wg-manager/wg-manager.conf is missing"
 fi

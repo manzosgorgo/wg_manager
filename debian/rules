@@ -3,5 +3,39 @@
 %:
 	dh $@
 
+# Rewrite package-staged frontend/runtime version references from the Debian
+# changelog. Source files stay development-friendly; installed files always
+# carry the exact binary package version.
+override_dh_install:
+	dh_install
+	set -e; \
+	version="$$(dpkg-parsechangelog -SVersion)"; \
+	root="debian/wg-manager-auth-client"; \
+	index="$$root/usr/share/wg-manager/frontend/index.html"; \
+	app="$$root/usr/share/wg-manager/frontend/app.js"; \
+	auth_session="$$root/usr/share/wg-manager/js/wg_auth_session.js"; \
+	client_api="$$root/usr/share/wg-manager/js/wg_client_api.js"; \
+	secure_session="$$root/usr/share/wg-manager/js/wg_secure_session.js"; \
+	test -f "$$index"; \
+	sed -i \
+	  -e "s|href=\"style.css\"|href=\"style.css?v=$$version\"|" \
+	  -e "s|src=\"/js/vendor/libopaque.js\"|src=\"/js/vendor/libopaque.js?v=$$version\"|" \
+	  -e "s|src=\"/vendor/qrcode.min.js\"|src=\"/vendor/qrcode.min.js?v=$$version\"|" \
+	  -e "s|src=\"app.js\"|src=\"app.js?v=$$version\"|" \
+	  "$$index"; \
+	sed -i \
+	  -e "s|/js/wg_auth_session.js\"|/js/wg_auth_session.js?v=$$version\"|" \
+	  -e "s|/js/wg_client_api.js\"|/js/wg_client_api.js?v=$$version\"|" \
+	  "$$app"; \
+	sed -i -e "s|./wg_opaque_client.js\"|./wg_opaque_client.js?v=$$version\"|" "$$auth_session"; \
+	sed -i -e "s|./wg_secure_session.js\"|./wg_secure_session.js?v=$$version\"|" "$$client_api"; \
+	sed -i -e "s|./wg_client_errors.js\"|./wg_client_errors.js?v=$$version\"|" "$$secure_session"; \
+	for version_file in \
+	  debian/wg-manager-auth-client/usr/lib/wg-manager/src/wg_version.py \
+	  debian/wg-manager-controller/usr/lib/wg-manager/src/wg_version.py; do \
+	  test -f "$$version_file"; \
+	  sed -i "s|^PACKAGE_VERSION = .*|PACKAGE_VERSION = \"$$version\"|" "$$version_file"; \
+	done
+
 override_dh_installsystemd:
 	dh_installsystemd --no-start --no-enable
