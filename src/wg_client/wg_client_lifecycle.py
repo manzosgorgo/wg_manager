@@ -1,9 +1,23 @@
+"""
+Lifecycle coordination for one wg-client session.
+
+Activity is reported back to wg-auth as KEEPALIVE; shutdown stops the IPC
+channel and asks the HTTPS server to leave serve_forever without holding the
+shutdown lock during cleanup.
+"""
+
 import logging
 import threading
 
 log = logging.getLogger("wg_client.lifecycle")
 class WGClientLifecycle:
+    """
+    Coordinate keepalive activity and one-shot shutdown of IPC and HTTPS layers.
+    """
     def __init__(self, api=None, ipc=None):
+        """
+        Create lifecycle state for an optional API and IPC channel.
+        """
         self.api = api
         self.ipc = ipc
 
@@ -11,6 +25,9 @@ class WGClientLifecycle:
         self.shutdown_lock = threading.Lock()
 
     def notify_activity(self):
+        """
+        Send a best-effort KEEPALIVE to wg-auth when IPC is available.
+        """
         ipc = self.ipc
         if ipc is None:
             return
@@ -18,6 +35,9 @@ class WGClientLifecycle:
         ipc.keepalive()
 
     def request_shutdown(self, notify_shutdown=True):
+        """
+        Request session shutdown once and stop IPC/API without holding the lifecycle lock.
+        """
         with self.shutdown_lock:
             if self.stop_event.is_set():
                 return
