@@ -1,3 +1,10 @@
+"""
+Process entry point for the wg-auth service.
+
+Loads the INI configuration selected by WG_AUTH_CONFIG, builds the auth
+lifecycle and HTTPS API, and serves until shutdown.
+"""
+
 import configparser
 import logging
 import os
@@ -16,12 +23,18 @@ config_path = os.environ.get(
 )
 
 def load_config(path):
+    """
+    Load and return the auth INI configuration from *path*.
+    """
     config = configparser.ConfigParser()
     config.read(path)
 
     return config
 
 def main():
+    """
+    Create the auth lifecycle and HTTPS API, then serve until shutdown.
+    """
 
     config = load_config(config_path)
 
