@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +51,56 @@ def validate_sources() -> None:
         raise RuntimeError(f"missing JavaScript documentation source(s): {formatted}")
 
 
+def print_generated_tree(root: Path) -> None:
+    """Print the generated file tree to stderr for failed output discovery."""
+    print(f"[jsdoc] generated tree under {root}:", file=sys.stderr)
+
+    entries = sorted(
+        path.relative_to(root)
+        for path in root.rglob("*")
+        if path.is_file()
+    )
+
+    if not entries:
+        print("  <empty>", file=sys.stderr)
+        return
+
+    for path in entries[:200]:
+        print(f"  {path}", file=sys.stderr)
+
+    if len(entries) > 200:
+        print(
+            f"  ... {len(entries) - 200} more file(s)",
+            file=sys.stderr,
+        )
+
+
+def find_site_root(build_output: Path) -> Path | None:
+    """Find the directory containing JSDoc's generated index.html."""
+    indexes = sorted(build_output.rglob("index.html"))
+
+    if not indexes:
+        return None
+
+    if len(indexes) > 1:
+        print(
+            "[jsdoc] multiple index.html files found; "
+            "using the shallowest generated site:",
+            file=sys.stderr,
+        )
+        for index in indexes:
+            print(
+                f"  {index.relative_to(build_output)}",
+                file=sys.stderr,
+            )
+
+    index = min(
+        indexes,
+        key=lambda path: len(path.relative_to(build_output).parts),
+    )
+    return index.parent
+
+
 def main() -> int:
     """Regenerate production JavaScript API documentation with JSDoc."""
     validate_sources()
@@ -59,42 +110,68 @@ def main() -> int:
 
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
-    OUTPUT.mkdir(parents=True, exist_ok=True)
 
-    command = [
-        *jsdoc_command(),
-        "--pedantic",
-        "--configure",
-        str(CONFIG),
-        "--destination",
-        str(OUTPUT),
-        "--package",
-        str(PACKAGE_JSON),
-        *map(str, SOURCE_FILES),
-    ]
+    with tempfile.TemporaryDirectory(prefix="wg-manager-jsdoc-") as tmp:
+        build_output = Path(tmp)
 
-    print("[jsdoc]", " ".join(command))
+        command = [
+            *jsdoc_command(),
+            "--pedantic",
+            "--verbose",
+            "--configure",
+            str(CONFIG),
+            "--destination",
+            str(build_output),
+            "--package",
+            str(PACKAGE_JSON),
+            *map(str, SOURCE_FILES),
+        ]
 
-    result = subprocess.run(
-        command,
-        cwd=ROOT,
-        text=True,
-    )
+        print("[jsdoc]", " ".join(command), flush=True)
 
-    if result.returncode != 0:
-        return result.returncode
+        result = subprocess.run(
+            command,
+            cwd=ROOT,
+            text=True,
+        )
+
+        print(f"[jsdoc] exit status: {result.returncode}", flush=True)
+
+        if result.returncode != 0:
+            print_generated_tree(build_output)
+            return result.returncode
+
+        site_root = find_site_root(build_output)
+
+        if site_root is None:
+            print(
+                "[jsdoc] command succeeded but no index.html was generated",
+                file=sys.stderr,
+            )
+            print_generated_tree(build_output)
+            return 1
+
+        print(
+            "[jsdoc] generated site root: "
+            f"{site_root.relative_to(build_output) or Path('.')}",
+            flush=True,
+        )
+
+        shutil.copytree(site_root, OUTPUT)
 
     index = OUTPUT / "index.html"
     if not index.is_file():
         print(
-            f"[jsdoc] expected output was not generated: {index}",
+            f"[jsdoc] normalized output is missing: {index}",
             file=sys.stderr,
         )
+        print_generated_tree(OUTPUT)
         return 1
 
     print(
         f"[jsdoc] generated {len(SOURCE_FILES)} source modules in "
-        f"{OUTPUT.relative_to(ROOT)}"
+        f"{OUTPUT.relative_to(ROOT)}",
+        flush=True,
     )
     return 0
 
