@@ -1,20 +1,26 @@
 /**
- * Gerarchia di errori del protocollo wg_client / wg_secure_session.
- * Deve restare identica, come contratto (nomi delle classi), alla
- * gerarchia Python in wg_client_errors.py:
+ * Browser error hierarchy for wg-client and WGSecureSession.
+ *
+ * Class names intentionally mirror src/wg_client/wg_client_errors.py:
  *
  *   WGError
- *   ├── WGProtocolError
- *   │   ├── WGMalformedMessageError
- *   │   ├── WGInvalidFieldError
- *   │   ├── WGInvalidEncodingError
- *   │   └── WGCounterError
- *   │       └── WGCounterExhaustedError
- *   ├── WGAuthenticationError
- *   │   ├── WGInvalidMACError
- *   │   └── WGSessionMismatchError
- *   └── WGReplayError
- *\n * @module wg_client_errors\n */\n\n/** Base class for all browser-side wg_manager errors. */
+ *   └── WGClientError
+ *       ├── WGProtocolError
+ *       │   ├── WGMalformedMessageError
+ *       │   ├── WGInvalidFieldError
+ *       │   ├── WGInvalidEncodingError
+ *       │   ├── WGCounterError
+ *       │   │   └── WGCounterExhaustedError
+ *       │   └── WGReplayError
+ *       ├── WGAuthenticationError
+ *       │   ├── WGInvalidMACError
+ *       │   └── WGSessionMismatchError
+ *       └── WGSessionError
+ *           ├── WGSessionExpiredError
+ *           └── WGRequestRateExceededError
+ *
+ * @module wg_client_errors
+ */\n\n/** Base class for all browser-side wg_manager errors. */
 export class WGError extends Error {
   constructor(message) {
     super(message);
