@@ -437,7 +437,7 @@ function base64UrlToWireGuard(value) {
  * Generate an exportable X25519 key pair in the browser and convert it to WireGuard encoding.
  *
  * The private key is returned to in-memory UI state only; it is never sent to wg_manager.
- * @returns {Promise<{privateKey:string, publicKey:string}>}
+ * @returns {Promise<Object>}
  */
 async function generateWireGuardKeyPair() {
     const keyPair = await crypto.subtle.generateKey(
