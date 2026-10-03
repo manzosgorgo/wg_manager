@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 
+"""
+Authorization and consistency layer between the HTTP API, wg-auth persistence and controller.
+
+User-visible peer operations are authorized against the authenticated principal.
+Creation reserves ownership before mutating WireGuard and rolls back on controller
+failure; removal mutates the controller first and reports persistence cleanup
+failures as consistency errors. Admin methods delegate account/ownership state
+to wg-auth over IPC.
+"""
+
 import ipaddress
 import logging
 
@@ -17,6 +27,9 @@ class WGPeerService:
     """Authorization and consistency boundary for peer operations."""
 
     def __init__(self, controller, session, lifecycle, interface, endpoint=None):
+        """
+        Bind controller, authenticated principal, lifecycle, interface and provisioning endpoint.
+        """
         if session is None:
             raise RuntimeError("WGPeerService requires a secure session")
 
@@ -31,6 +44,9 @@ class WGPeerService:
 
     @property
     def ipc(self):
+        """
+        Return the active persistence IPC channel or raise a 503 peer error.
+        """
         ipc = self.lifecycle.ipc
         if ipc is None:
             raise WGPeerError(
@@ -57,6 +73,9 @@ class WGPeerService:
         return result
 
     def status(self):
+        """
+        Return controller status filtered to peers owned by the principal unless admin.
+        """
         result = self._controller_status()
 
         if self.session.is_admin:
@@ -81,6 +100,9 @@ class WGPeerService:
         return filtered
 
     def provisioning(self):
+        """
+        Merge controller and persistence state into available/reserved VPN addressing data.
+        """
         try:
             controller = self.controller.provisioning()
         except WGControllerError as exc:
@@ -129,6 +151,9 @@ class WGPeerService:
         return result
 
     def add_peer(self, public_key, allowed_ip):
+        """
+        Reserve ownership, add the controller peer, roll back on failure and update session ownership.
+        """
         current = self._controller_status()
 
         existing_keys = {
@@ -192,6 +217,9 @@ class WGPeerService:
         return result
 
     def remove_peer(self, public_key):
+        """
+        Authorize and remove a peer, then clean persisted ownership and session state.
+        """
         if not self.session.can_access_peer(public_key):
             raise WGPeerError(
                 403,
@@ -223,6 +251,9 @@ class WGPeerService:
 
 
     def admin_status(self):
+        """
+        Return admin-only combined live runtime and persistent ownership state.
+        """
         if not self.session.is_admin:
             raise WGPeerError(403, "admin principal required")
 
@@ -260,6 +291,9 @@ class WGPeerService:
         }
 
     def reassign_owner(self, public_key, username):
+        """
+        Admin-only reassignment of a live peer to another persisted user.
+        """
         if not self.session.is_admin:
             raise WGPeerError(403, "admin principal required")
 
@@ -275,6 +309,9 @@ class WGPeerService:
 
 
     def create_user(self, username, password):
+        """
+        Admin-only account creation through wg-auth persistence IPC.
+        """
         if not self.session.is_admin:
             raise WGPeerError(403, "admin principal required")
 
@@ -286,6 +323,9 @@ class WGPeerService:
             raise WGPeerError(502, "failed to create account") from exc
 
     def delete_user(self, username):
+        """
+        Admin-only account deletion; the currently active admin account cannot delete itself.
+        """
         if not self.session.is_admin:
             raise WGPeerError(403, "admin principal required")
 
