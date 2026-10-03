@@ -14,8 +14,7 @@
  *   │   ├── WGInvalidMACError
  *   │   └── WGSessionMismatchError
  *   └── WGReplayError
- */
-
+ *\n * @module wg_client_errors\n */\n\n/** Base class for all browser-side wg_manager errors. */
 export class WGError extends Error {
   constructor(message) {
     super(message);
@@ -23,6 +22,7 @@ export class WGError extends Error {
   }
 }
 
+/** Base class for errors raised by the browser wg-client implementation. */
 export class WGClientError extends WGError {
   constructor(message) {
     super(message);
@@ -30,6 +30,7 @@ export class WGClientError extends WGError {
   }
 }
 
+/** Malformed or unsupported secure-session/protocol input. */
 export class WGProtocolError extends WGClientError {
   constructor(message) {
     super(message);
@@ -37,6 +38,7 @@ export class WGProtocolError extends WGClientError {
   }
 }
 
+/** Required authentication structure is missing or malformed. */
 export class WGMalformedMessageError extends WGProtocolError {
   constructor(message) {
     super(message);
@@ -44,6 +46,7 @@ export class WGMalformedMessageError extends WGProtocolError {
   }
 }
 
+/** A protocol field has an invalid type, size or value. */
 export class WGInvalidFieldError extends WGProtocolError {
   constructor(message) {
     super(message);
@@ -51,6 +54,7 @@ export class WGInvalidFieldError extends WGProtocolError {
   }
 }
 
+/** A protocol field cannot be decoded from its required encoding. */
 export class WGInvalidEncodingError extends WGProtocolError {
   constructor(message) {
     super(message);
@@ -58,6 +62,7 @@ export class WGInvalidEncodingError extends WGProtocolError {
   }
 }
 
+/** A secure-session counter is invalid or unusable. */
 export class WGCounterError extends WGProtocolError {
   constructor(message) {
     super(message);
@@ -65,6 +70,7 @@ export class WGCounterError extends WGProtocolError {
   }
 }
 
+/** The outgoing secure-session counter reached its configured maximum. */
 export class WGCounterExhaustedError extends WGCounterError {
   constructor(message) {
     super(message);
@@ -72,6 +78,7 @@ export class WGCounterExhaustedError extends WGCounterError {
   }
 }
 
+/** Base class for cryptographic authentication failures. */
 export class WGAuthenticationError extends WGClientError {
   constructor(message) {
     super(message);
@@ -79,6 +86,7 @@ export class WGAuthenticationError extends WGClientError {
   }
 }
 
+/** The supplied HMAC does not authenticate the message. */
 export class WGInvalidMACError extends WGAuthenticationError {
   constructor(message) {
     super(message);
@@ -86,6 +94,7 @@ export class WGInvalidMACError extends WGAuthenticationError {
   }
 }
 
+/** Authentication metadata belongs to another session. */
 export class WGSessionMismatchError extends WGAuthenticationError {
   constructor(message) {
     super(message);
@@ -93,6 +102,7 @@ export class WGSessionMismatchError extends WGAuthenticationError {
   }
 }
 
+/** Base class for secure-session lifecycle/policy failures. */
 export class WGSessionError extends WGClientError {
   constructor(message) {
     super(message);
@@ -100,6 +110,7 @@ export class WGSessionError extends WGClientError {
   }
 }
 
+/** The configured secure-session lifetime has expired. */
 export class WGSessionExpiredError extends WGSessionError {
   constructor(message) {
     super(message);
@@ -107,6 +118,7 @@ export class WGSessionExpiredError extends WGSessionError {
   }
 }
 
+/** The configured maximum request frequency was exceeded. */
 export class WGRequestRateExceededError extends WGSessionError {
   constructor(message) {
     super(message);
@@ -114,6 +126,7 @@ export class WGRequestRateExceededError extends WGSessionError {
   }
 }
 
+/** A message counter was already accepted or fell outside the replay window. */
 export class WGReplayError extends WGProtocolError {
   constructor(message) {
     super(message);
