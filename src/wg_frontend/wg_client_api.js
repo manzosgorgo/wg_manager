@@ -78,7 +78,7 @@ export class WGClientAPI {
      *
      * @param {string} method HTTP method.
      * @param {string} apiPath Canonical signed API path.
-     * @param {?Object} [object=null] JSON request body.
+     * @param {Object} [object=null] JSON request body.
      * @param {string} [transportPath=apiPath] Path actually sent over HTTP.
      * @returns {Promise<Object>}
      */
