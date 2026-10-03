@@ -9,7 +9,11 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_client.html" class="white">wg_client</a>.wg_client_activator</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_client/wg_client_activator.py">/home/main/Desktop/wg_manager/src/wg_client/wg_client_activator.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">Client-side&nbsp;helper&nbsp;for&nbsp;driving&nbsp;the&nbsp;wg-client&nbsp;activation&nbsp;protocol.<br>
+&nbsp;<br>
+Primarily&nbsp;useful&nbsp;to&nbsp;tests&nbsp;and&nbsp;administrative&nbsp;tooling:&nbsp;it&nbsp;connects&nbsp;to&nbsp;the&nbsp;Unix<br>
+activation&nbsp;socket,&nbsp;answers&nbsp;an&nbsp;optional&nbsp;STATE_SNAPSHOT&nbsp;reconciliation&nbsp;round&nbsp;and<br>
+returns&nbsp;an&nbsp;<a href="builtins.html#object">object</a>&nbsp;that&nbsp;keeps&nbsp;the&nbsp;control&nbsp;socket&nbsp;alive.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -41,16 +45,16 @@
 <tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
 <td class="decor title-decor" colspan=2><span class="code"><a href="#WGClientActivation">WGClientActivation</a>(sock,&nbsp;response)<br>
 &nbsp;<br>
-<br>&nbsp;</span></td></tr>
+Context-managed&nbsp;activation&nbsp;result&nbsp;that&nbsp;owns&nbsp;the&nbsp;persistent&nbsp;control&nbsp;socket.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn">Methods defined here:<br>
-<dl><dt><a name="WGClientActivation-__enter__"><strong>__enter__</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGClientActivation-__enter__"><strong>__enter__</strong></a>(self)</dt><dd><span class="code">Return&nbsp;this&nbsp;activation&nbsp;handle.</span></dd></dl>
 
-<dl><dt><a name="WGClientActivation-__exit__"><strong>__exit__</strong></a>(self, exc_type, exc_value, traceback)</dt></dl>
+<dl><dt><a name="WGClientActivation-__exit__"><strong>__exit__</strong></a>(self, exc_type, exc_value, traceback)</dt><dd><span class="code">Close&nbsp;the&nbsp;activation&nbsp;handle&nbsp;on&nbsp;context&nbsp;exit.</span></dd></dl>
 
-<dl><dt><a name="WGClientActivation-__init__"><strong>__init__</strong></a>(self, sock, response)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGClientActivation-__init__"><strong>__init__</strong></a>(self, sock, response)</dt><dd><span class="code">Store&nbsp;the&nbsp;connected&nbsp;socket&nbsp;and&nbsp;final&nbsp;activation&nbsp;response.</span></dd></dl>
 
-<dl><dt><a name="WGClientActivation-close"><strong>close</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGClientActivation-close"><strong>close</strong></a>(self)</dt><dd><span class="code">Close&nbsp;the&nbsp;activation/control&nbsp;socket&nbsp;once.</span></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>
@@ -75,6 +79,6 @@ Data descriptors defined here:<br>
     listen_path,
     principal,
     state_reconcile=None
-)</dt></dl>
+)</dt><dd><span class="code">Send&nbsp;an&nbsp;activation&nbsp;packet,&nbsp;service&nbsp;state&nbsp;reconciliation&nbsp;and&nbsp;return&nbsp;the&nbsp;connected&nbsp;activation&nbsp;handle.</span></dd></dl>
 </td></tr></table>
 </body></html>

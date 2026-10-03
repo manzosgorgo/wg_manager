@@ -4,11 +4,14 @@
 
 - Path: `src/wg_auth/__init__.py`
 - Language: `python`
-- Lines: 0
-- SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- Lines: 4
+- SHA256: `4d616398042d1155cb32818dcdc4add679fc9fcf6e897169a8c5576987f9214f`
 
 ## Source
 
 ```python
 
+"""
+Authentication package for OPAQUE login, persistence and wg-client activation.
+"""
 ```

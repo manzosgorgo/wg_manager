@@ -9,7 +9,11 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_client.html" class="white">wg_client</a>.wg_client_lifecycle</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_client/wg_client_lifecycle.py">/home/main/Desktop/wg_manager/src/wg_client/wg_client_lifecycle.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">Lifecycle&nbsp;coordination&nbsp;for&nbsp;one&nbsp;wg-client&nbsp;session.<br>
+&nbsp;<br>
+Activity&nbsp;is&nbsp;reported&nbsp;back&nbsp;to&nbsp;wg-auth&nbsp;as&nbsp;KEEPALIVE;&nbsp;shutdown&nbsp;stops&nbsp;the&nbsp;IPC<br>
+channel&nbsp;and&nbsp;asks&nbsp;the&nbsp;HTTPS&nbsp;server&nbsp;to&nbsp;leave&nbsp;serve_forever&nbsp;without&nbsp;holding&nbsp;the<br>
+shutdown&nbsp;lock&nbsp;during&nbsp;cleanup.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -40,14 +44,14 @@
 <tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
 <td class="decor title-decor" colspan=2><span class="code"><a href="#WGClientLifecycle">WGClientLifecycle</a>(api=None,&nbsp;ipc=None)<br>
 &nbsp;<br>
-<br>&nbsp;</span></td></tr>
+Coordinate&nbsp;keepalive&nbsp;activity&nbsp;and&nbsp;one-shot&nbsp;shutdown&nbsp;of&nbsp;IPC&nbsp;and&nbsp;HTTPS&nbsp;layers.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn">Methods defined here:<br>
-<dl><dt><a name="WGClientLifecycle-__init__"><strong>__init__</strong></a>(self, api=None, ipc=None)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGClientLifecycle-__init__"><strong>__init__</strong></a>(self, api=None, ipc=None)</dt><dd><span class="code">Create&nbsp;lifecycle&nbsp;state&nbsp;for&nbsp;an&nbsp;optional&nbsp;API&nbsp;and&nbsp;IPC&nbsp;channel.</span></dd></dl>
 
-<dl><dt><a name="WGClientLifecycle-notify_activity"><strong>notify_activity</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGClientLifecycle-notify_activity"><strong>notify_activity</strong></a>(self)</dt><dd><span class="code">Send&nbsp;a&nbsp;best-effort&nbsp;KEEPALIVE&nbsp;to&nbsp;wg-auth&nbsp;when&nbsp;IPC&nbsp;is&nbsp;available.</span></dd></dl>
 
-<dl><dt><a name="WGClientLifecycle-request_shutdown"><strong>request_shutdown</strong></a>(self, notify_shutdown=True)</dt></dl>
+<dl><dt><a name="WGClientLifecycle-request_shutdown"><strong>request_shutdown</strong></a>(self, notify_shutdown=True)</dt><dd><span class="code">Request&nbsp;session&nbsp;shutdown&nbsp;once&nbsp;and&nbsp;stop&nbsp;IPC/API&nbsp;without&nbsp;holding&nbsp;the&nbsp;lifecycle&nbsp;lock.</span></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>

@@ -9,7 +9,10 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_auth.html" class="white">wg_auth</a>.wg_auth_ownership_service</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_ownership_service.py">/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_ownership_service.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">Administrative&nbsp;ownership&nbsp;reconciliation&nbsp;and&nbsp;reassignment.<br>
+&nbsp;<br>
+Combines&nbsp;persisted&nbsp;ownership&nbsp;from&nbsp;user&nbsp;records&nbsp;with&nbsp;the&nbsp;live&nbsp;peer&nbsp;reservation<br>
+registry&nbsp;and&nbsp;performs&nbsp;best-effort&nbsp;rollback&nbsp;when&nbsp;reassignment&nbsp;fails.</span></p>
 <p>
 <table class="section">
 <tr class="decor index-decor heading-text">
@@ -35,11 +38,11 @@
 Administrative&nbsp;ownership&nbsp;operations&nbsp;shared&nbsp;by&nbsp;IPC&nbsp;and&nbsp;CLI.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn">Methods defined here:<br>
-<dl><dt><a name="WGAuthOwnershipService-__init__"><strong>__init__</strong></a>(self, user_store, peer_registry)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGAuthOwnershipService-__init__"><strong>__init__</strong></a>(self, user_store, peer_registry)</dt><dd><span class="code">Bind&nbsp;ownership&nbsp;operations&nbsp;to&nbsp;the&nbsp;user&nbsp;store&nbsp;and&nbsp;peer&nbsp;registry.</span></dd></dl>
 
-<dl><dt><a name="WGAuthOwnershipService-admin_state"><strong>admin_state</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthOwnershipService-admin_state"><strong>admin_state</strong></a>(self)</dt><dd><span class="code">Return&nbsp;users&nbsp;plus&nbsp;consistent,&nbsp;orphan&nbsp;and&nbsp;stale&nbsp;peer&nbsp;ownership&nbsp;state.</span></dd></dl>
 
-<dl><dt><a name="WGAuthOwnershipService-reassign"><strong>reassign</strong></a>(self, public_key, target_username)</dt></dl>
+<dl><dt><a name="WGAuthOwnershipService-reassign"><strong>reassign</strong></a>(self, public_key, target_username)</dt><dd><span class="code">Move&nbsp;a&nbsp;live&nbsp;peer&nbsp;to&nbsp;another&nbsp;existing&nbsp;user,&nbsp;rolling&nbsp;user&nbsp;records&nbsp;back&nbsp;on&nbsp;failure.</span></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>

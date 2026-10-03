@@ -4,12 +4,19 @@
 
 - Path: `debian/changelog`
 - Language: `unknown`
-- Lines: 31
-- SHA256: `dafe68e112663260629fc9119977517ca8bdea6ca464c435284752eaedc32e5c`
+- Lines: 38
+- SHA256: `1bdbc5896747a60a97090860241d7af45c478fa4977fc8ceb40d401ed1f9d249`
 
 ## Source
 
 ```
+wg-manager (0.1.0-6) unstable; urgency=medium
+
+  * Refresh pydoc source documentation across auth, client and controller.
+  * Document the pydoc generation workflow.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 10:55:00 +0200
+
 wg-manager (0.1.0-5) unstable; urgency=medium
 
   * Add production deployment and configuration documentation.

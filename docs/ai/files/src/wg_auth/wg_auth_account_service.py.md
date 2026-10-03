@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_account_service.py`
 - Language: `python`
-- Lines: 64
-- SHA256: `0c144b716e69d9b51c93dc065d5d30a2c7083c650ee5982c13d059287ec5cb55`
+- Lines: 83
+- SHA256: `246d67112dcd03f3afc565f9831d0286bc9aff979ef2d28f70d661264df681e7`
 - Imports:
   - `opaque`
 
@@ -13,6 +13,13 @@
 
 ```python
 #!/usr/bin/env python3
+
+"""
+Administrative account operations backed by OPAQUE credential records.
+
+This layer creates registration records but delegates durable user storage and
+delete constraints to WGAuthUserStore.
+"""
 
 import opaque
 
@@ -24,10 +31,16 @@ class WGAuthAccountService:
     """Administrative account lifecycle and OPAQUE record creation."""
 
     def __init__(self, user_store):
+        """
+        Bind account operations to the persistent user store.
+        """
         self.user_store = user_store
 
     @staticmethod
     def make_opaque_record(username, password):
+        """
+        Create a validated OPAQUE user record for *username* and *password*.
+        """
         if not isinstance(username, str) or not username:
             raise ValueError("username must be a non-empty string")
         if not isinstance(password, str) or not password:
@@ -57,6 +70,9 @@ class WGAuthAccountService:
         return record
 
     def create(self, username, password):
+        """
+        Create and persist a new account with no initially owned peers.
+        """
         record = self.make_opaque_record(
             username,
             password,
@@ -71,6 +87,9 @@ class WGAuthAccountService:
         }
 
     def delete(self, username):
+        """
+        Delete an account through the user store and return a result object.
+        """
         self.user_store.delete_user(username)
         return {
             "username": username,

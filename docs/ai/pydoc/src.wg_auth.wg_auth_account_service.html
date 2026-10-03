@@ -9,7 +9,10 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_auth.html" class="white">wg_auth</a>.wg_auth_account_service</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_account_service.py">/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_account_service.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">Administrative&nbsp;account&nbsp;operations&nbsp;backed&nbsp;by&nbsp;OPAQUE&nbsp;credential&nbsp;records.<br>
+&nbsp;<br>
+This&nbsp;layer&nbsp;creates&nbsp;registration&nbsp;records&nbsp;but&nbsp;delegates&nbsp;durable&nbsp;user&nbsp;storage&nbsp;and<br>
+delete&nbsp;constraints&nbsp;to&nbsp;WGAuthUserStore.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -42,15 +45,15 @@
 Administrative&nbsp;account&nbsp;lifecycle&nbsp;and&nbsp;OPAQUE&nbsp;record&nbsp;creation.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn">Methods defined here:<br>
-<dl><dt><a name="WGAuthAccountService-__init__"><strong>__init__</strong></a>(self, user_store)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGAuthAccountService-__init__"><strong>__init__</strong></a>(self, user_store)</dt><dd><span class="code">Bind&nbsp;account&nbsp;operations&nbsp;to&nbsp;the&nbsp;persistent&nbsp;user&nbsp;store.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAccountService-create"><strong>create</strong></a>(self, username, password)</dt></dl>
+<dl><dt><a name="WGAuthAccountService-create"><strong>create</strong></a>(self, username, password)</dt><dd><span class="code">Create&nbsp;and&nbsp;persist&nbsp;a&nbsp;new&nbsp;account&nbsp;with&nbsp;no&nbsp;initially&nbsp;owned&nbsp;peers.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAccountService-delete"><strong>delete</strong></a>(self, username)</dt></dl>
+<dl><dt><a name="WGAuthAccountService-delete"><strong>delete</strong></a>(self, username)</dt><dd><span class="code">Delete&nbsp;an&nbsp;account&nbsp;through&nbsp;the&nbsp;user&nbsp;store&nbsp;and&nbsp;return&nbsp;a&nbsp;result&nbsp;<a href="builtins.html#object">object</a>.</span></dd></dl>
 
 <hr>
 Static methods defined here:<br>
-<dl><dt><a name="WGAuthAccountService-make_opaque_record"><strong>make_opaque_record</strong></a>(username, password)</dt></dl>
+<dl><dt><a name="WGAuthAccountService-make_opaque_record"><strong>make_opaque_record</strong></a>(username, password)</dt><dd><span class="code">Create&nbsp;a&nbsp;validated&nbsp;OPAQUE&nbsp;user&nbsp;record&nbsp;for&nbsp;*username*&nbsp;and&nbsp;*password*.</span></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>

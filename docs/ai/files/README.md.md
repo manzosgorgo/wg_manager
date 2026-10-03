@@ -4,8 +4,8 @@
 
 - Path: `README.md`
 - Language: `markdown`
-- Lines: 376
-- SHA256: `c5cda3e2bbec8bdeb06ef44f4649b055c72375324c154093f7900b62b667c5e2`
+- Lines: 386
+- SHA256: `ddb504390e52387cf1702f2a47132a661219f2696672f7302d7070831bba6baa`
 
 ## Source
 
@@ -379,6 +379,16 @@ docs/comm-callgraph.md
 docs/protocol-flow.md
 docs/static-analysis.md
 ```
+
+La reference Python viene generata direttamente dalle docstring dei moduli
+production:
+
+```bash
+python3 tools/build_pydoc.py
+```
+
+`tools/publish_docs.py` esegue già questo passaggio durante la pubblicazione,
+quindi gli HTML sotto `docs/ai/pydoc/` non vanno modificati a mano.
 
 ## Stato del progetto
 

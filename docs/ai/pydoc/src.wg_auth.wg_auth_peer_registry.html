@@ -9,7 +9,11 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_auth.html" class="white">wg_auth</a>.wg_auth_peer_registry</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_peer_registry.py">/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_peer_registry.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">Persistent&nbsp;global&nbsp;reservation&nbsp;indexes&nbsp;for&nbsp;WireGuard&nbsp;public&nbsp;keys&nbsp;and&nbsp;VPN&nbsp;IPs.<br>
+&nbsp;<br>
+The&nbsp;peer&nbsp;and&nbsp;IP&nbsp;JSON&nbsp;files&nbsp;are&nbsp;derived&nbsp;indexes&nbsp;reconciled&nbsp;against&nbsp;live<br>
+controller&nbsp;state&nbsp;and&nbsp;persisted&nbsp;user&nbsp;ownership.&nbsp;Writes&nbsp;are&nbsp;atomic&nbsp;and&nbsp;guarded<br>
+by&nbsp;a&nbsp;process-local&nbsp;reentrant&nbsp;lock.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -45,9 +49,9 @@
 Persistent&nbsp;global&nbsp;reservation&nbsp;table&nbsp;for&nbsp;WireGuard&nbsp;keys&nbsp;and&nbsp;IPs.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn">Methods defined here:<br>
-<dl><dt><a name="WGAuthPeerRegistry-__init__"><strong>__init__</strong></a>(self, path, ip_path=None)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGAuthPeerRegistry-__init__"><strong>__init__</strong></a>(self, path, ip_path=None)</dt><dd><span class="code">Configure&nbsp;peer&nbsp;and&nbsp;IP&nbsp;registry&nbsp;paths.</span></dd></dl>
 
-<dl><dt><a name="WGAuthPeerRegistry-get"><strong>get</strong></a>(self, public_key)</dt></dl>
+<dl><dt><a name="WGAuthPeerRegistry-get"><strong>get</strong></a>(self, public_key)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;of&nbsp;one&nbsp;peer&nbsp;reservation,&nbsp;or&nbsp;None&nbsp;when&nbsp;absent.</span></dd></dl>
 
 <dl><dt><a name="WGAuthPeerRegistry-reconcile"><strong>reconcile</strong></a>(self, manager_peers, owners)</dt><dd><span class="code">Rebuild&nbsp;the&nbsp;registry&nbsp;from&nbsp;the&nbsp;manager's&nbsp;live&nbsp;key/IP&nbsp;state&nbsp;and<br>
 the&nbsp;user&nbsp;store's&nbsp;persisted&nbsp;ownership&nbsp;map.<br>
@@ -58,15 +62,15 @@ owners&nbsp;maps&nbsp;public_key&nbsp;-&gt;&nbsp;username.<br>
 Live&nbsp;peers&nbsp;without&nbsp;a&nbsp;persisted&nbsp;owner&nbsp;are&nbsp;retained&nbsp;as&nbsp;orphan<br>
 reservations&nbsp;so&nbsp;an&nbsp;administrator&nbsp;can&nbsp;claim&nbsp;or&nbsp;reassign&nbsp;them.</span></dd></dl>
 
-<dl><dt><a name="WGAuthPeerRegistry-release"><strong>release</strong></a>(self, actor_username, public_key)</dt></dl>
+<dl><dt><a name="WGAuthPeerRegistry-release"><strong>release</strong></a>(self, actor_username, public_key)</dt><dd><span class="code">Release&nbsp;a&nbsp;reservation&nbsp;if&nbsp;requested&nbsp;by&nbsp;its&nbsp;owner&nbsp;or&nbsp;by&nbsp;the&nbsp;admin&nbsp;principal.</span></dd></dl>
 
-<dl><dt><a name="WGAuthPeerRegistry-reserve"><strong>reserve</strong></a>(self, username, public_key, allowed_ip)</dt></dl>
+<dl><dt><a name="WGAuthPeerRegistry-reserve"><strong>reserve</strong></a>(self, username, public_key, allowed_ip)</dt><dd><span class="code">Reserve&nbsp;a&nbsp;unique&nbsp;public-key/IP&nbsp;pair&nbsp;for&nbsp;a&nbsp;user;&nbsp;identical&nbsp;reservations&nbsp;are&nbsp;idempotent.</span></dd></dl>
 
-<dl><dt><a name="WGAuthPeerRegistry-set_owner"><strong>set_owner</strong></a>(self, public_key, username)</dt></dl>
+<dl><dt><a name="WGAuthPeerRegistry-set_owner"><strong>set_owner</strong></a>(self, public_key, username)</dt><dd><span class="code">Assign&nbsp;an&nbsp;existing&nbsp;live&nbsp;reservation&nbsp;to&nbsp;a&nbsp;user&nbsp;in&nbsp;both&nbsp;indexes.</span></dd></dl>
 
-<dl><dt><a name="WGAuthPeerRegistry-snapshot"><strong>snapshot</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthPeerRegistry-snapshot"><strong>snapshot</strong></a>(self)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;complete&nbsp;public-key&nbsp;reservation&nbsp;table.</span></dd></dl>
 
-<dl><dt><a name="WGAuthPeerRegistry-snapshot_ips"><strong>snapshot_ips</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthPeerRegistry-snapshot_ips"><strong>snapshot_ips</strong></a>(self)</dt><dd><span class="code">Return&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;complete&nbsp;allowed-IP&nbsp;reservation&nbsp;table.</span></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>

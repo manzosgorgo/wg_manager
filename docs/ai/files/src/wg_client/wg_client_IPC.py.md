@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_IPC.py`
 - Language: `python`
-- Lines: 687
-- SHA256: `f81f4f2be98c6343bff48b1479e1f339e4b6ad1fb9086afe1c2b1edb6c152973`
+- Lines: 743
+- SHA256: `6df1037dbf0ddbe180d8f3dc9e674ba77c7b3ac098733f0e3bcc227dff68b4ea`
 - Imports:
   - `json`
   - `logging`
@@ -18,6 +18,14 @@
 ## Source
 
 ```python
+"""
+Persistent wg-client side of the newline-delimited JSON IPC channel to wg-auth.
+
+The control loop receives STOP and asynchronous result messages while public
+request methods correlate persistence/admin RPCs by request_id. Socket writes
+are serialized and pending callers are failed when the control channel stops.
+"""
+
 import json
 import logging
 import re
@@ -46,8 +54,14 @@ IPC_RESPONSE_TIMEOUT = 10
 
 
 class WGClientIPC:
+    """
+    Own the client side of activation, persistence RPCs and lifecycle control with wg-auth.
+    """
 
     def __init__(self, sock, lifecycle):
+        """
+        Bind the inherited control socket and initialize request correlation state.
+        """
         self.sock = sock
         self.lifecycle = lifecycle
 
@@ -59,6 +73,9 @@ class WGClientIPC:
 
 
     def control_loop(self):
+        """
+        Receive STOP/result packets, complete pending RPCs and request shutdown on protocol failure.
+        """
         log.debug("IPC control loop started")
 
         try:
@@ -112,6 +129,9 @@ class WGClientIPC:
 
 
     def receive_packet(self):
+        """
+        Read one bounded newline-delimited IPC packet.
+        """
         while True:
             newline = self._recv_buffer.find(b"\n")
 
@@ -140,6 +160,9 @@ class WGClientIPC:
 
 
     def parse_packet(self,packet):
+        """
+        Decode one UTF-8 JSON packet and enforce the IPC protocol version.
+        """
         try:
             text = packet.decode("utf-8")
         except UnicodeDecodeError as exc:
@@ -368,6 +391,9 @@ class WGClientIPC:
                 self._pending.pop(request_id, None)
 
     def register_peer(self, public_key, allowed_ip):
+        """
+        Persist a public-key/IP reservation through wg-auth and wait for PEER_RESULT.
+        """
         return self._peer_request(
             "PEER_REGISTER",
             public_key,
@@ -375,6 +401,9 @@ class WGClientIPC:
         )
 
     def unregister_peer(self, public_key):
+        """
+        Remove a persisted peer reservation through wg-auth.
+        """
         return self._peer_request("PEER_UNREGISTER", public_key)
 
     def _ownership_request(self, command, **fields):
@@ -446,6 +475,9 @@ class WGClientIPC:
                 self._pending.pop(request_id, None)
 
     def provisioning_state(self):
+        """
+        Fetch reserved provisioning state from wg-auth persistence.
+        """
         event = threading.Event()
 
         with self._pending_lock:
@@ -496,9 +528,15 @@ class WGClientIPC:
                 self._pending.pop(request_id, None)
 
     def ownership_state(self):
+        """
+        Fetch the administrative ownership snapshot from wg-auth.
+        """
         return self._ownership_request("OWNERSHIP_STATE")
 
     def reassign_owner(self, public_key, username):
+        """
+        Request admin ownership reassignment for a live public key.
+        """
         if not isinstance(public_key, str) or not public_key:
             raise WGProtocolError("public_key must be a non-empty string")
         if not isinstance(username, str) or not username:
@@ -577,6 +615,9 @@ class WGClientIPC:
                 self._pending.pop(request_id, None)
 
     def create_user(self, username, password):
+        """
+        Create an account through wg-auth account persistence.
+        """
         return self._account_request(
             "ACCOUNT_CREATE",
             username=username,
@@ -584,12 +625,18 @@ class WGClientIPC:
         )
 
     def delete_user(self, username):
+        """
+        Delete an account through wg-auth account persistence.
+        """
         return self._account_request(
             "ACCOUNT_DELETE",
             username=username,
         )
 
     def reconcile_state(self, peers):
+        """
+        Send the controller live-peer snapshot and require a successful STATE_RESULT.
+        """
         if not isinstance(peers, list):
             raise WGProtocolError("peer snapshot must be a list")
 
@@ -635,6 +682,9 @@ class WGClientIPC:
 
 
     def send_result(self, status, **fields):
+        """
+        Send the final ACTIVATION_RESULT with OK or ERROR status.
+        """
         if status not in {"OK", "ERROR"}:
             raise WGProtocolError("invalid activation result status")
 
@@ -649,6 +699,9 @@ class WGClientIPC:
             self.sock.sendall(self._encode_packet(response))
 
     def keepalive(self):
+        """
+        Notify wg-auth that the authenticated browser session is still active.
+        """
         sock = self.sock
         if sock is None:
             raise WGProtocolError("IPC connection is closed")
@@ -678,6 +731,9 @@ class WGClientIPC:
             self.sock.sendall(self._encode_packet(response))
         log.debug("sent STOP on ipc")
     def stop(self, notify_shutdown=True):
+        """
+        Optionally send STOP, then idempotently close the control socket.
+        """
         sock = self.sock
 
         if sock is None:

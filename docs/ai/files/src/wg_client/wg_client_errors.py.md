@@ -4,12 +4,16 @@
 
 - Path: `src/wg_client/wg_client_errors.py`
 - Language: `python`
-- Lines: 118
-- SHA256: `504d5ecf23811205c7a26b3d2482d632c1b3e5dc4024eaebd1152d232fb29018`
+- Lines: 131
+- SHA256: `bf54b56fe78d9dc14f3e8a53d1ae753211584fa91aaa387edaaae53bbd4f8339`
 
 ## Source
 
 ```python
+"""
+Exception hierarchy shared by wg-client HTTP, IPC, controller and secure-session layers.
+"""
+
 class WGError(Exception):
     """Base class for all wg-manager exceptions."""
 
@@ -20,6 +24,9 @@ class WGControllerError(WGError):
     """Error returned by the WireGuard controller."""
 
     def __init__(self, status, message, response=None):
+        """
+        Create a controller transport/HTTP error with status, message and optional response.
+        """
         super().__init__(message)
         self.status = status
         # The API handler reads exc.message: it was never set before.
@@ -37,6 +44,9 @@ class WGPeerError(WGClientError):
     """A peer operation could not be completed (carries an HTTP status)."""
 
     def __init__(self, status, message):
+        """
+        Create a peer-service error carrying the HTTP status returned to the API client.
+        """
         super().__init__(message)
         self.status = status
         self.message = message
@@ -70,6 +80,9 @@ class WGPeerPersistenceError(WGProtocolError):
     """Semantic error returned by the auth persistence IPC."""
 
     def __init__(self, status, message):
+        """
+        Create a semantic persistence error returned by wg-auth IPC.
+        """
         super().__init__(message)
         self.status = status
         self.message = message

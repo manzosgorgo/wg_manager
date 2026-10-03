@@ -9,7 +9,12 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_client.html" class="white">wg_client</a>.wg_secure_session</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_client/wg_secure_session.py">/home/main/Desktop/wg_manager/src/wg_client/wg_secure_session.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">Cryptographic&nbsp;request/response&nbsp;authentication&nbsp;for&nbsp;one&nbsp;wg_manager&nbsp;session.<br>
+&nbsp;<br>
+Keys&nbsp;are&nbsp;derived&nbsp;from&nbsp;the&nbsp;OPAQUE&nbsp;K_session&nbsp;with&nbsp;HKDF-SHA256.&nbsp;HMAC-SHA256<br>
+binds&nbsp;method/path/body&nbsp;or&nbsp;status/body&nbsp;to&nbsp;a&nbsp;session&nbsp;ID,&nbsp;counter&nbsp;and&nbsp;nonce.<br>
+Mutable&nbsp;counter,&nbsp;replay-window,&nbsp;pending-request&nbsp;and&nbsp;lifetime&nbsp;state&nbsp;is&nbsp;protected<br>
+by&nbsp;a&nbsp;lock&nbsp;so&nbsp;one&nbsp;instance&nbsp;may&nbsp;be&nbsp;shared&nbsp;by&nbsp;HTTP&nbsp;worker&nbsp;threads.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -75,24 +80,29 @@ K_session&nbsp;itself&nbsp;is&nbsp;never&nbsp;transmitted&nbsp;by&nbsp;this&nbsp
     principal=None,
     rng=None,
     clock=None
-)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+)</dt><dd><span class="code">Validate&nbsp;secure-session&nbsp;policy,&nbsp;normalize&nbsp;the&nbsp;principal,&nbsp;derive&nbsp;request/response&nbsp;keys&nbsp;and&nbsp;initialize&nbsp;replay&nbsp;state.</span></dd></dl>
 
-<dl><dt><a name="WGSecureSession-can_access_peer"><strong>can_access_peer</strong></a>(self, public_key)</dt></dl>
+<dl><dt><a name="WGSecureSession-can_access_peer"><strong>can_access_peer</strong></a>(self, public_key)</dt><dd><span class="code">Return&nbsp;whether&nbsp;the&nbsp;principal&nbsp;may&nbsp;operate&nbsp;on&nbsp;a&nbsp;public&nbsp;key;&nbsp;admin&nbsp;may&nbsp;access&nbsp;all&nbsp;peers.</span></dd></dl>
 
 <dl><dt><a name="WGSecureSession-create_request_auth"><strong>create_request_auth</strong></a>(self, method: str, path: str, body: bytes = b'') -&gt; dict</dt><dd><span class="code">Create&nbsp;authentication&nbsp;parameters&nbsp;for&nbsp;a&nbsp;new&nbsp;request.<br>
 &nbsp;<br>
+Allocates&nbsp;a&nbsp;unique&nbsp;request&nbsp;counter,&nbsp;creates&nbsp;a&nbsp;random&nbsp;nonce&nbsp;and&nbsp;stores<br>
+the&nbsp;resulting&nbsp;auth&nbsp;record&nbsp;as&nbsp;pending&nbsp;until&nbsp;its&nbsp;response&nbsp;is&nbsp;verified.<br>
 Thread-safe:&nbsp;concurrent&nbsp;callers&nbsp;never&nbsp;obtain&nbsp;the&nbsp;same&nbsp;counter.</span></dd></dl>
 
-<dl><dt><a name="WGSecureSession-create_response_auth"><strong>create_response_auth</strong></a>(self, request_auth: dict, status: int, body: bytes = b'') -&gt; dict</dt><dd><span class="code">Create&nbsp;authentication&nbsp;parameters&nbsp;for&nbsp;a&nbsp;response.</span></dd></dl>
-
-<dl><dt><a name="WGSecureSession-register_peer"><strong>register_peer</strong></a>(self, public_key)</dt></dl>
-
-<dl><dt><a name="WGSecureSession-unregister_peer"><strong>unregister_peer</strong></a>(self, public_key)</dt></dl>
-
-<dl><dt><a name="WGSecureSession-verify_request"><strong>verify_request</strong></a>(self, auth: dict, method: str, path: str, body: bytes = b'') -&gt; bool</dt><dd><span class="code">Verify&nbsp;request&nbsp;authentication.<br>
+<dl><dt><a name="WGSecureSession-create_response_auth"><strong>create_response_auth</strong></a>(self, request_auth: dict, status: int, body: bytes = b'') -&gt; dict</dt><dd><span class="code">Authenticate&nbsp;a&nbsp;response&nbsp;to&nbsp;an&nbsp;already&nbsp;verified&nbsp;request.<br>
 &nbsp;<br>
-Thread-safe:&nbsp;the&nbsp;replay&nbsp;check&nbsp;and&nbsp;the&nbsp;counter&nbsp;update&nbsp;are&nbsp;one<br>
-atomic&nbsp;step,&nbsp;so&nbsp;a&nbsp;request&nbsp;is&nbsp;accepted&nbsp;at&nbsp;most&nbsp;once.</span></dd></dl>
+The&nbsp;response&nbsp;deliberately&nbsp;reuses&nbsp;the&nbsp;request&nbsp;counter&nbsp;and&nbsp;nonce;&nbsp;it&nbsp;is<br>
+MACed&nbsp;with&nbsp;the&nbsp;independent&nbsp;response&nbsp;key&nbsp;and&nbsp;the&nbsp;HTTP&nbsp;status/body.</span></dd></dl>
+
+<dl><dt><a name="WGSecureSession-register_peer"><strong>register_peer</strong></a>(self, public_key)</dt><dd><span class="code">Add&nbsp;a&nbsp;newly&nbsp;created&nbsp;peer&nbsp;to&nbsp;non-admin&nbsp;in-memory&nbsp;ownership&nbsp;state.</span></dd></dl>
+
+<dl><dt><a name="WGSecureSession-unregister_peer"><strong>unregister_peer</strong></a>(self, public_key)</dt><dd><span class="code">Remove&nbsp;a&nbsp;deleted&nbsp;peer&nbsp;from&nbsp;non-admin&nbsp;in-memory&nbsp;ownership&nbsp;state.</span></dd></dl>
+
+<dl><dt><a name="WGSecureSession-verify_request"><strong>verify_request</strong></a>(self, auth: dict, method: str, path: str, body: bytes = b'') -&gt; bool</dt><dd><span class="code">Verify&nbsp;request&nbsp;authentication&nbsp;against&nbsp;session,&nbsp;MAC&nbsp;and&nbsp;replay&nbsp;policy.<br>
+&nbsp;<br>
+Thread-safe:&nbsp;MAC&nbsp;verification,&nbsp;replay-window&nbsp;acceptance&nbsp;and&nbsp;counter<br>
+state&nbsp;update&nbsp;are&nbsp;one&nbsp;atomic&nbsp;step,&nbsp;so&nbsp;a&nbsp;request&nbsp;is&nbsp;accepted&nbsp;at&nbsp;most&nbsp;once.</span></dd></dl>
 
 <dl><dt><a name="WGSecureSession-verify_response"><strong>verify_response</strong></a>(
     self,
@@ -100,19 +110,25 @@ atomic&nbsp;step,&nbsp;so&nbsp;a&nbsp;request&nbsp;is&nbsp;accepted&nbsp;at&nbsp
     request_auth: dict,
     status: int,
     body: bytes = b''
-) -&gt; bool</dt><dd><span class="code">Verify&nbsp;authentication&nbsp;of&nbsp;a&nbsp;server&nbsp;response.<br>
+) -&gt; bool</dt><dd><span class="code">Verify&nbsp;a&nbsp;response&nbsp;against&nbsp;its&nbsp;original&nbsp;pending&nbsp;request.<br>
 &nbsp;<br>
-Thread-safe:&nbsp;a&nbsp;response&nbsp;is&nbsp;accepted&nbsp;at&nbsp;most&nbsp;once.</span></dd></dl>
+Session&nbsp;ID&nbsp;and&nbsp;counter&nbsp;must&nbsp;match&nbsp;the&nbsp;request,&nbsp;the&nbsp;response&nbsp;MAC&nbsp;must<br>
+validate,&nbsp;and&nbsp;the&nbsp;counter&nbsp;must&nbsp;still&nbsp;be&nbsp;inside&nbsp;the&nbsp;response&nbsp;replay<br>
+window.&nbsp;A&nbsp;response&nbsp;is&nbsp;accepted&nbsp;at&nbsp;most&nbsp;once.</span></dd></dl>
 
 <hr>
 Readonly properties defined here:<br>
 <dl><dt><strong>is_admin</strong></dt>
+<dd><span class="code">Return&nbsp;True&nbsp;when&nbsp;the&nbsp;authenticated&nbsp;principal&nbsp;username&nbsp;is&nbsp;admin.</span></dd>
 </dl>
 <dl><dt><strong>principal</strong></dt>
+<dd><span class="code">Return&nbsp;the&nbsp;normalized&nbsp;authenticated&nbsp;principal,&nbsp;or&nbsp;None.</span></dd>
 </dl>
 <dl><dt><strong>session_id</strong></dt>
+<dd><span class="code">Return&nbsp;the&nbsp;raw&nbsp;session&nbsp;identifier&nbsp;bytes.</span></dd>
 </dl>
 <dl><dt><strong>session_id_b64</strong></dt>
+<dd><span class="code">Return&nbsp;the&nbsp;session&nbsp;identifier&nbsp;encoded&nbsp;for&nbsp;X-WG-Session-ID.</span></dd>
 </dl>
 <hr>
 Data descriptors defined here:<br>

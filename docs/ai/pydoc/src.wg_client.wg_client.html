@@ -9,7 +9,11 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_client.html" class="white">wg_client</a>.wg_client</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_client/wg_client.py">/home/main/Desktop/wg_manager/src/wg_client/wg_client.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">Socket-activated&nbsp;process&nbsp;entry&nbsp;point&nbsp;for&nbsp;one&nbsp;authenticated&nbsp;wg-client&nbsp;session.<br>
+&nbsp;<br>
+The&nbsp;process&nbsp;receives&nbsp;activation&nbsp;over&nbsp;stdin&nbsp;from&nbsp;systemd,&nbsp;validates&nbsp;the&nbsp;secure<br>
+session,&nbsp;reconciles&nbsp;live&nbsp;controller&nbsp;state&nbsp;with&nbsp;wg-auth&nbsp;persistence,&nbsp;binds&nbsp;the<br>
+mTLS&nbsp;API,&nbsp;and&nbsp;exits&nbsp;on&nbsp;logout,&nbsp;IPC&nbsp;failure&nbsp;or&nbsp;session&nbsp;expiry.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -30,15 +34,16 @@
 <td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
     
 <tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
-<td class="singlecolumn"><dl><dt><a name="-activate"><strong>activate</strong></a>(ipc, lifecycle)</dt><dd><span class="code">Read&nbsp;the&nbsp;activation&nbsp;packet&nbsp;and&nbsp;bring&nbsp;the&nbsp;HTTPS&nbsp;API&nbsp;up.<br>
+<td class="singlecolumn"><dl><dt><a name="-activate"><strong>activate</strong></a>(ipc, lifecycle)</dt><dd><span class="code">Validate&nbsp;one&nbsp;IPC&nbsp;activation,&nbsp;reconcile&nbsp;live&nbsp;peer&nbsp;state,&nbsp;bind&nbsp;the&nbsp;HTTPS&nbsp;API<br>
+and&nbsp;report&nbsp;the&nbsp;activation&nbsp;result.<br>
 &nbsp;<br>
-Sends&nbsp;ACTIVATION_RESULT&nbsp;only&nbsp;once&nbsp;the&nbsp;API&nbsp;socket&nbsp;is&nbsp;bound&nbsp;and<br>
-TLS&nbsp;is&nbsp;ready,&nbsp;so&nbsp;"OK"&nbsp;means&nbsp;the&nbsp;API&nbsp;is&nbsp;actually&nbsp;reachable.<br>
-Returns&nbsp;(api,&nbsp;activation),&nbsp;or&nbsp;None&nbsp;on&nbsp;failure.<br>
-:param&nbsp;lifecycle:</span></dd></dl>
- <dl><dt><a name="-main"><strong>main</strong></a>()</dt></dl>
- <dl><dt><a name="-setup_logging"><strong>setup_logging</strong></a>()</dt></dl>
- <dl><dt><a name="-systemd_notify"><strong>systemd_notify</strong></a>(message)</dt></dl>
+ACTIVATION_RESULT&nbsp;OK&nbsp;is&nbsp;sent&nbsp;only&nbsp;after&nbsp;reconciliation&nbsp;and&nbsp;TLS&nbsp;bind&nbsp;have<br>
+succeeded,&nbsp;so&nbsp;the&nbsp;auth&nbsp;side&nbsp;may&nbsp;treat&nbsp;OK&nbsp;as&nbsp;an&nbsp;actually&nbsp;reachable&nbsp;session.<br>
+Returns&nbsp;(api,&nbsp;activation)&nbsp;on&nbsp;success&nbsp;and&nbsp;None&nbsp;after&nbsp;reporting&nbsp;an&nbsp;activation<br>
+error.</span></dd></dl>
+ <dl><dt><a name="-main"><strong>main</strong></a>()</dt><dd><span class="code">Run&nbsp;one&nbsp;socket-activated&nbsp;session&nbsp;until&nbsp;lifecycle&nbsp;shutdown&nbsp;or&nbsp;expiry.</span></dd></dl>
+ <dl><dt><a name="-setup_logging"><strong>setup_logging</strong></a>()</dt><dd><span class="code">Attach&nbsp;one&nbsp;journald&nbsp;handler&nbsp;to&nbsp;the&nbsp;wg_manager&nbsp;logger&nbsp;hierarchy.</span></dd></dl>
+ <dl><dt><a name="-systemd_notify"><strong>systemd_notify</strong></a>(message)</dt><dd><span class="code">Send&nbsp;a&nbsp;datagram&nbsp;to&nbsp;systemd's&nbsp;notify&nbsp;socket;&nbsp;return&nbsp;False&nbsp;when&nbsp;notification&nbsp;is&nbsp;unavailable.</span></dd></dl>
 </td></tr></table><p>
 <table class="section">
 <tr class="decor data-decor heading-text">

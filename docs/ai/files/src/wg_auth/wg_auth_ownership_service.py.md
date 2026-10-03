@@ -4,22 +4,35 @@
 
 - Path: `src/wg_auth/wg_auth_ownership_service.py`
 - Language: `python`
-- Lines: 68
-- SHA256: `11f0f0980ac8fe46b1941e89f9000e1f4654ead0aa637873757acc4f4eecf475`
+- Lines: 84
+- SHA256: `f70545eb3268cfc96d01dfe355aa9938aa020b21808a01ee08907184e3ba5784`
 
 ## Source
 
 ```python
 #!/usr/bin/env python3
 
+"""
+Administrative ownership reconciliation and reassignment.
+
+Combines persisted ownership from user records with the live peer reservation
+registry and performs best-effort rollback when reassignment fails.
+"""
+
 class WGAuthOwnershipService:
     """Administrative ownership operations shared by IPC and CLI."""
 
     def __init__(self, user_store, peer_registry):
+        """
+        Bind ownership operations to the user store and peer registry.
+        """
         self.user_store = user_store
         self.peer_registry = peer_registry
 
     def admin_state(self):
+        """
+        Return users plus consistent, orphan and stale peer ownership state.
+        """
         owners = self.user_store.peer_owners()
         registry = self.peer_registry.snapshot()
         peers = []
@@ -50,6 +63,9 @@ class WGAuthOwnershipService:
         }
 
     def reassign(self, public_key, target_username):
+        """
+        Move a live peer to another existing user, rolling user records back on failure.
+        """
         self.user_store.load(target_username)
         reservation = self.peer_registry.get(public_key)
         if reservation is None:

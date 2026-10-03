@@ -9,7 +9,12 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_client.html" class="white">wg_client</a>.wg_client_API_handler</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_client/wg_client_API_handler.py">/home/main/Desktop/wg_manager/src/wg_client/wg_client_API_handler.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">Authenticated&nbsp;HTTP&nbsp;routing&nbsp;for&nbsp;the&nbsp;per-session&nbsp;wg-client&nbsp;API.<br>
+&nbsp;<br>
+Every&nbsp;application&nbsp;request&nbsp;is&nbsp;scoped&nbsp;below&nbsp;listen_path&nbsp;and&nbsp;authenticated&nbsp;with<br>
+WGSecureSession&nbsp;headers.&nbsp;The&nbsp;handler&nbsp;canonicalizes&nbsp;proxy-normalized&nbsp;dynamic<br>
+paths&nbsp;before&nbsp;MAC&nbsp;verification&nbsp;and&nbsp;serializes&nbsp;authenticated&nbsp;request/response<br>
+transactions&nbsp;to&nbsp;keep&nbsp;counter&nbsp;state&nbsp;coherent.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -50,7 +55,7 @@
 <tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
 <td class="decor title-decor" colspan=2><span class="code"><a href="#WGClientAPIHandler">WGClientAPIHandler</a>(request,&nbsp;client_address,&nbsp;server)<br>
 &nbsp;<br>
-<br>&nbsp;</span></td></tr>
+Route&nbsp;authenticated&nbsp;session,&nbsp;peer,&nbsp;provisioning&nbsp;and&nbsp;admin&nbsp;HTTP&nbsp;operations.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn"><dl><dt>Method resolution order:</dt>
 <dd><a href="src.wg_client.wg_client_API_handler.html#WGClientAPIHandler">WGClientAPIHandler</a></dd>
@@ -61,7 +66,7 @@
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="WGClientAPIHandler-admin_owner_key"><strong>admin_owner_key</strong></a>(self, path)</dt></dl>
+<dl><dt><a name="WGClientAPIHandler-admin_owner_key"><strong>admin_owner_key</strong></a>(self, path)</dt><dd><span class="code">Decode&nbsp;the&nbsp;public&nbsp;key&nbsp;from&nbsp;an&nbsp;admin&nbsp;ownership&nbsp;path,&nbsp;or&nbsp;return&nbsp;None.</span></dd></dl>
 
 <dl><dt><a name="WGClientAPIHandler-api_path"><strong>api_path</strong></a>(self)</dt><dd><span class="code">Return&nbsp;the&nbsp;request&nbsp;path&nbsp;relative&nbsp;to&nbsp;listen_path,&nbsp;or&nbsp;None<br>
 if&nbsp;the&nbsp;request&nbsp;is&nbsp;outside&nbsp;listen_path.<br>
@@ -93,40 +98,21 @@ return&nbsp;without&nbsp;doing&nbsp;anything&nbsp;else.<br>
 &nbsp;<br>
 The&nbsp;server&nbsp;cannot&nbsp;exist&nbsp;without&nbsp;a&nbsp;secure&nbsp;session.</span></dd></dl>
 
-<dl><dt><a name="WGClientAPIHandler-do_CONNECT"><strong>do_CONNECT</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGClientAPIHandler-do_CONNECT"><strong>do_CONNECT</strong></a>(self)</dt><dd><span class="code">Reject&nbsp;CONNECT&nbsp;with&nbsp;HTTP&nbsp;405.</span></dd></dl>
 
-<dl><dt><a name="WGClientAPIHandler-do_DELETE"><strong>do_DELETE</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGClientAPIHandler-do_DELETE"><strong>do_DELETE</strong></a>(self)</dt><dd><span class="code">Handle&nbsp;session&nbsp;logout,&nbsp;admin&nbsp;account&nbsp;deletion&nbsp;and&nbsp;peer&nbsp;deletion.</span></dd></dl>
 
-<dl><dt><a name="WGClientAPIHandler-do_GET"><strong>do_GET</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGClientAPIHandler-do_GET"><strong>do_GET</strong></a>(self)</dt><dd><span class="code">Serve&nbsp;heartbeat,&nbsp;status,&nbsp;provisioning&nbsp;and&nbsp;admin-state&nbsp;GET&nbsp;endpoints.</span></dd></dl>
 
-<dl><dt><a name="WGClientAPIHandler-do_PATCH"><strong>do_PATCH</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGClientAPIHandler-do_PATCH"><strong>do_PATCH</strong></a>(self)</dt><dd><span class="code">Reject&nbsp;PATCH&nbsp;with&nbsp;HTTP&nbsp;405.</span></dd></dl>
 
-<dl><dt><a name="WGClientAPIHandler-do_POST"><strong>do_POST</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGClientAPIHandler-do_POST"><strong>do_POST</strong></a>(self)</dt><dd><span class="code">Create&nbsp;admin-managed&nbsp;user&nbsp;accounts&nbsp;from&nbsp;authenticated&nbsp;JSON&nbsp;requests.</span></dd></dl>
 
-<dl><dt><a name="WGClientAPIHandler-do_PUT"><strong>do_PUT</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGClientAPIHandler-do_PUT"><strong>do_PUT</strong></a>(self)</dt><dd><span class="code">Handle&nbsp;peer&nbsp;creation&nbsp;and&nbsp;admin&nbsp;ownership&nbsp;reassignment.</span></dd></dl>
 
-<dl><dt><a name="WGClientAPIHandler-handle_one_request"><strong>handle_one_request</strong></a>(self)</dt><dd><span class="code">Handle&nbsp;a&nbsp;single&nbsp;HTTP&nbsp;request.<br>
-&nbsp;<br>
-You&nbsp;normally&nbsp;don't&nbsp;need&nbsp;to&nbsp;override&nbsp;this&nbsp;method;&nbsp;see&nbsp;the&nbsp;class<br>
-__doc__&nbsp;string&nbsp;for&nbsp;information&nbsp;on&nbsp;how&nbsp;to&nbsp;handle&nbsp;specific&nbsp;HTTP<br>
-commands&nbsp;such&nbsp;as&nbsp;GET&nbsp;and&nbsp;POST.</span></dd></dl>
+<dl><dt><a name="WGClientAPIHandler-handle_one_request"><strong>handle_one_request</strong></a>(self)</dt><dd><span class="code">Reset&nbsp;per-request&nbsp;auth&nbsp;state&nbsp;before&nbsp;processing&nbsp;a&nbsp;possibly&nbsp;persistent&nbsp;HTTP&nbsp;connection.</span></dd></dl>
 
-<dl><dt><a name="WGClientAPIHandler-log_message"><strong>log_message</strong></a>(self, format, *args)</dt><dd><span class="code">Log&nbsp;an&nbsp;arbitrary&nbsp;message.<br>
-&nbsp;<br>
-This&nbsp;is&nbsp;used&nbsp;by&nbsp;all&nbsp;other&nbsp;logging&nbsp;functions.&nbsp;&nbsp;Override<br>
-it&nbsp;if&nbsp;you&nbsp;have&nbsp;specific&nbsp;logging&nbsp;wishes.<br>
-&nbsp;<br>
-The&nbsp;first&nbsp;argument,&nbsp;FORMAT,&nbsp;is&nbsp;a&nbsp;format&nbsp;string&nbsp;for&nbsp;the<br>
-message&nbsp;to&nbsp;be&nbsp;logged.&nbsp;&nbsp;If&nbsp;the&nbsp;format&nbsp;string&nbsp;contains<br>
-any&nbsp;%&nbsp;escapes&nbsp;requiring&nbsp;parameters,&nbsp;they&nbsp;should&nbsp;be<br>
-specified&nbsp;as&nbsp;subsequent&nbsp;arguments&nbsp;(it's&nbsp;just&nbsp;like<br>
-printf!).<br>
-&nbsp;<br>
-The&nbsp;client&nbsp;ip&nbsp;and&nbsp;current&nbsp;date/time&nbsp;are&nbsp;prefixed&nbsp;to<br>
-every&nbsp;message.<br>
-&nbsp;<br>
-Unicode&nbsp;control&nbsp;characters&nbsp;are&nbsp;replaced&nbsp;with&nbsp;escaped&nbsp;hex<br>
-before&nbsp;writing&nbsp;the&nbsp;output&nbsp;to&nbsp;stderr.</span></dd></dl>
+<dl><dt><a name="WGClientAPIHandler-log_message"><strong>log_message</strong></a>(self, format, *args)</dt><dd><span class="code">Route&nbsp;<a href="http.server.html#BaseHTTPRequestHandler">BaseHTTPRequestHandler</a>&nbsp;access&nbsp;messages&nbsp;through&nbsp;the&nbsp;project&nbsp;logger.</span></dd></dl>
 
 <dl><dt><a name="WGClientAPIHandler-peer_key"><strong>peer_key</strong></a>(self, path)</dt><dd><span class="code">Return&nbsp;the&nbsp;decoded&nbsp;public&nbsp;key&nbsp;from&nbsp;/v1/peers/&lt;pk&gt;,&nbsp;or&nbsp;None.</span></dd></dl>
 
@@ -139,15 +125,18 @@ is&nbsp;WGSecureSession's&nbsp;job,&nbsp;via&nbsp;verify_request().</span></dd><
 
 <dl><dt><a name="WGClientAPIHandler-send_error"><strong>send_error</strong></a>(self, code, message=None, explain=None)</dt><dd><span class="code">JSON&nbsp;style&nbsp;override&nbsp;for&nbsp;send_error,&nbsp;authenticated&nbsp;when&nbsp;possible.</span></dd></dl>
 
-<dl><dt><a name="WGClientAPIHandler-send_json"><strong>send_json</strong></a>(self, code, obj)</dt></dl>
+<dl><dt><a name="WGClientAPIHandler-send_json"><strong>send_json</strong></a>(self, code, obj)</dt><dd><span class="code">Send&nbsp;a&nbsp;JSON&nbsp;response&nbsp;and&nbsp;attach&nbsp;secure-session&nbsp;response&nbsp;authentication&nbsp;when&nbsp;available.</span></dd></dl>
 
 <hr>
 Readonly properties defined here:<br>
 <dl><dt><strong>peer_service</strong></dt>
+<dd><span class="code">Return&nbsp;the&nbsp;server&nbsp;peer&nbsp;service,&nbsp;enforcing&nbsp;the&nbsp;construction&nbsp;invariant.</span></dd>
 </dl>
 <dl><dt><strong>session</strong></dt>
+<dd><span class="code">Return&nbsp;the&nbsp;server&nbsp;secure&nbsp;session,&nbsp;enforcing&nbsp;the&nbsp;construction&nbsp;invariant.</span></dd>
 </dl>
 <dl><dt><strong>session_lock</strong></dt>
+<dd><span class="code">Return&nbsp;the&nbsp;lock&nbsp;serializing&nbsp;authenticated&nbsp;application&nbsp;transactions.</span></dd>
 </dl>
 <hr>
 Data and other attributes defined here:<br>
@@ -278,7 +267,7 @@ Data descriptors inherited from <a href="socketserver.html#BaseRequestHandler">s
 &nbsp;&nbsp;&nbsp;&nbsp;lifecycle<br>
 )<br>
 &nbsp;<br>
-<br>&nbsp;</span></td></tr>
+Threading&nbsp;HTTP&nbsp;server&nbsp;carrying&nbsp;peer-service,&nbsp;lifecycle&nbsp;and&nbsp;secure-session&nbsp;state.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn"><dl><dt>Method resolution order:</dt>
 <dd><a href="src.wg_client.wg_client_API_handler.html#WGClientHTTPServer">WGClientHTTPServer</a></dd>
@@ -299,7 +288,7 @@ Methods defined here:<br>
     listen_path,
     session,
     lifecycle
-)</dt><dd><span class="code">Constructor.&nbsp;&nbsp;May&nbsp;be&nbsp;extended,&nbsp;do&nbsp;not&nbsp;override.</span></dd></dl>
+)</dt><dd><span class="code">Attach&nbsp;per-session&nbsp;services&nbsp;and&nbsp;the&nbsp;transaction&nbsp;lock&nbsp;to&nbsp;the&nbsp;HTTP&nbsp;server.</span></dd></dl>
 
 <hr>
 Data and other attributes inherited from <a href="http.server.html#ThreadingHTTPServer">http.server.ThreadingHTTPServer</a>:<br>

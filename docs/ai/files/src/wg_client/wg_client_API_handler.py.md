@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_API_handler.py`
 - Language: `python`
-- Lines: 689
-- SHA256: `56adf7b8cdadb48266bfd92d0803318a914da9fcfaeb48c420d638fd7701c56d`
+- Lines: 746
+- SHA256: `f763f09a0d0c47a79079f0f97f2fc9b87a2e4784244e0e0eebaba24265e729d3`
 - Imports:
   - `datetime`
   - `http`
@@ -20,6 +20,15 @@
 
 ```python
 #!/usr/bin/env python3
+"""
+Authenticated HTTP routing for the per-session wg-client API.
+
+Every application request is scoped below listen_path and authenticated with
+WGSecureSession headers. The handler canonicalizes proxy-normalized dynamic
+paths before MAC verification and serializes authenticated request/response
+transactions to keep counter state coherent.
+"""
+
 import datetime
 import http.server
 import json
@@ -84,6 +93,9 @@ _AUTH_REJECTED_ERRORS = (
 
 
 class WGClientHTTPServer(http.server.ThreadingHTTPServer):
+    """
+    Threading HTTP server carrying peer-service, lifecycle and secure-session state.
+    """
     def __init__(
             self,
             server_address,
@@ -93,6 +105,9 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
             session,
             lifecycle,
     ):
+        """
+        Attach per-session services and the transaction lock to the HTTP server.
+        """
         super().__init__(server_address, handler_class)
         self.peer_service = peer_service
         self.listen_path = listen_path
@@ -112,6 +127,9 @@ class WGClientHTTPServer(http.server.ThreadingHTTPServer):
 
 
 class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
+    """
+    Route authenticated session, peer, provisioning and admin HTTP operations.
+    """
     # Socket timeout: a client that stops sending cannot hold
     # a handler thread forever.
     timeout = 30
@@ -122,6 +140,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
     request_auth = None
 
     def handle_one_request(self):
+        """
+        Reset per-request auth state before processing a possibly persistent HTTP connection.
+        """
         # Connections may be persistent (HTTP/1.1 keep-alive), so a
         # single handler instance can serve several requests. Reset the
         # per-request authentication state up front so a stale
@@ -133,6 +154,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
 
     @property
     def peer_service(self):
+        """
+        Return the server peer service, enforcing the construction invariant.
+        """
         service = self.server.peer_service
         if service is None:
             raise RuntimeError("peer service invariant violated")
@@ -140,6 +164,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
 
     @property
     def session(self):
+        """
+        Return the server secure session, enforcing the construction invariant.
+        """
         session = self.server.session
         if session is None:
             raise RuntimeError("secure session invariant violated")
@@ -147,6 +174,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
 
     @property
     def session_lock(self):
+        """
+        Return the lock serializing authenticated application transactions.
+        """
         return self.server.session_lock
 
     def api_path(self):
@@ -240,6 +270,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
         return public_key or None
 
     def admin_owner_key(self, path):
+        """
+        Decode the public key from an admin ownership path, or return None.
+        """
         if (
             path is None
             or not path.startswith(ADMIN_PEERS_PREFIX)
@@ -255,6 +288,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
         return public_key or None
 
     def log_message(self, format, *args):
+        """
+        Route BaseHTTPRequestHandler access messages through the project logger.
+        """
         log.info("HTTP %s - %s", self.address_string(), format % args)
 
     # ------------------------------------------------------------------
@@ -425,6 +461,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(body)
 
     def send_json(self, code, obj):
+        """
+        Send a JSON response and attach secure-session response authentication when available.
+        """
         body = json.dumps(obj).encode("utf-8")
 
         auth_headers = self._authenticated_headers(code, body)
@@ -459,6 +498,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
     # ------------------------------------------------------------------
 
     def do_GET(self):
+        """
+        Serve heartbeat, status, provisioning and admin-state GET endpoints.
+        """
         log.info("Received HTTP GET request: %s", self.path)
 
         path = self.api_path()
@@ -500,6 +542,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(200, result)
 
     def do_POST(self):
+        """
+        Create admin-managed user accounts from authenticated JSON requests.
+        """
         log.info("Received HTTP POST request: %s", self.path)
 
         try:
@@ -557,6 +602,9 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(201, result)
 
     def do_DELETE(self):
+        """
+        Handle session logout, admin account deletion and peer deletion.
+        """
         log.warning("Received HTTP DELETE request: %s", self.path)
 
         with self.session_lock:
@@ -607,14 +655,23 @@ class WGClientAPIHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(200, result)
 
     def do_CONNECT(self):
+        """
+        Reject CONNECT with HTTP 405.
+        """
         log.warning("Received HTTP CONNECT request: %s", self.path)
         self.send_error(405)
 
     def do_PATCH(self):
+        """
+        Reject PATCH with HTTP 405.
+        """
         log.warning("Received HTTP PATCH request: %s", self.path)
         self.send_error(405)
 
     def do_PUT(self):
+        """
+        Handle peer creation and admin ownership reassignment.
+        """
         log.warning("Received HTTP PUT request: %s", self.path)
 
         try:

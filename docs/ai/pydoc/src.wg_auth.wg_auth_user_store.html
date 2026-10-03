@@ -9,7 +9,10 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_auth.html" class="white">wg_auth</a>.wg_auth_user_store</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_user_store.py">/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_user_store.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">Persistent&nbsp;storage&nbsp;for&nbsp;OPAQUE&nbsp;accounts&nbsp;and&nbsp;per-user&nbsp;peer&nbsp;ownership.<br>
+&nbsp;<br>
+Each&nbsp;user&nbsp;is&nbsp;stored&nbsp;as&nbsp;one&nbsp;JSON&nbsp;file&nbsp;containing&nbsp;a&nbsp;base64&nbsp;OPAQUE&nbsp;credential<br>
+record&nbsp;and&nbsp;a&nbsp;peer&nbsp;list.&nbsp;Writes&nbsp;use&nbsp;temporary&nbsp;files&nbsp;and&nbsp;atomic&nbsp;replacement.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -45,7 +48,7 @@
 <tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
 <td class="decor title-decor" colspan=2><span class="code"><a href="#WGAuthUser">WGAuthUser</a>(username:&nbsp;str,&nbsp;credential_record:&nbsp;bytes,&nbsp;peers:&nbsp;tuple[str,&nbsp;...])&nbsp;-&amp;gt;&nbsp;None<br>
 &nbsp;<br>
-<a href="#WGAuthUser">WGAuthUser</a>(username:&nbsp;str,&nbsp;credential_record:&nbsp;bytes,&nbsp;peers:&nbsp;tuple[str,&nbsp;...])<br>&nbsp;</span></td></tr>
+Immutable&nbsp;in-memory&nbsp;representation&nbsp;of&nbsp;one&nbsp;persisted&nbsp;auth&nbsp;account.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn">Methods defined here:<br>
 <dl><dt><a name="WGAuthUser-__delattr__"><strong>__delattr__</strong></a>(self, name)</dt><dd><span class="code">Implement&nbsp;delattr(self,&nbsp;name).</span></dd></dl>
@@ -65,6 +68,7 @@
 <hr>
 Readonly properties defined here:<br>
 <dl><dt><strong>principal</strong></dt>
+<dd><span class="code">Return&nbsp;the&nbsp;principal&nbsp;payload&nbsp;propagated&nbsp;to&nbsp;wg-client&nbsp;at&nbsp;activation.</span></dd>
 </dl>
 <hr>
 Data descriptors defined here:<br>
@@ -95,21 +99,21 @@ Data and other attributes defined here:<br>
 Persistent&nbsp;OPAQUE&nbsp;credentials&nbsp;and&nbsp;peer&nbsp;ownership&nbsp;records.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn">Methods defined here:<br>
-<dl><dt><a name="WGAuthUserStore-__init__"><strong>__init__</strong></a>(self, login_dir, opaque_record_len=256)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGAuthUserStore-__init__"><strong>__init__</strong></a>(self, login_dir, opaque_record_len=256)</dt><dd><span class="code">Create&nbsp;a&nbsp;store&nbsp;rooted&nbsp;at&nbsp;*login_dir*&nbsp;with&nbsp;the&nbsp;expected&nbsp;OPAQUE&nbsp;record&nbsp;size.</span></dd></dl>
 
-<dl><dt><a name="WGAuthUserStore-add_peer"><strong>add_peer</strong></a>(self, username, public_key)</dt></dl>
+<dl><dt><a name="WGAuthUserStore-add_peer"><strong>add_peer</strong></a>(self, username, public_key)</dt><dd><span class="code">Persist&nbsp;ownership&nbsp;of&nbsp;*public_key*&nbsp;for&nbsp;a&nbsp;user&nbsp;and&nbsp;return&nbsp;the&nbsp;updated&nbsp;record.</span></dd></dl>
 
-<dl><dt><a name="WGAuthUserStore-create_user"><strong>create_user</strong></a>(self, username, credential_record)</dt></dl>
+<dl><dt><a name="WGAuthUserStore-create_user"><strong>create_user</strong></a>(self, username, credential_record)</dt><dd><span class="code">Atomically&nbsp;create&nbsp;a&nbsp;new&nbsp;user&nbsp;record&nbsp;without&nbsp;overwriting&nbsp;an&nbsp;existing&nbsp;account.</span></dd></dl>
 
-<dl><dt><a name="WGAuthUserStore-delete_user"><strong>delete_user</strong></a>(self, username)</dt></dl>
+<dl><dt><a name="WGAuthUserStore-delete_user"><strong>delete_user</strong></a>(self, username)</dt><dd><span class="code">Delete&nbsp;an&nbsp;account&nbsp;only&nbsp;when&nbsp;it&nbsp;owns&nbsp;no&nbsp;peers.</span></dd></dl>
 
-<dl><dt><a name="WGAuthUserStore-list_users"><strong>list_users</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthUserStore-list_users"><strong>list_users</strong></a>(self)</dt><dd><span class="code">Load&nbsp;all&nbsp;non-hidden&nbsp;user&nbsp;records&nbsp;in&nbsp;deterministic&nbsp;name&nbsp;order.</span></dd></dl>
 
-<dl><dt><a name="WGAuthUserStore-load"><strong>load</strong></a>(self, username)</dt></dl>
+<dl><dt><a name="WGAuthUserStore-load"><strong>load</strong></a>(self, username)</dt><dd><span class="code">Validate&nbsp;and&nbsp;load&nbsp;one&nbsp;user&nbsp;record&nbsp;from&nbsp;disk.</span></dd></dl>
 
-<dl><dt><a name="WGAuthUserStore-peer_owners"><strong>peer_owners</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthUserStore-peer_owners"><strong>peer_owners</strong></a>(self)</dt><dd><span class="code">Build&nbsp;a&nbsp;public-key&nbsp;to&nbsp;username&nbsp;map&nbsp;and&nbsp;reject&nbsp;conflicting&nbsp;ownership.</span></dd></dl>
 
-<dl><dt><a name="WGAuthUserStore-remove_peer"><strong>remove_peer</strong></a>(self, username, public_key)</dt></dl>
+<dl><dt><a name="WGAuthUserStore-remove_peer"><strong>remove_peer</strong></a>(self, username, public_key)</dt><dd><span class="code">Remove&nbsp;peer&nbsp;ownership&nbsp;from&nbsp;a&nbsp;user&nbsp;and&nbsp;return&nbsp;the&nbsp;updated&nbsp;record.</span></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>

@@ -16,13 +16,13 @@
 
 ## Forme dei messaggi (dict che arrivano ai sink)
 
-- `{<k.lower().strip()>: ‹in socket.recv›(':'|'\r\n'|'iso-8859-1')}` — `wg_manager.py:request` — wg_manager.py:59
-- `{allowed_ip: 'allowed_ip' | ‹in socket.recv›('0'|'\r\n'|'content-length'), ok: True, operation: 'add_peer', public_key: 'public_key' | ‹in socket.recv›('0'|'\r\n'|'content-length')}` — `wg_manager.py:reply` — wg_manager.py:177
-- `{error: 'internal error', ok: False}` — `wg_manager.py:reply` — wg_manager.py:257
-- `{error: ?, ok: False}` — `wg_manager.py:reply` — wg_manager.py:246
-- `{interface: 'if' | ‹wg_manager.py:main.c›, listen_port: '\t' | 'dump' | 'if' | 'show' | 0 | +7, ok: True, server_address: 'server_address' | ‹wg_manager.py:main.c›, server_public_key: '\t' | 'dump' |…` — `wg_manager.py:reply` — wg_manager.py:149
-- `{interface: 'if' | ‹wg_manager.py:main.c›, ok: True, peers: 'if' | ‹wg_manager.py:main.c›}` — `wg_manager.py:reply` — wg_manager.py:190
-- `{ok: True, operation: 'remove_peer', public_key: '/v1/peers/' | ‹in socket.recv›('0'|'\r\n'|'content-length')}` — `wg_manager.py:reply` — wg_manager.py:185
+- `{<k.lower().strip()>: ‹in socket.recv›(':'|'\r\n'|'iso-8859-1')}` — `wg_manager.py:request` — wg_manager.py:86
+- `{allowed_ip: 'allowed_ip' | ‹in socket.recv›('0'|'\r\n'|'content-length'), ok: True, operation: 'add_peer', public_key: 'public_key' | ‹in socket.recv›('0'|'\r\n'|'content-length')}` — `wg_manager.py:reply` — wg_manager.py:219
+- `{error: 'internal error', ok: False}` — `wg_manager.py:reply` — wg_manager.py:314
+- `{error: ?, ok: False}` — `wg_manager.py:reply` — wg_manager.py:303
+- `{interface: 'if' | ‹wg_manager.py:main.c›, listen_port: '\t' | 'dump' | 'if' | 'show' | 0 | +7, ok: True, server_address: 'server_address' | ‹wg_manager.py:main.c›, server_public_key: '\t' | 'dump' |…` — `wg_manager.py:reply` — wg_manager.py:188
+- `{interface: 'if' | ‹wg_manager.py:main.c›, ok: True, peers: 'if' | ‹wg_manager.py:main.c›}` — `wg_manager.py:reply` — wg_manager.py:238
+- `{ok: True, operation: 'remove_peer', public_key: '/v1/peers/' | ‹in socket.recv›('0'|'\r\n'|'content-length')}` — `wg_manager.py:reply` — wg_manager.py:230
 
 ## Cosa accettano i parametri (valori costanti che possono assumere)
 
@@ -31,20 +31,20 @@
 
 ## Sink
 
-### `wg_manager.py:reply` — socket.sendall@L41
+### `wg_manager.py:reply` — socket.sendall@L65
 - via: http.HTTPStatus, json.dumps
 - costanti dirette: ' ', ',', ':', 'HTTP/1.1 ', '\r\nCache-Control: no-store\r\nConnection: clo…, '\r\nContent-Type: application/json\r\nContent-…, 200, 201, 500
 - forme: 6 (vedi sopra)
 
-### `wg_manager.py:request` — socket.recv@L48, socket.recv@L72
+### `wg_manager.py:request` — socket.recv@L75, socket.recv@L99
 - costanti dirette: '0', 'content-length', 1, 4096, b'\r\n\r\n'
 - dalla rete: socket.recv
 - forme: 1 (vedi sopra)
 
-### `wg_manager.py:systemd_socket` — socket.<create socket.socket>@L215
+### `wg_manager.py:systemd_socket` — socket.<create socket.socket>@L266
 - costanti dirette: 3
 
-### `wg_manager.py:tls` — socket.wrap_socket@L228
+### `wg_manager.py:tls` — socket.wrap_socket@L282
 - via: socket.socket
 - costanti dirette: 3
 

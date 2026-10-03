@@ -9,7 +9,11 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_auth.html" class="white">wg_auth</a>.wg_auth_API_handler</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_API_handler.py">/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_API_handler.py</a></td></tr></table>
-    <p><span class="code">#&nbsp;src/wg_auth/wg_auth_API_handler.py</span></p>
+    <p><span class="code">HTTPS&nbsp;request&nbsp;handler&nbsp;for&nbsp;the&nbsp;public&nbsp;wg-auth&nbsp;endpoints.<br>
+&nbsp;<br>
+POST&nbsp;/auth&nbsp;starts&nbsp;OPAQUE,&nbsp;POST&nbsp;/auth/verify&nbsp;completes&nbsp;it&nbsp;and&nbsp;activates<br>
+wg-client,&nbsp;and&nbsp;GET&nbsp;/status&nbsp;exposes&nbsp;coarse&nbsp;session&nbsp;state.&nbsp;Logout&nbsp;is&nbsp;intentionally<br>
+performed&nbsp;through&nbsp;the&nbsp;authenticated&nbsp;wg-client&nbsp;session&nbsp;rather&nbsp;than&nbsp;this&nbsp;API.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -40,7 +44,7 @@
 <tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
 <td class="decor title-decor" colspan=2><span class="code"><a href="#WGAuthAPIHandler">WGAuthAPIHandler</a>(request,&nbsp;client_address,&nbsp;server)<br>
 &nbsp;<br>
-<br>&nbsp;</span></td></tr>
+Translate&nbsp;wg-auth&nbsp;HTTP&nbsp;requests&nbsp;into&nbsp;WGAuthAPI&nbsp;operations&nbsp;and&nbsp;JSON&nbsp;responses.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn"><dl><dt>Method resolution order:</dt>
 <dd><a href="src.wg_auth.wg_auth_API_handler.html#WGAuthAPIHandler">WGAuthAPIHandler</a></dd>
@@ -51,11 +55,11 @@
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="WGAuthAPIHandler-do_DELETE"><strong>do_DELETE</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthAPIHandler-do_DELETE"><strong>do_DELETE</strong></a>(self)</dt><dd><span class="code">Reject&nbsp;direct&nbsp;auth&nbsp;logout&nbsp;because&nbsp;logout&nbsp;requires&nbsp;the&nbsp;authenticated&nbsp;client&nbsp;session.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPIHandler-do_GET"><strong>do_GET</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthAPIHandler-do_GET"><strong>do_GET</strong></a>(self)</dt><dd><span class="code">Return&nbsp;session&nbsp;status&nbsp;for&nbsp;/status&nbsp;and&nbsp;404&nbsp;for&nbsp;other&nbsp;paths.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPIHandler-do_POST"><strong>do_POST</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthAPIHandler-do_POST"><strong>do_POST</strong></a>(self)</dt><dd><span class="code">Dispatch&nbsp;POST&nbsp;/auth&nbsp;and&nbsp;POST&nbsp;/auth/verify;&nbsp;return&nbsp;JSON&nbsp;protocol&nbsp;errors&nbsp;otherwise.</span></dd></dl>
 
 <hr>
 Data and other attributes defined here:<br>

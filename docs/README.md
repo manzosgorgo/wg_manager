@@ -416,6 +416,16 @@ docs/protocol-flow.md
 docs/static-analysis.md
 ```
 
+La reference Python viene generata direttamente dalle docstring dei moduli
+production:
+
+```bash
+python3 tools/build_pydoc.py
+```
+
+`tools/publish_docs.py` esegue già questo passaggio durante la pubblicazione,
+quindi gli HTML sotto `docs/ai/pydoc/` non vanno modificati a mano.
+
 ## Stato del progetto
 
 Il backend di autenticazione/sessione/ownership/peer management è considerato

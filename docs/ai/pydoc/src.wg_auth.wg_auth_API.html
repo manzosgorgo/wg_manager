@@ -9,7 +9,11 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_auth.html" class="white">wg_auth</a>.wg_auth_API</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_API.py">/home/main/Desktop/wg_manager/src/wg_auth/wg_auth_API.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code">High-level&nbsp;authentication&nbsp;API&nbsp;and&nbsp;session&nbsp;orchestrator.<br>
+&nbsp;<br>
+<a href="#WGAuthAPI">WGAuthAPI</a>&nbsp;owns&nbsp;the&nbsp;single&nbsp;auth&nbsp;session&nbsp;state&nbsp;machine,&nbsp;OPAQUE&nbsp;session&nbsp;<a href="builtins.html#object">object</a>,<br>
+persistence&nbsp;services,&nbsp;wg-client&nbsp;IPC&nbsp;activation&nbsp;and&nbsp;the&nbsp;TLS&nbsp;HTTP&nbsp;server.&nbsp;The<br>
+session&nbsp;states&nbsp;are&nbsp;IDLE,&nbsp;STARTING,&nbsp;ACTIVE&nbsp;and&nbsp;STOPPING.</span></p>
 <p>
 <table class="section">
 <tr class="decor pkg-content-decor heading-text">
@@ -42,26 +46,26 @@
 <tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
 <td class="decor title-decor" colspan=2><span class="code"><a href="#WGAuthAPI">WGAuthAPI</a>(config,&nbsp;lifecycle)<br>
 &nbsp;<br>
-<br>&nbsp;</span></td></tr>
+Coordinate&nbsp;OPAQUE&nbsp;authentication,&nbsp;persistence,&nbsp;wg-client&nbsp;activation&nbsp;and&nbsp;logout.<br>&nbsp;</span></td></tr>
 <tr><td>&nbsp;</td>
 <td class="singlecolumn">Methods defined here:<br>
-<dl><dt><a name="WGAuthAPI-__enter__"><strong>__enter__</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthAPI-__enter__"><strong>__enter__</strong></a>(self)</dt><dd><span class="code">Create&nbsp;and&nbsp;bind&nbsp;the&nbsp;TLS&nbsp;HTTP&nbsp;server,&nbsp;returning&nbsp;this&nbsp;API&nbsp;instance.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPI-__exit__"><strong>__exit__</strong></a>(self, exc_type, exc_value, traceback)</dt></dl>
+<dl><dt><a name="WGAuthAPI-__exit__"><strong>__exit__</strong></a>(self, exc_type, exc_value, traceback)</dt><dd><span class="code">Stop&nbsp;and&nbsp;close&nbsp;the&nbsp;HTTP&nbsp;server&nbsp;when&nbsp;leaving&nbsp;a&nbsp;context&nbsp;manager.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPI-__init__"><strong>__init__</strong></a>(self, config, lifecycle)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGAuthAPI-__init__"><strong>__init__</strong></a>(self, config, lifecycle)</dt><dd><span class="code">Build&nbsp;persistence&nbsp;services&nbsp;and&nbsp;initialize&nbsp;the&nbsp;single-session&nbsp;state&nbsp;machine.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPI-finish_authentication"><strong>finish_authentication</strong></a>(self, authU)</dt></dl>
+<dl><dt><a name="WGAuthAPI-finish_authentication"><strong>finish_authentication</strong></a>(self, authU)</dt><dd><span class="code">Verify&nbsp;OPAQUE,&nbsp;activate/reconcile&nbsp;wg-client&nbsp;and&nbsp;move&nbsp;STARTING&nbsp;to&nbsp;ACTIVE.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPI-get_session_status"><strong>get_session_status</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthAPI-get_session_status"><strong>get_session_status</strong></a>(self)</dt><dd><span class="code">Return&nbsp;browser-facing&nbsp;authenticated/client-active&nbsp;flags&nbsp;from&nbsp;the&nbsp;state&nbsp;machine.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPI-logout"><strong>logout</strong></a>(self, notify_client=True)</dt></dl>
+<dl><dt><a name="WGAuthAPI-logout"><strong>logout</strong></a>(self, notify_client=True)</dt><dd><span class="code">Request&nbsp;logout;&nbsp;STARTING&nbsp;sessions&nbsp;are&nbsp;marked&nbsp;for&nbsp;cancellation,&nbsp;ACTIVE&nbsp;sessions&nbsp;are&nbsp;torn&nbsp;down.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPI-run"><strong>run</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthAPI-run"><strong>run</strong></a>(self)</dt><dd><span class="code">Serve&nbsp;HTTP&nbsp;requests&nbsp;until&nbsp;<a href="#WGAuthAPI-stop">stop</a>()&nbsp;shuts&nbsp;the&nbsp;server&nbsp;down.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPI-start_authentication"><strong>start_authentication</strong></a>(self, username, pubU)</dt></dl>
+<dl><dt><a name="WGAuthAPI-start_authentication"><strong>start_authentication</strong></a>(self, username, pubU)</dt><dd><span class="code">Load&nbsp;a&nbsp;user&nbsp;and&nbsp;start&nbsp;the&nbsp;OPAQUE&nbsp;exchange,&nbsp;moving&nbsp;IDLE&nbsp;to&nbsp;STARTING.</span></dd></dl>
 
-<dl><dt><a name="WGAuthAPI-stop"><strong>stop</strong></a>(self)</dt></dl>
+<dl><dt><a name="WGAuthAPI-stop"><strong>stop</strong></a>(self)</dt><dd><span class="code">Shut&nbsp;down&nbsp;and&nbsp;close&nbsp;the&nbsp;HTTP&nbsp;server&nbsp;if&nbsp;it&nbsp;is&nbsp;running.</span></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>

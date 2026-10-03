@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_peer_registry.py`
 - Language: `python`
-- Lines: 333
-- SHA256: `dae8d44b2768accce49fc92b896d8fc171c69f6ac8c6a3ad6a75fe961c14d1b0`
+- Lines: 362
+- SHA256: `6e1e04a93ee264438fa17e1c2716b3ef1ee63182f91ca7e688856d3533d14aa2`
 - Imports:
   - `json`
   - `os`
@@ -17,6 +17,14 @@
 ```python
 #!/usr/bin/env python3
 
+"""
+Persistent global reservation indexes for WireGuard public keys and VPN IPs.
+
+The peer and IP JSON files are derived indexes reconciled against live
+controller state and persisted user ownership. Writes are atomic and guarded
+by a process-local reentrant lock.
+"""
+
 import json
 import os
 import tempfile
@@ -27,6 +35,9 @@ class WGAuthPeerRegistry:
     """Persistent global reservation table for WireGuard keys and IPs."""
 
     def __init__(self, path, ip_path=None):
+        """
+        Configure peer and IP registry paths.
+        """
         self.path = path
         self.ip_path = (
             ip_path
@@ -173,6 +184,9 @@ class WGAuthPeerRegistry:
         )
 
     def reserve(self, username, public_key, allowed_ip):
+        """
+        Reserve a unique public-key/IP pair for a user; identical reservations are idempotent.
+        """
         if not isinstance(username, str) or not username:
             raise ValueError("username must be a non-empty string")
         if not isinstance(public_key, str) or not public_key:
@@ -214,6 +228,9 @@ class WGAuthPeerRegistry:
             return dict(entry)
 
     def release(self, actor_username, public_key):
+        """
+        Release a reservation if requested by its owner or by the admin principal.
+        """
         if not isinstance(actor_username, str) or not actor_username:
             raise ValueError("actor username must be a non-empty string")
         if not isinstance(public_key, str) or not public_key:
@@ -241,11 +258,17 @@ class WGAuthPeerRegistry:
             return dict(existing)
 
     def get(self, public_key):
+        """
+        Return a copy of one peer reservation, or None when absent.
+        """
         with self._lock:
             entry = self._load()["peers"].get(public_key)
             return None if entry is None else dict(entry)
 
     def snapshot(self):
+        """
+        Return a copy of the complete public-key reservation table.
+        """
         with self._lock:
             return {
                 public_key: dict(entry)
@@ -253,6 +276,9 @@ class WGAuthPeerRegistry:
             }
 
     def snapshot_ips(self):
+        """
+        Return a copy of the complete allowed-IP reservation table.
+        """
         with self._lock:
             return {
                 allowed_ip: dict(entry)
@@ -260,6 +286,9 @@ class WGAuthPeerRegistry:
             }
 
     def set_owner(self, public_key, username):
+        """
+        Assign an existing live reservation to a user in both indexes.
+        """
         if not isinstance(username, str) or not username:
             raise ValueError("username must be a non-empty string")
 

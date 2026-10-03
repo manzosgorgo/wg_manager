@@ -223,7 +223,7 @@ Generated mechanically by `tools/project_index.py`.
 - `WGAuthAPI._create_server`
 
 **Evidence:**
-- `src/wg_auth/wg_auth_API.py:402` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
+- `src/wg_auth/wg_auth_API.py:440` HTTP_SERVER `ThreadingHTTPServer((self.config['http']['host'], int(self.config['http']['port'])), WGAuthAPIHandler)`
 
 **Message surfaces:**
 - **HTTP**
@@ -256,7 +256,7 @@ Generated mechanically by `tools/project_index.py`.
 - `WGAuthIPC.activate`
 
 **Evidence:**
-- `src/wg_auth/wg_auth_IPC.py:495` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
+- `src/wg_auth/wg_auth_IPC.py:524` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
 
 **Message surfaces:**
 - **IPC**
@@ -283,10 +283,10 @@ Generated mechanically by `tools/project_index.py`.
 - `systemd_notify`
 
 **Evidence:**
-- `src/wg_client/wg_client.py:45` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)`
-- `src/wg_client/wg_client.py:48` CONNECT `sock.connect(notify_socket)`
-- `src/wg_client/wg_client.py:49` SENDALL `sock.sendall(message.encode())`
-- `src/wg_client/wg_client.py:52` CLOSE `sock.close()`
+- `src/wg_client/wg_client.py:59` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)`
+- `src/wg_client/wg_client.py:62` CONNECT `sock.connect(notify_socket)`
+- `src/wg_client/wg_client.py:63` SENDALL `sock.sendall(message.encode())`
+- `src/wg_client/wg_client.py:66` CLOSE `sock.close()`
 
 ### connection-011
 
@@ -307,7 +307,7 @@ Generated mechanically by `tools/project_index.py`.
 - `main`
 
 **Evidence:**
-- `src/wg_client/wg_client.py:193` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=os.dup(sys.stdin.fileno()))`
+- `src/wg_client/wg_client.py:211` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, fileno=os.dup(sys.stdin.fileno()))`
 
 ### connection-012
 
@@ -329,11 +329,11 @@ Generated mechanically by `tools/project_index.py`.
 - `activate_client`
 
 **Evidence:**
-- `src/wg_client/wg_client_activator.py:49` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
-- `src/wg_client/wg_client_activator.py:55` CONNECT `sock.connect(socket_path)`
-- `src/wg_client/wg_client_activator.py:56` SENDALL `sock.sendall(payload)`
-- `src/wg_client/wg_client_activator.py:96` SENDALL `sock.sendall((json.dumps(state_result, separators=(',', ':')) + '\n').encode('utf-8'))`
-- `src/wg_client/wg_client_activator.py:116` CLOSE `sock.close()`
+- `src/wg_client/wg_client_activator.py:75` SOCKET_CREATE `socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)`
+- `src/wg_client/wg_client_activator.py:81` CONNECT `sock.connect(socket_path)`
+- `src/wg_client/wg_client_activator.py:82` SENDALL `sock.sendall(payload)`
+- `src/wg_client/wg_client_activator.py:122` SENDALL `sock.sendall((json.dumps(state_result, separators=(',', ':')) + '\n').encode('utf-8'))`
+- `src/wg_client/wg_client_activator.py:142` CLOSE `sock.close()`
 
 **Message surfaces:**
 - **INTERNAL**
@@ -361,8 +361,8 @@ Generated mechanically by `tools/project_index.py`.
 - `WGControllerClient._request`
 
 **Evidence:**
-- `src/wg_client/wg_controller_client.py:32` HTTP_CLIENT `http.client.HTTPSConnection(self.host, self.port, context=self.tls, timeout=self.timeout)`
-- `src/wg_client/wg_controller_client.py:74` CLOSE `conn.close()`
+- `src/wg_client/wg_controller_client.py:46` HTTP_CLIENT `http.client.HTTPSConnection(self.host, self.port, context=self.tls, timeout=self.timeout)`
+- `src/wg_client/wg_controller_client.py:88` CLOSE `conn.close()`
 
 ### connection-014
 
@@ -385,8 +385,8 @@ Generated mechanically by `tools/project_index.py`.
 - `WGClientClient._request`
 
 **Evidence:**
-- `src/wg_client/wg_controller_client.py:130` HTTP_CLIENT `http.client.HTTPSConnection(self.host, self.port, context=self.tls, timeout=self.timeout)`
-- `src/wg_client/wg_controller_client.py:195` CLOSE `conn.close()`
+- `src/wg_client/wg_controller_client.py:162` HTTP_CLIENT `http.client.HTTPSConnection(self.host, self.port, context=self.tls, timeout=self.timeout)`
+- `src/wg_client/wg_controller_client.py:227` CLOSE `conn.close()`
 
 ## Test connections
 

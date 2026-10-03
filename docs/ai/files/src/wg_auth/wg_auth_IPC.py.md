@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_IPC.py`
 - Language: `python`
-- Lines: 595
-- SHA256: `d17184fb55151986627eb322cf75ebe796396b089d6506e813d11f414c1de77b`
+- Lines: 633
+- SHA256: `1523539b1109f98fbdb02e7bd8382cd49a1447ffb85bac079cd3b59dded4bda9`
 - Imports:
   - `json`
   - `logging`
@@ -16,6 +16,14 @@
 ## Source
 
 ```python
+"""
+Persistent newline-delimited JSON control channel from wg-auth to wg-client.
+
+The channel carries activation, live-state reconciliation, keepalives, peer
+persistence, provisioning state, ownership administration, account operations
+and STOP. Protocol violations cause the authenticated session to shut down.
+"""
+
 import json
 import logging
 import socket
@@ -31,6 +39,9 @@ PROTOCOL_VERSION = 1
 
 
 class WGAuthIPC:
+    """
+    Own the auth side of the persistent Unix-domain control connection to wg-client.
+    """
 
     def __init__(
         self,
@@ -49,6 +60,9 @@ class WGAuthIPC:
         account_create=None,
         account_delete=None,
     ):
+        """
+        Configure activation metadata, lifecycle hooks and persistence/admin callbacks.
+        """
         self.socket_path = socket_path
         self.client_id = client_id
         self.timeout = timeout
@@ -68,9 +82,15 @@ class WGAuthIPC:
         self._recv_buffer = bytearray()
     @property
     def active(self):
+        """
+        Return True while the Unix control socket is connected.
+        """
         return self.sock is not None
 
     def control_loop(self):
+        """
+        Process post-activation control messages until STOP, EOF or a protocol failure.
+        """
         log.debug("IPC control loop started")
 
         try:
@@ -442,6 +462,9 @@ class WGAuthIPC:
         })
 
     def receive_packet(self):
+        """
+        Read one bounded newline-delimited packet from the control socket.
+        """
         while True:
             newline = self._recv_buffer.find(b"\n")
 
@@ -477,6 +500,9 @@ class WGAuthIPC:
             self._recv_buffer.extend(chunk)
 
     def parse_packet(self, packet):
+        """
+        Decode UTF-8 JSON and enforce the IPC protocol version.
+        """
         try:
             text = packet.decode("utf-8")
         except UnicodeDecodeError as exc:
@@ -504,6 +530,9 @@ class WGAuthIPC:
         return obj
 
     def activate(self, session_id, k_session):
+        """
+        Connect, send activation, reconcile live peer state and wait for ACTIVATION_RESULT.
+        """
 
         if self.sock is not None:
             raise RuntimeError("IPC already active")
@@ -572,6 +601,9 @@ class WGAuthIPC:
 
             return response
     def deactivate(self):
+        """
+        Send STOP to the client and close the control channel.
+        """
         if self.sock is None:
             return
 
@@ -596,9 +628,15 @@ class WGAuthIPC:
         return payload
 
     def send_packet(self, packet):
+        """
+        Encode and send one IPC packet on the active socket.
+        """
         self.sock.sendall(self._encode_packet(packet))
 
     def close(self):
+        """
+        Idempotently shut down and release the Unix control socket.
+        """
         if self.sock is None:
             return
 

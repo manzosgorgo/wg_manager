@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_API.py`
 - Language: `python`
-- Lines: 433
-- SHA256: `97bd584f59c9bb8c638c56143c35fbeb1020cbb19cfeff11835b4ac5084159bf`
+- Lines: 471
+- SHA256: `afcaf3355b568fdc7242f5a0bc4b81731ec33ab83b22deb60a46986f6e611b5e`
 - Imports:
   - `http.server`
   - `json`
@@ -24,6 +24,14 @@
 ## Source
 
 ```python
+"""
+High-level authentication API and session orchestrator.
+
+WGAuthAPI owns the single auth session state machine, OPAQUE session object,
+persistence services, wg-client IPC activation and the TLS HTTP server. The
+session states are IDLE, STARTING, ACTIVE and STOPPING.
+"""
+
 import ssl
 import json
 import logging
@@ -41,12 +49,18 @@ log = logging.getLogger("wg_auth.API")
 
 
 class WGAuthAPI:
+    """
+    Coordinate OPAQUE authentication, persistence, wg-client activation and logout.
+    """
     SESSION_IDLE = "IDLE"
     SESSION_STARTING = "STARTING"
     SESSION_ACTIVE = "ACTIVE"
     SESSION_STOPPING = "STOPPING"
 
     def __init__(self, config, lifecycle):
+        """
+        Build persistence services and initialize the single-session state machine.
+        """
         self.config = config
         self.lifecycle = lifecycle
         self.user_store = WGAuthUserStore(config["auth"]["login_dir"])
@@ -81,19 +95,31 @@ class WGAuthAPI:
         self.session_stop_requested = False
 
     def __enter__(self):
+        """
+        Create and bind the TLS HTTP server, returning this API instance.
+        """
         self.server = self._create_server()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Stop and close the HTTP server when leaving a context manager.
+        """
         self.stop()
 
     def run(self):
+        """
+        Serve HTTP requests until stop() shuts the server down.
+        """
         if self.server is None:
             raise RuntimeError("API server is not started")
 
         self.server.serve_forever()
 
     def stop(self):
+        """
+        Shut down and close the HTTP server if it is running.
+        """
         if self.server is not None:
             self.server.shutdown()
             self.server.server_close()
@@ -104,6 +130,9 @@ class WGAuthAPI:
     # ------------------------------------------------------------------
 
     def get_session_status(self):
+        """
+        Return browser-facing authenticated/client-active flags from the state machine.
+        """
         with self.session_lock:
             state = self.session_state
 
@@ -121,6 +150,9 @@ class WGAuthAPI:
     # ------------------------------------------------------------------
 
     def start_authentication(self, username, pubU):
+        """
+        Load a user and start the OPAQUE exchange, moving IDLE to STARTING.
+        """
         from src.wg_auth.wg_auth_session import WGAuthSession
 
         with self.session_lock:
@@ -159,6 +191,9 @@ class WGAuthAPI:
 
 
     def finish_authentication(self, authU):
+        """
+        Verify OPAQUE, activate/reconcile wg-client and move STARTING to ACTIVE.
+        """
         with self.session_lock:
             if self.session_state != self.SESSION_STARTING:
                 raise WGAuthSessionError(
@@ -345,6 +380,9 @@ class WGAuthAPI:
     # ------------------------------------------------------------------
 
     def logout(self, notify_client=True):
+        """
+        Request logout; STARTING sessions are marked for cancellation, ACTIVE sessions are torn down.
+        """
         with self.session_lock:
             if self.session_state == self.SESSION_IDLE:
                 return

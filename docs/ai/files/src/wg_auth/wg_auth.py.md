@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth.py`
 - Language: `python`
-- Lines: 50
-- SHA256: `43563bcd4f5e01c32b19cc43dd5cba8d9b01a7a61df6dc9d18c5f765162eec6a`
+- Lines: 63
+- SHA256: `1e38139d973d9d2eec2f1508513efe256e81a6a273f217055f8a193af90009f6`
 - Imports:
   - `configparser`
   - `logging`
@@ -20,6 +20,13 @@
 ## Source
 
 ```python
+"""
+Process entry point for the wg-auth service.
+
+Loads the INI configuration selected by WG_AUTH_CONFIG, builds the auth
+lifecycle and HTTPS API, and serves until shutdown.
+"""
+
 import configparser
 import logging
 import os
@@ -38,12 +45,18 @@ config_path = os.environ.get(
 )
 
 def load_config(path):
+    """
+    Load and return the auth INI configuration from *path*.
+    """
     config = configparser.ConfigParser()
     config.read(path)
 
     return config
 
 def main():
+    """
+    Create the auth lifecycle and HTTPS API, then serve until shutdown.
+    """
 
     config = load_config(config_path)
 

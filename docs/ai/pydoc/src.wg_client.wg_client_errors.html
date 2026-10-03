@@ -9,7 +9,7 @@
 <tr class="heading-text decor">
 <td class="title">&nbsp;<br><strong class="title"><a href="src.html" class="white">src</a>.<a href="src.wg_client.html" class="white">wg_client</a>.wg_client_errors</strong></td>
 <td class="extra"><a href=".">index</a><br><a href="file:/home/main/Desktop/wg_manager/src/wg_client/wg_client_errors.py">/home/main/Desktop/wg_manager/src/wg_client/wg_client_errors.py</a></td></tr></table>
-    <p></p>
+    <p><span class="code"><a href="builtins.html#Exception">Exception</a>&nbsp;hierarchy&nbsp;shared&nbsp;by&nbsp;wg-client&nbsp;HTTP,&nbsp;IPC,&nbsp;controller&nbsp;and&nbsp;secure-session&nbsp;layers.</span></p>
 <p>
 <table class="section">
 <tr class="decor index-decor heading-text">
@@ -338,7 +338,7 @@ Error&nbsp;returned&nbsp;by&nbsp;the&nbsp;WireGuard&nbsp;controller.<br>&nbsp;</
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="WGControllerError-__init__"><strong>__init__</strong></a>(self, status, message, response=None)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGControllerError-__init__"><strong>__init__</strong></a>(self, status, message, response=None)</dt><dd><span class="code">Create&nbsp;a&nbsp;controller&nbsp;transport/HTTP&nbsp;error&nbsp;with&nbsp;status,&nbsp;message&nbsp;and&nbsp;optional&nbsp;response.</span></dd></dl>
 
 <hr>
 Data descriptors inherited from <a href="src.wg_client.wg_client_errors.html#WGError">WGError</a>:<br>
@@ -849,7 +849,7 @@ A&nbsp;peer&nbsp;operation&nbsp;could&nbsp;not&nbsp;be&nbsp;completed&nbsp;(carr
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="WGPeerError-__init__"><strong>__init__</strong></a>(self, status, message)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGPeerError-__init__"><strong>__init__</strong></a>(self, status, message)</dt><dd><span class="code">Create&nbsp;a&nbsp;peer-service&nbsp;error&nbsp;carrying&nbsp;the&nbsp;HTTP&nbsp;status&nbsp;returned&nbsp;to&nbsp;the&nbsp;API&nbsp;client.</span></dd></dl>
 
 <hr>
 Data descriptors inherited from <a href="src.wg_client.wg_client_errors.html#WGError">WGError</a>:<br>
@@ -915,7 +915,7 @@ Semantic&nbsp;error&nbsp;returned&nbsp;by&nbsp;the&nbsp;auth&nbsp;persistence&nb
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="WGPeerPersistenceError-__init__"><strong>__init__</strong></a>(self, status, message)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="WGPeerPersistenceError-__init__"><strong>__init__</strong></a>(self, status, message)</dt><dd><span class="code">Create&nbsp;a&nbsp;semantic&nbsp;persistence&nbsp;error&nbsp;returned&nbsp;by&nbsp;wg-auth&nbsp;IPC.</span></dd></dl>
 
 <hr>
 Data descriptors inherited from <a href="src.wg_client.wg_client_errors.html#WGError">WGError</a>:<br>

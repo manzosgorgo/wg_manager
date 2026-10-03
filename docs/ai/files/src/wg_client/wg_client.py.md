@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client.py`
 - Language: `python`
-- Lines: 258
-- SHA256: `d043f98a45da0fc95c71f82415bd352f58cf36a7a5f13f8f7083f5ac91e0d124`
+- Lines: 276
+- SHA256: `95748b90a803a3ccc2126b073e9071476610bbb269b2d88f69b658cbd2af60ea`
 - Imports:
   - `logging`
   - `os`
@@ -26,6 +26,14 @@
 
 ```python
 #!/usr/bin/env python3
+
+"""
+Socket-activated process entry point for one authenticated wg-client session.
+
+The process receives activation over stdin from systemd, validates the secure
+session, reconciles live controller state with wg-auth persistence, binds the
+mTLS API, and exits on logout, IPC failure or session expiry.
+"""
 
 import logging
 import os
@@ -52,6 +60,9 @@ log = logging.getLogger("wg_manager.client")
 
 
 def setup_logging():
+    """
+    Attach one journald handler to the wg_manager logger hierarchy.
+    """
     handler = journal.JournalHandler(SYSLOG_IDENTIFIER="wg_client")
     handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
 
@@ -61,6 +72,9 @@ def setup_logging():
 
 
 def systemd_notify(message):
+    """
+    Send a datagram to systemd's notify socket; return False when notification is unavailable.
+    """
     notify_socket = os.environ.get("NOTIFY_SOCKET")
 
     if not notify_socket:
@@ -123,12 +137,13 @@ def _manager_peer_snapshot(api):
 
 def activate(ipc, lifecycle):
     """
-    Read the activation packet and bring the HTTPS API up.
+    Validate one IPC activation, reconcile live peer state, bind the HTTPS API
+    and report the activation result.
 
-    Sends ACTIVATION_RESULT only once the API socket is bound and
-    TLS is ready, so "OK" means the API is actually reachable.
-    Returns (api, activation), or None on failure.
-    :param lifecycle:
+    ACTIVATION_RESULT OK is sent only after reconciliation and TLS bind have
+    succeeded, so the auth side may treat OK as an actually reachable session.
+    Returns (api, activation) on success and None after reporting an activation
+    error.
     """
     api = None
 
@@ -212,6 +227,9 @@ def activate(ipc, lifecycle):
 
 
 def main():
+    """
+    Run one socket-activated session until lifecycle shutdown or expiry.
+    """
     setup_logging()
     log.info("wg_client starting")
 

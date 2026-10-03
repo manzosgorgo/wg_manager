@@ -4,8 +4,8 @@
 
 - Path: `src/wg_client/wg_client_config.py`
 - Language: `python`
-- Lines: 203
-- SHA256: `ca43a813a550a0c55a322af4e9550c635d1187a421ff995d11842151d2a19349`
+- Lines: 214
+- SHA256: `cd733396266a0b9b86a800917b93db8e1542e6ebf43812f5482ecfc65ce7c70f`
 - Imports:
   - `configparser`
   - `math`
@@ -15,6 +15,14 @@
 
 ```python
 #!/usr/bin/env python3
+
+"""
+Load and validate wg-client runtime configuration.
+
+WG_CLIENT_CONFIG selects the INI file. The loader normalizes numeric values,
+applies secure-session defaults and rejects invalid port, timeout, counter,
+replay-window and request-rate combinations before runtime starts.
+"""
 
 import configparser
 import math
@@ -38,6 +46,9 @@ DEFAULT_REPLAY_WINDOW_SIZE = 64
 
 
 def load_config():
+    """
+    Load, validate and normalize the selected wg-client INI configuration.
+    """
     path = os.environ.get(
         "WG_CLIENT_CONFIG",
         DEFAULT_CONFIG,

@@ -4,8 +4,8 @@
 
 - Path: `src/wg_auth/wg_auth_lifecycle.py`
 - Language: `python`
-- Lines: 97
-- SHA256: `bd442d95d91c5b52f19238f833fe83b82eafe938a0cc0540665cf30c6af30155`
+- Lines: 122
+- SHA256: `91ce09ff1a1932653da4ae29848e3723b10c4779146feb62d43397688eeac23f`
 - Imports:
   - `logging`
   - `threading`
@@ -13,6 +13,13 @@
 ## Source
 
 ```python
+"""
+Lifecycle coordination for wg-auth and its per-session wg-client process.
+
+The lifecycle owns service/session shutdown signals and the authenticated
+session idle timer. It deliberately performs API shutdown outside the lock.
+"""
+
 import logging
 import threading
 
@@ -20,8 +27,14 @@ log = logging.getLogger("wg_auth.lifecycle")
 
 
 class WGAuthLifecycle:
+    """
+    Coordinate service shutdown, session shutdown, IPC control and idle expiry.
+    """
 
     def __init__(self, api=None, ipc=None, idle_timeout=45):
+        """
+        Create lifecycle state for an optional API/IPC pair and idle timeout.
+        """
         self.api = api
         self.ipc = ipc
 
@@ -58,6 +71,9 @@ class WGAuthLifecycle:
         self.request_session_shutdown()
 
     def touch_session(self):
+        """
+        Refresh the authenticated-session idle timer unless shutdown has started.
+        """
         with self.shutdown_lock:
             if self.session_stop_event.is_set():
                 return
@@ -67,6 +83,9 @@ class WGAuthLifecycle:
         log.debug("session idle timer refreshed")
 
     def request_shutdown(self):
+        """
+        Request process-wide API shutdown exactly once.
+        """
         with self.shutdown_lock:
             if self.stop_event.is_set():
                 return
@@ -83,6 +102,9 @@ class WGAuthLifecycle:
                 ).start()
 
     def request_session_shutdown(self, notify_client=True):
+        """
+        Stop the active application session, optionally notifying wg-client.
+        """
         with self.shutdown_lock:
             if self.session_stop_event.is_set():
                 return
@@ -96,6 +118,9 @@ class WGAuthLifecycle:
             self.api.logout(notify_client=notify_client)
 
     def request_session_start(self):
+        """
+        Mark a session active, arm idle expiry and start the IPC control thread.
+        """
         with self.shutdown_lock:
             self.session_stop_event.clear()
             self._arm_idle_timer_locked()
