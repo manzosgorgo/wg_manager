@@ -368,15 +368,18 @@ docs/protocol-flow.md
 docs/static-analysis.md
 ```
 
-La reference Python viene generata direttamente dalle docstring dei moduli
-production:
+Le reference API vengono generate direttamente dalla documentazione inline dei
+moduli production:
 
 ```bash
 python3 tools/build_pydoc.py
+python3 tools/build_jsdoc.py
 ```
 
-`tools/publish_docs.py` esegue già questo passaggio durante la pubblicazione,
-quindi gli HTML sotto `docs/ai/pydoc/` non vanno modificati a mano.
+La prima usa le docstring Python, la seconda i blocchi JSDoc dei sorgenti
+frontend. `tools/publish_docs.py` esegue automaticamente entrambe durante la
+pubblicazione, quindi gli HTML sotto `docs/ai/pydoc/` e
+`docs/ai/jsdoc/` non vanno modificati a mano.
 
 ## Stato del progetto
 
