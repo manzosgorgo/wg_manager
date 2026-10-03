@@ -146,7 +146,7 @@ def clean_obsolete_generated_site() -> None:
 
 
 def generate_project_index() -> None:
-    print("\n[1/6] Generating project index")
+    print("\n[1/8] Generating project index")
 
     if not PROJECT_INDEX.is_file():
         fail(f"project_index.py not found: {PROJECT_INDEX}")
@@ -206,7 +206,7 @@ def generate_protocol(name: str, source_relative: str) -> None:
 
 
 def generate_protocol_snapshots() -> None:
-    print("\n[2/6] Generating protocol snapshots")
+    print("\n[2/8] Generating protocol snapshots")
 
     if not PROTOCOL_FLOW.is_file():
         fail(f"protocol_flow.py not found: {PROTOCOL_FLOW}")
@@ -218,7 +218,7 @@ def generate_protocol_snapshots() -> None:
 
 
 def generate_pydoc() -> None:
-    print("\n[3/6] Generating Python API documentation")
+    print("\n[3/8] Generating Python API documentation")
 
     if not BUILD_PYDOC.is_file():
         fail(f"build_pydoc.py not found: {BUILD_PYDOC}")
@@ -235,7 +235,7 @@ def generate_pydoc() -> None:
 def generate_jsdoc() -> None:
     """Generate JavaScript API documentation from production frontend sources."""
 
-    print("\n[4/6] Generating JavaScript API documentation")
+    print("\n[4/8] Generating JavaScript API documentation")
 
     if not BUILD_JSDOC.is_file():
         fail(f"build_jsdoc.py not found: {BUILD_JSDOC}")
@@ -256,7 +256,7 @@ def generate_readme() -> None:
     This becomes README.md at the root of the public GitHub repository.
     """
 
-    print("\n[5/6] Generating documentation README")
+    print("\n[5/8] Generating documentation README")
 
     readme = """# wg-manager documentation
 
@@ -342,7 +342,7 @@ The protocol snapshots are generated independently for:
 # ---------------------------------------------------------------------------
 
 def validate_required_files() -> None:
-    print("\n[6/6] Validating generated documentation")
+    print("\n[6/8] Validating generated documentation")
 
     required = [
         DOCS_DIR / "README.md",
@@ -861,7 +861,7 @@ def main() -> int:
     # Temporary staging repository
     # ------------------------------------------------------------------
 
-    print("\n[6/7] Preparing temporary Git staging area")
+    print("\n[7/8] Preparing temporary Git staging area")
 
     with tempfile.TemporaryDirectory(
         prefix="wg-manager-docs-publish-"
@@ -883,7 +883,7 @@ def main() -> int:
     if not args.no_pages:
         configure_pages(branch)
 
-    print("\n[7/7] Publication complete")
+    print("\n[8/8] Publication complete")
 
     if pushed:
         print(f"Published: https://github.com/{GITHUB_REPO}")
