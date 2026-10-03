@@ -29,6 +29,18 @@ Automatically generated documentation for the `wg_manager` project.
 The Python API reference is generated from module/class/function docstrings
 with `tools/build_pydoc.py`.
 
+## JavaScript API documentation
+
+- [JSDoc API index](ai/jsdoc/index.html)
+
+The browser API reference is generated from JSDoc comments in the production
+frontend sources with `tools/build_jsdoc.py`.
+
+## Operational documentation
+
+- [Debian deployment](deployment.md)
+- [Production configuration](configuration.md)
+
 ## Source documentation
 
 The [`ai/files/`](ai/files/) directory contains generated documentation
