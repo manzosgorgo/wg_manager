@@ -1,5 +1,6 @@
 /**
- * Browser-side OPAQUE authentication orchestration for wg-auth.\nKeeps the resulting session identifier, shared session key and activation metadata only in memory.
+ * Browser-side OPAQUE authentication orchestration for wg-auth.
+ * Keeps the resulting session identifier, shared session key and activation metadata only in memory.
  * @module wg_auth_session
  */
 import { WGOPAQUEClient } from "./wg_opaque_client.js";
@@ -55,7 +56,7 @@ export class WGAuthSession {
 
     /**
      * Read coarse authentication/client activation state from wg-auth.
-     * @returns {Promise<{status:number, ok:boolean, data:Object|null}>}
+     * @returns {Promise<Object>}
      */
     async status() {
         return this._request("GET", "/status");
