@@ -4,8 +4,8 @@
 
 - Path: `README.md`
 - Language: `markdown`
-- Lines: 386
-- SHA256: `ddb504390e52387cf1702f2a47132a661219f2696672f7302d7070831bba6baa`
+- Lines: 389
+- SHA256: `95fefe98d26e7bcc164ea0fa00f316a7cf57d3f37a06d597f1c1a0fbe2054e12`
 
 ## Source
 
@@ -380,15 +380,18 @@ docs/protocol-flow.md
 docs/static-analysis.md
 ```
 
-La reference Python viene generata direttamente dalle docstring dei moduli
-production:
+Le reference API vengono generate direttamente dalla documentazione inline dei
+moduli production:
 
 ```bash
 python3 tools/build_pydoc.py
+python3 tools/build_jsdoc.py
 ```
 
-`tools/publish_docs.py` esegue già questo passaggio durante la pubblicazione,
-quindi gli HTML sotto `docs/ai/pydoc/` non vanno modificati a mano.
+La prima usa le docstring Python, la seconda i blocchi JSDoc dei sorgenti
+frontend. `tools/publish_docs.py` esegue automaticamente entrambe durante la
+pubblicazione, quindi gli HTML sotto `docs/ai/pydoc/` e
+`docs/ai/jsdoc/` non vanno modificati a mano.
 
 ## Stato del progetto
 

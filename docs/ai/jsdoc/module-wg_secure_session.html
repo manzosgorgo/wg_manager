@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Module: wg_secure_session</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Module: wg_secure_session</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        
+            
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">WGSecureSession — porting JavaScript (Web Crypto API) del modulo Python
+src/wg_client/wg_secure_session.py
+
+Progettato per girare identico sia in un browser moderno (crypto.subtle
+globale) sia in Node.js (crypto.webcrypto esposto come globalThis.crypto
+dal chiamante, vedi check_vectors.mjs) — nessuna libreria esterna, e
+nessun fallback Node interno al modulo: il modulo usa esclusivamente
+l'API Web Crypto standard.
+
+Il protocollo (formato dei messaggi, HKDF con questi salt/info, contatori,
+dimensione di nonce/chiavi, configurazione, gerarchia di errori) e'
+IDENTICO alla versione Python: le due implementazioni devono produrre
+esattamente gli stessi byte per gli stessi input, e sollevare lo stesso
+"tipo" di errore (per nome di classe) per la stessa condizione. Vedi
+check_vectors.mjs per la verifica automatica contro i vettori generati
+dall'implementazione Python.
+
+Come in Python, session_key_size controlla la lunghezza delle chiavi
+derivate con HKDF, non la lunghezza del segreto OPAQUE in ingresso.
+La dimensione del segreto OPAQUE appartiene al protocollo di attivazione.
+
+Differenze deliberate rispetto alla versione Python, dovute all'ambiente:
+  - Le chiavi derivate (request_key/response_key) sono importate come
+    CryptoKey non estraibili (extractable: false), per non lasciarle
+    leggibili come bytes grezzi a un eventuale script malevolo nella
+    stessa pagina (mitigazione parziale, non totale, di un XSS).
+  - Le API di SubtleCrypto sono asincrone: tutti i metodi che calcolano
+    o verificano un MAC restituiscono una Promise, e la costruzione
+    dell'istanza avviene tramite la factory asincrona
+    WGSecureSession.create(...) invece che nel costruttore.</div>
+        
+
+        
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="wg_secure_session.js.html">wg_secure_session.js</a>, <a href="wg_secure_session.js.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="module-wg_secure_session.WGSecureSession.html">WGSecureSession</a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~b64decode"><span class="type-signature">(inner) </span>b64decode<span class="signature">(str)</span><span class="type-signature"> &rarr; {Uint8Array}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Decode URL-safe base64 into bytes.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>str</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="wg_secure_session.js.html">wg_secure_session.js</a>, <a href="wg_secure_session.js.html#line138">line 138</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Uint8Array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~b64encode"><span class="type-signature">(inner) </span>b64encode<span class="signature">(bytes)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Encode bytes as URL-safe base64 compatible with Python urlsafe_b64encode.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>bytes</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Uint8Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="wg_secure_session.js.html">wg_secure_session.js</a>, <a href="wg_secure_session.js.html#line124">line 124</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~bytesToHex"><span class="type-signature">(inner) </span>bytesToHex<span class="signature">(bytes)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Encode bytes as lowercase hexadecimal.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>bytes</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Uint8Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="wg_secure_session.js.html">wg_secure_session.js</a>, <a href="wg_secure_session.js.html#line96">line 96</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~hexToBytes"><span class="type-signature">(inner) </span>hexToBytes<span class="signature">(hex)</span><span class="type-signature"> &rarr; {Uint8Array}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Decode an even-length hexadecimal string.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>hex</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="wg_secure_session.js.html">wg_secure_session.js</a>, <a href="wg_secure_session.js.html#line107">line 107</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Uint8Array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-vpn_app.html">vpn_app</a></li><li><a href="module-wg_auth_session.html">wg_auth_session</a></li><li><a href="module-wg_client_api.html">wg_client_api</a></li><li><a href="module-wg_client_errors.html">wg_client_errors</a></li><li><a href="module-wg_opaque_client.html">wg_opaque_client</a></li><li><a href="module-wg_secure_session.html">wg_secure_session</a></li></ul><h3>Classes</h3><ul><li><a href="module-wg_auth_session.WGAuthSession.html">WGAuthSession</a></li><li><a href="module-wg_client_api.WGClientAPI.html">WGClientAPI</a></li><li><a href="module-wg_client_errors.WGAuthenticationError.html">WGAuthenticationError</a></li><li><a href="module-wg_client_errors.WGClientError.html">WGClientError</a></li><li><a href="module-wg_client_errors.WGCounterError.html">WGCounterError</a></li><li><a href="module-wg_client_errors.WGCounterExhaustedError.html">WGCounterExhaustedError</a></li><li><a href="module-wg_client_errors.WGError.html">WGError</a></li><li><a href="module-wg_client_errors.WGInvalidEncodingError.html">WGInvalidEncodingError</a></li><li><a href="module-wg_client_errors.WGInvalidFieldError.html">WGInvalidFieldError</a></li><li><a href="module-wg_client_errors.WGInvalidMACError.html">WGInvalidMACError</a></li><li><a href="module-wg_client_errors.WGMalformedMessageError.html">WGMalformedMessageError</a></li><li><a href="module-wg_client_errors.WGProtocolError.html">WGProtocolError</a></li><li><a href="module-wg_client_errors.WGReplayError.html">WGReplayError</a></li><li><a href="module-wg_client_errors.WGRequestRateExceededError.html">WGRequestRateExceededError</a></li><li><a href="module-wg_client_errors.WGSessionError.html">WGSessionError</a></li><li><a href="module-wg_client_errors.WGSessionExpiredError.html">WGSessionExpiredError</a></li><li><a href="module-wg_client_errors.WGSessionMismatchError.html">WGSessionMismatchError</a></li><li><a href="module-wg_opaque_client.WGOPAQUEClient.html">WGOPAQUEClient</a></li><li><a href="module-wg_secure_session.WGSecureSession.html">WGSecureSession</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sat Oct 03 2026 11:10:12 GMT+0200 (Ora legale dell’Europa centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

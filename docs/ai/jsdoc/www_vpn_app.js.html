@@ -1,19 +1,32 @@
-# `src/wg_frontend/www/vpn/app.js`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: www/vpn/app.js</title>
 
-## Metadata
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
 
-- Path: `src/wg_frontend/www/vpn/app.js`
-- Language: `javascript`
-- Lines: 1208
-- SHA256: `6eb88baaffacb4ae03d9768c7c1f553ddac8b19df6ad56305a55efcbaff47039`
-- Imports:
-  - `/js/wg_auth_session.js`
-  - `/js/wg_client_api.js`
+<body>
 
-## Source
+<div id="main">
 
-```javascript
-/**
+    <h1 class="page-title">Source: www/vpn/app.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
  * Browser application wiring for the wg_manager VPN frontend.
  *
  * Coordinates login, authenticated session lifetime, peer CRUD, provisioning,
@@ -198,10 +211,10 @@ function renderPeers(result) {
 
     if (!Array.isArray(peers) || peers.length === 0) {
         peerList.innerHTML = [
-            '<article class="placeholder-card">',
-            "<strong>Nessun peer</strong>",
-            "<span>Non risultano peer associati a questa sessione.</span>",
-            "</article>",
+            '&lt;article class="placeholder-card">',
+            "&lt;strong>Nessun peer&lt;/strong>",
+            "&lt;span>Non risultano peer associati a questa sessione.&lt;/span>",
+            "&lt;/article>",
         ].join("");
         return;
     }
@@ -452,7 +465,7 @@ function base64UrlToWireGuard(value) {
  * Generate an exportable X25519 key pair in the browser and convert it to WireGuard encoding.
  *
  * The private key is returned to in-memory UI state only; it is never sent to wg_manager.
- * @returns {Promise<Object>}
+ * @returns {Promise&lt;Object>}
  */
 async function generateWireGuardKeyPair() {
     const keyPair = await crypto.subtle.generateKey(
@@ -489,16 +502,16 @@ async function generateWireGuardKeyPair() {
 function configIsComplete(text) {
     return (
         typeof text === "string"
-        && text.length > 0
-        && !text.includes("<")
-        && !text.includes(">")
+        &amp;&amp; text.length > 0
+        &amp;&amp; !text.includes("&lt;")
+        &amp;&amp; !text.includes(">")
     );
 }
 
 /** Enable or hide config export/QR controls based on provisioning completeness. */
 function updateQrAvailability() {
     const configText = peerConfigPreview.textContent ?? "";
-    const ready = provisionedPeer && configIsComplete(configText);
+    const ready = provisionedPeer &amp;&amp; configIsComplete(configText);
 
     peerDownloadConfigButton.disabled = !ready;
     peerQrStatus.textContent = ready
@@ -538,8 +551,8 @@ function renderClientConfigPreview() {
         `Address = ${address}`,
         "",
         "[Peer]",
-        `PublicKey = ${data.server_public_key ?? "<server public key>"}`,
-        `Endpoint = ${data.endpoint ?? "<server endpoint>"}`,
+        `PublicKey = ${data.server_public_key ?? "&lt;server public key>"}`,
+        `Endpoint = ${data.endpoint ?? "&lt;server endpoint>"}`,
         `AllowedIPs = ${allowedIps.join(", ")}`,
         ...(keepalive > 0
             ? [`PersistentKeepalive = ${keepalive}`]
@@ -551,7 +564,7 @@ function renderClientConfigPreview() {
 
 /**
  * Fetch provisioning state, repopulate available addresses and refresh config preview/debug state.
- * @returns {Promise<Object>} Authenticated provisioning response wrapper.
+ * @returns {Promise&lt;Object>} Authenticated provisioning response wrapper.
  */
 async function refreshProvisioning() {
     const client = window.wgFrontend.client;
@@ -617,7 +630,7 @@ async function refreshProvisioning() {
 
 /**
  * Refresh and render the current principal's visible WireGuard peers.
- * @returns {Promise<Object>} Authenticated status response wrapper.
+ * @returns {Promise&lt;Object>} Authenticated status response wrapper.
  */
 async function refreshPeers() {
     const client = window.wgFrontend.client;
@@ -654,7 +667,7 @@ function renderAdminState(result) {
 
     if (peers.length === 0) {
         adminPeerList.innerHTML =
-            '<article class="placeholder-card"><strong>Nessun peer</strong><span>Nessun record ownership disponibile.</span></article>';
+            '&lt;article class="placeholder-card">&lt;strong>Nessun peer&lt;/strong>&lt;span>Nessun record ownership disponibile.&lt;/span>&lt;/article>';
     } else {
         for (const peer of peers) {
             const card = document.createElement("article");
@@ -720,7 +733,7 @@ function renderAdminState(result) {
 
     if (users.length === 0) {
         adminUserList.innerHTML =
-            '<article class="placeholder-card"><strong>Nessun utente</strong></article>';
+            '&lt;article class="placeholder-card">&lt;strong>Nessun utente&lt;/strong>&lt;/article>';
     } else {
         for (const username of users) {
             const card = document.createElement("article");
@@ -775,7 +788,7 @@ function renderAdminState(result) {
 
 /**
  * Refresh the admin-only ownership/account view.
- * @returns {Promise<Object>} Authenticated admin response wrapper.
+ * @returns {Promise&lt;Object>} Authenticated admin response wrapper.
  */
 async function refreshAdmin() {
     const client = window.wgFrontend.client;
@@ -800,13 +813,13 @@ async function refreshAdmin() {
 
 /**
  * Probe wg-auth availability and surface whether a server-side session already exists.
- * @returns {Promise<void>}
+ * @returns {Promise&lt;void>}
  */
 async function refreshAuthStatus() {
     try {
         const result = await auth.status();
 
-        if (result.ok && result.data?.ok) {
+        if (result.ok &amp;&amp; result.data?.ok) {
             const serverSessionActive =
                 result.data.authenticated || result.data.client_active;
 
@@ -814,7 +827,7 @@ async function refreshAuthStatus() {
                 ? "Sessione auth già attiva"
                 : "Auth online";
 
-            if (serverSessionActive && !auth.sessionId) {
+            if (serverSessionActive &amp;&amp; !auth.sessionId) {
                 status.className = "auth-status";
                 status.textContent =
                     "Esiste una sessione server ancora attiva. Verrà chiusa automaticamente se il browser che la possiede non invia più richieste autenticate.";
@@ -1194,7 +1207,7 @@ for (const viewButton of viewButtons) {
             }
         }
 
-        if (selected === "admin" && !adminNavButton.hidden) {
+        if (selected === "admin" &amp;&amp; !adminNavButton.hidden) {
             try {
                 await refreshAdmin();
             } catch (error) {
@@ -1221,4 +1234,26 @@ window.addEventListener("pagehide", (event) => {
         client.fastLogout();
     }
 });
-```
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-vpn_app.html">vpn_app</a></li><li><a href="module-wg_auth_session.html">wg_auth_session</a></li><li><a href="module-wg_client_api.html">wg_client_api</a></li><li><a href="module-wg_client_errors.html">wg_client_errors</a></li><li><a href="module-wg_opaque_client.html">wg_opaque_client</a></li><li><a href="module-wg_secure_session.html">wg_secure_session</a></li></ul><h3>Classes</h3><ul><li><a href="module-wg_auth_session.WGAuthSession.html">WGAuthSession</a></li><li><a href="module-wg_client_api.WGClientAPI.html">WGClientAPI</a></li><li><a href="module-wg_client_errors.WGAuthenticationError.html">WGAuthenticationError</a></li><li><a href="module-wg_client_errors.WGClientError.html">WGClientError</a></li><li><a href="module-wg_client_errors.WGCounterError.html">WGCounterError</a></li><li><a href="module-wg_client_errors.WGCounterExhaustedError.html">WGCounterExhaustedError</a></li><li><a href="module-wg_client_errors.WGError.html">WGError</a></li><li><a href="module-wg_client_errors.WGInvalidEncodingError.html">WGInvalidEncodingError</a></li><li><a href="module-wg_client_errors.WGInvalidFieldError.html">WGInvalidFieldError</a></li><li><a href="module-wg_client_errors.WGInvalidMACError.html">WGInvalidMACError</a></li><li><a href="module-wg_client_errors.WGMalformedMessageError.html">WGMalformedMessageError</a></li><li><a href="module-wg_client_errors.WGProtocolError.html">WGProtocolError</a></li><li><a href="module-wg_client_errors.WGReplayError.html">WGReplayError</a></li><li><a href="module-wg_client_errors.WGRequestRateExceededError.html">WGRequestRateExceededError</a></li><li><a href="module-wg_client_errors.WGSessionError.html">WGSessionError</a></li><li><a href="module-wg_client_errors.WGSessionExpiredError.html">WGSessionExpiredError</a></li><li><a href="module-wg_client_errors.WGSessionMismatchError.html">WGSessionMismatchError</a></li><li><a href="module-wg_opaque_client.WGOPAQUEClient.html">WGOPAQUEClient</a></li><li><a href="module-wg_secure_session.WGSecureSession.html">WGSecureSession</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sat Oct 03 2026 11:10:12 GMT+0200 (Ora legale dell’Europa centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

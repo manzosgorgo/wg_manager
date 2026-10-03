@@ -1,16 +1,32 @@
-# `src/wg_frontend/wg_secure_session.js`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: wg_secure_session.js</title>
 
-## Metadata
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
 
-- Path: `src/wg_frontend/wg_secure_session.js`
-- Language: `javascript`
-- Lines: 753
-- SHA256: `62b9dbade3d4c7cdc7f591430d5974d1ef5295df42f9956e9964cbea26f098de`
+<body>
 
-## Source
+<div id="main">
 
-```javascript
-/**
+    <h1 class="page-title">Source: wg_secure_session.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
  * WGSecureSession — porting JavaScript (Web Crypto API) del modulo Python
  * src/wg_client/wg_secure_session.py
  *
@@ -121,7 +137,7 @@ function hexToBytes(hex) {
     throw new WGProtocolError("hex string must have even length");
   }
   const out = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < out.length; i++) {
+  for (let i = 0; i &lt; out.length; i++) {
     out[i] = parseInt(hex.substr(i * 2, 2), 16);
   }
   return out;
@@ -162,7 +178,7 @@ function b64decode(str) {
     throw new WGInvalidEncodingError("invalid base64 encoding");
   }
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
+  for (let i = 0; i &lt; binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
@@ -264,25 +280,25 @@ export class WGSecureSession {
     const maxRequestFrequency = sc.max_request_frequency ?? 0.0;
     const replayWindowSize = sc.replay_window_size ?? 64;
 
-    if (!Number.isInteger(sessionTimeout) || sessionTimeout <= 0) {
+    if (!Number.isInteger(sessionTimeout) || sessionTimeout &lt;= 0) {
       throw new WGInvalidFieldError("invalid session timeout");
     }
-    if (!Number.isFinite(maxRequestFrequency) || maxRequestFrequency < 0) {
+    if (!Number.isFinite(maxRequestFrequency) || maxRequestFrequency &lt; 0) {
       throw new WGInvalidFieldError("invalid maximum request frequency");
     }
-    if (!Number.isInteger(replayWindowSize) || replayWindowSize <= 0) {
+    if (!Number.isInteger(replayWindowSize) || replayWindowSize &lt;= 0) {
       throw new WGInvalidFieldError("invalid replay window size");
     }
 
     const counterCapacity = counterMax - counterMin + 1;
-    if (maxRequestFrequency > 0 && maxRequestFrequency * sessionTimeout > counterCapacity) {
+    if (maxRequestFrequency > 0 &amp;&amp; maxRequestFrequency * sessionTimeout > counterCapacity) {
       throw new WGInvalidFieldError("maximum request frequency and session timeout exceed counter capacity");
     }
 
-    if (counterMin < 1) {
+    if (counterMin &lt; 1) {
       throw new WGInvalidFieldError("invalid counter minimum");
     }
-    if (counterMax < counterMin) {
+    if (counterMax &lt; counterMin) {
       throw new WGInvalidFieldError("invalid counter range");
     }
     if (counterMax > 0xffffffff) {
@@ -391,7 +407,7 @@ export class WGSecureSession {
    * @param {string} method HTTP method.
    * @param {string} path Canonical request target covered by the MAC.
    * @param {Uint8Array} [body] Raw request body.
-   * @returns {Promise<Object>}
+   * @returns {Promise&lt;Object>}
    */
   async createRequestAuth(method, path, body = new Uint8Array(0)) {
     if (typeof method !== "string") throw new WGInvalidFieldError("method must be str");
@@ -439,7 +455,7 @@ export class WGSecureSession {
 
   /**
    * Verify an incoming request MAC and atomically commit its counter to the replay window.
-   * @returns {Promise<boolean>} True when authentication succeeds.
+   * @returns {Promise&lt;boolean>} True when authentication succeeds.
    */
   async verifyRequest(auth, method, path, body = new Uint8Array(0)) {
     if (typeof method !== "string") throw new WGInvalidFieldError("method must be str");
@@ -483,7 +499,7 @@ export class WGSecureSession {
 
   /**
    * Authenticate a response using the request's session ID, counter and nonce.
-   * @returns {Promise<Object>}
+   * @returns {Promise&lt;Object>}
    */
   async createResponseAuth(requestAuth, status, body = new Uint8Array(0)) {
     if (!Number.isInteger(status)) throw new WGInvalidFieldError("status must be int");
@@ -515,7 +531,7 @@ export class WGSecureSession {
    * A response is accepted only once and removes the corresponding request from
    * the pending table after successful MAC/replay validation.
    *
-   * @returns {Promise<boolean>} True when authentication succeeds.
+   * @returns {Promise&lt;boolean>} True when authentication succeeds.
    */
   async verifyResponse(auth, requestAuth, status, body = new Uint8Array(0)) {
     if (!Number.isInteger(status)) throw new WGInvalidFieldError("status must be int");
@@ -579,7 +595,7 @@ export class WGSecureSession {
   }
 
   _checkRequestRate() {
-    if (this.maxRequestFrequency <= 0) return;
+    if (this.maxRequestFrequency &lt;= 0) return;
 
     const elapsed = Math.max(0, this._clock() - this._sessionStarted);
     const requestsUsed = this._requestCounter - this.counterMin + 1;
@@ -595,7 +611,7 @@ export class WGSecureSession {
       this.counterMin,
       highestSeen - this.replayWindowSize + 1,
     );
-    return lowerBound <= counter && counter <= this.counterMax;
+    return lowerBound &lt;= counter &amp;&amp; counter &lt;= this.counterMax;
   }
 
   _acceptReceiveCounter(counter, request) {
@@ -616,7 +632,7 @@ export class WGSecureSession {
     );
 
     for (const value of Array.from(accepted)) {
-      if (value < lowerBound) accepted.delete(value);
+      if (value &lt; lowerBound) accepted.delete(value);
     }
 
     if (request) {
@@ -662,7 +678,7 @@ export class WGSecureSession {
     if (typeof value !== "number" || !Number.isInteger(value)) {
       throw new WGInvalidFieldError("counter must be int");
     }
-    if (value < this.counterMin || value > this.counterMax) {
+    if (value &lt; this.counterMin || value > this.counterMax) {
       throw new WGCounterError("counter out of valid range");
     }
     return value;
@@ -756,11 +772,32 @@ export class WGSecureSession {
 function bytesEqual(a, b) {
   if (a.length !== b.length) return false;
   let diff = 0;
-  for (let i = 0; i < a.length; i++) {
+  for (let i = 0; i &lt; a.length; i++) {
     diff |= a[i] ^ b[i];
   }
   return diff === 0;
 }
 
-export { b64encode, b64decode, bytesToHex, hexToBytes };
-```
+export { b64encode, b64decode, bytesToHex, hexToBytes };</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-vpn_app.html">vpn_app</a></li><li><a href="module-wg_auth_session.html">wg_auth_session</a></li><li><a href="module-wg_client_api.html">wg_client_api</a></li><li><a href="module-wg_client_errors.html">wg_client_errors</a></li><li><a href="module-wg_opaque_client.html">wg_opaque_client</a></li><li><a href="module-wg_secure_session.html">wg_secure_session</a></li></ul><h3>Classes</h3><ul><li><a href="module-wg_auth_session.WGAuthSession.html">WGAuthSession</a></li><li><a href="module-wg_client_api.WGClientAPI.html">WGClientAPI</a></li><li><a href="module-wg_client_errors.WGAuthenticationError.html">WGAuthenticationError</a></li><li><a href="module-wg_client_errors.WGClientError.html">WGClientError</a></li><li><a href="module-wg_client_errors.WGCounterError.html">WGCounterError</a></li><li><a href="module-wg_client_errors.WGCounterExhaustedError.html">WGCounterExhaustedError</a></li><li><a href="module-wg_client_errors.WGError.html">WGError</a></li><li><a href="module-wg_client_errors.WGInvalidEncodingError.html">WGInvalidEncodingError</a></li><li><a href="module-wg_client_errors.WGInvalidFieldError.html">WGInvalidFieldError</a></li><li><a href="module-wg_client_errors.WGInvalidMACError.html">WGInvalidMACError</a></li><li><a href="module-wg_client_errors.WGMalformedMessageError.html">WGMalformedMessageError</a></li><li><a href="module-wg_client_errors.WGProtocolError.html">WGProtocolError</a></li><li><a href="module-wg_client_errors.WGReplayError.html">WGReplayError</a></li><li><a href="module-wg_client_errors.WGRequestRateExceededError.html">WGRequestRateExceededError</a></li><li><a href="module-wg_client_errors.WGSessionError.html">WGSessionError</a></li><li><a href="module-wg_client_errors.WGSessionExpiredError.html">WGSessionExpiredError</a></li><li><a href="module-wg_client_errors.WGSessionMismatchError.html">WGSessionMismatchError</a></li><li><a href="module-wg_opaque_client.WGOPAQUEClient.html">WGOPAQUEClient</a></li><li><a href="module-wg_secure_session.WGSecureSession.html">WGSecureSession</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Sat Oct 03 2026 11:10:12 GMT+0200 (Ora legale dell’Europa centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

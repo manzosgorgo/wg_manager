@@ -863,70 +863,70 @@ Structural symbol index extracted mechanically from source files.
 
 ## `src/wg_frontend/wg_auth_session.js`
 
-- **class** `WGAuthSession` — line 2
+- **class** `WGAuthSession` — line 11
 
 ## `src/wg_frontend/wg_client_api.js`
 
-- **class** `WGClientAPI` — line 17
+- **class** `WGClientAPI` — line 27
 
 ## `src/wg_frontend/wg_client_errors.js`
 
-- **class** `WGError` (Error) — line 18
-- **class** `WGClientError` (WGError) — line 25
-- **class** `WGProtocolError` (WGClientError) — line 32
-- **class** `WGMalformedMessageError` (WGProtocolError) — line 39
-- **class** `WGInvalidFieldError` (WGProtocolError) — line 46
-- **class** `WGInvalidEncodingError` (WGProtocolError) — line 53
-- **class** `WGCounterError` (WGProtocolError) — line 60
-- **class** `WGCounterExhaustedError` (WGCounterError) — line 67
-- **class** `WGAuthenticationError` (WGClientError) — line 74
-- **class** `WGInvalidMACError` (WGAuthenticationError) — line 81
-- **class** `WGSessionMismatchError` (WGAuthenticationError) — line 88
-- **class** `WGSessionError` (WGClientError) — line 95
-- **class** `WGSessionExpiredError` (WGSessionError) — line 102
-- **class** `WGRequestRateExceededError` (WGSessionError) — line 109
-- **class** `WGReplayError` (WGProtocolError) — line 116
+- **class** `WGError` (Error) — line 26
+- **class** `WGClientError` (WGError) — line 34
+- **class** `WGProtocolError` (WGClientError) — line 42
+- **class** `WGMalformedMessageError` (WGProtocolError) — line 50
+- **class** `WGInvalidFieldError` (WGProtocolError) — line 58
+- **class** `WGInvalidEncodingError` (WGProtocolError) — line 66
+- **class** `WGCounterError` (WGProtocolError) — line 74
+- **class** `WGCounterExhaustedError` (WGCounterError) — line 82
+- **class** `WGAuthenticationError` (WGClientError) — line 90
+- **class** `WGInvalidMACError` (WGAuthenticationError) — line 98
+- **class** `WGSessionMismatchError` (WGAuthenticationError) — line 106
+- **class** `WGSessionError` (WGClientError) — line 114
+- **class** `WGSessionExpiredError` (WGSessionError) — line 122
+- **class** `WGRequestRateExceededError` (WGSessionError) — line 130
+- **class** `WGReplayError` (WGProtocolError) — line 138
 
 ## `src/wg_frontend/wg_opaque_client.js`
 
-- **function** `opaqueLibrary` — line 1
-- **class** `WGOPAQUEClient` — line 12
+- **function** `opaqueLibrary` — line 6
+- **class** `WGOPAQUEClient` — line 21
 
 ## `src/wg_frontend/wg_secure_session.js`
 
-- **function** `getSubtle` — line 57
-- **function** `getRandomBytes` — line 64
-- **function** `concatBytes` — line 77
-- **function** `bytesToHex` — line 88
-- **function** `hexToBytes` — line 94
-- **function** `b64encode` — line 107
-- **function** `b64decode` — line 115
-- **function** `sha256` — line 136
-- **class** `WGSecureSession` — line 152
-- **function** `bytesEqual` — line 679
+- **function** `getSubtle` — line 59
+- **function** `getRandomBytes` — line 66
+- **function** `concatBytes` — line 79
+- **function** `bytesToHex` — line 96
+- **function** `hexToBytes` — line 107
+- **function** `b64encode` — line 124
+- **function** `b64decode` — line 138
+- **function** `sha256` — line 158
+- **class** `WGSecureSession` — line 182
+- **function** `bytesEqual` — line 743
 
 ## `src/wg_frontend/www/vpn/app.js`
 
-- **function** `setConfigPendingExport` — line 42
-- **function** `confirmDiscardPendingConfig` — line 46
-- **function** `stopHeartbeat` — line 84
-- **function** `startHeartbeat` — line 91
-- **function** `showAuthView` — line 126
-- **function** `showPeerView` — line 132
-- **function** `showPostauthView` — line 138
-- **function** `renderPeers` — line 147
-- **function** `clientAllowedIpsForMode` — line 373
-- **function** `base64UrlToWireGuard` — line 383
-- **function** `generateWireGuardKeyPair` — line 391
-- **function** `configIsComplete` — line 418
-- **function** `updateQrAvailability` — line 427
-- **function** `renderClientConfigPreview` — line 443
-- **function** `refreshProvisioning` — line 477
-- **function** `refreshPeers` — line 538
-- **function** `renderAdminState` — line 559
-- **function** `refreshAdmin` — line 689
-- **function** `refreshAuthStatus` — line 709
-- **function** `renderQrCode` — line 986
+- **function** `setConfigPendingExport` — line 57
+- **function** `confirmDiscardPendingConfig` — line 66
+- **function** `stopHeartbeat` — line 105
+- **function** `startHeartbeat` — line 118
+- **function** `showAuthView` — line 154
+- **function** `showPeerView` — line 161
+- **function** `showPostauthView` — line 168
+- **function** `renderPeers` — line 181
+- **function** `clientAllowedIpsForMode` — line 413
+- **function** `base64UrlToWireGuard` — line 428
+- **function** `generateWireGuardKeyPair` — line 442
+- **function** `configIsComplete` — line 474
+- **function** `updateQrAvailability` — line 484
+- **function** `renderClientConfigPreview` — line 503
+- **function** `refreshProvisioning` — line 541
+- **function** `refreshPeers` — line 607
+- **function** `renderAdminState` — line 632
+- **function** `refreshAdmin` — line 765
+- **function** `refreshAuthStatus` — line 790
+- **function** `renderQrCode` — line 1069
 
 ## `src/wg_manager/wg_manager.py`
 

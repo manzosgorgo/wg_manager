@@ -4,12 +4,26 @@
 
 - Path: `debian/changelog`
 - Language: `unknown`
-- Lines: 38
-- SHA256: `1bdbc5896747a60a97090860241d7af45c478fa4977fc8ceb40d401ed1f9d249`
+- Lines: 52
+- SHA256: `39073baf3f0347d815b02e5ddc890eaf8ef416baf6a1f34a9cd59412b6cc97a8`
 
 ## Source
 
 ```
+wg-manager (0.1.0-8) unstable; urgency=medium
+
+  * Fix JSDoc type expressions and escaped newlines that broke API generation.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 11:40:00 +0200
+
+wg-manager (0.1.0-7) unstable; urgency=medium
+
+  * Add JSDoc API documentation for production frontend modules.
+  * Generate Python and JavaScript API references during documentation publish.
+  * Refresh stale JavaScript protocol/error documentation.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 11:25:00 +0200
+
 wg-manager (0.1.0-6) unstable; urgency=medium
 
   * Refresh pydoc source documentation across auth, client and controller.

@@ -4,8 +4,8 @@
 
 - Path: `src/wg_frontend/package.json`
 - Language: `json`
-- Lines: 11
-- SHA256: `0b20187a368323ab7a77d17fe6088078c46008364a87fb8af10b0139f3ba2a4f`
+- Lines: 15
+- SHA256: `8e7f1203710ad76de10f03a49695729c90e0e47d97491ca6ba8d96db842f4723`
 
 ## Source
 
@@ -16,9 +16,13 @@
   "description": "",
   "main": "wg_secure_session.js",
   "scripts": {
-    "test": "node check_vectors.mjs"
+    "test": "node check_vectors.mjs",
+    "docs:js": "python3 ../../tools/build_jsdoc.py"
   },
   "private": true,
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "jsdoc": "4.0.5"
+  }
 }
 ```

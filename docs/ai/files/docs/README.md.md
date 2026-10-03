@@ -4,8 +4,8 @@
 
 - Path: `docs/README.md`
 - Language: `markdown`
-- Lines: 424
-- SHA256: `14e31445d8ad05f059dbd0960ee576537ab353a47b4cb1255114679968608ecb`
+- Lines: 449
+- SHA256: `5ca08762e4a18052608b5795986550ec1b74dea6c5b2bb9179db1e27d430bae9`
 
 ## Source
 
@@ -40,6 +40,18 @@ Automatically generated documentation for the `wg_manager` project.
 
 The Python API reference is generated from module/class/function docstrings
 with `tools/build_pydoc.py`.
+
+## JavaScript API documentation
+
+- [JSDoc API index](ai/jsdoc/index.html)
+
+The browser API reference is generated from JSDoc comments in the production
+frontend sources with `tools/build_jsdoc.py`.
+
+## Operational documentation
+
+- [Debian deployment](deployment.md)
+- [Production configuration](configuration.md)
 
 ## Source documentation
 
@@ -427,6 +439,19 @@ docs/comm-callgraph.md
 docs/protocol-flow.md
 docs/static-analysis.md
 ```
+
+Le reference API vengono generate direttamente dalla documentazione inline dei
+moduli production:
+
+```bash
+python3 tools/build_pydoc.py
+python3 tools/build_jsdoc.py
+```
+
+La prima usa le docstring Python, la seconda i blocchi JSDoc dei sorgenti
+frontend. `tools/publish_docs.py` esegue automaticamente entrambe durante la
+pubblicazione, quindi gli HTML sotto `docs/ai/pydoc/` e
+`docs/ai/jsdoc/` non vanno modificati a mano.
 
 ## Stato del progetto
 

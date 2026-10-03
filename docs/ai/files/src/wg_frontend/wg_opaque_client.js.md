@@ -4,12 +4,17 @@
 
 - Path: `src/wg_frontend/wg_opaque_client.js`
 - Language: `javascript`
-- Lines: 68
-- SHA256: `ccac0b4a7a5853c9d45f851d87640e55e21a3f845d4de4713bebd438c7fd5dfa`
+- Lines: 90
+- SHA256: `3591ed4a142243758f105772b4abd4326ed813302ee6925b03d996c822a41375`
 
 ## Source
 
 ```javascript
+/**
+ * Thin browser adapter around the vendored libopaque implementation.
+ * Owns one OPAQUE credential request and recovers the shared session key after the server response.
+ * @module wg_opaque_client
+ */
 function opaqueLibrary() {
     const opaque = globalThis.libopaque;
 
@@ -22,7 +27,14 @@ function opaqueLibrary() {
     return opaque;
 }
 
+/**
+ * Stateful client half of one OPAQUE authentication exchange.
+ */
 export class WGOPAQUEClient {
+    /**
+     * @param {string} username User identifier bound into the OPAQUE transcript.
+     * @param {string} password User password; retained only for this exchange object.
+     */
     constructor(username, password) {
         if (typeof username !== "string" || !username) {
             throw new TypeError("username must be a non-empty string");
@@ -38,6 +50,10 @@ export class WGOPAQUEClient {
         this.requestState = null;
     }
 
+    /**
+     * Create the OPAQUE credential request sent to POST /auth.
+     * @returns {Promise<Object>} Hex-encoded public credential request.
+     */
     async start() {
         const opaque = opaqueLibrary();
         await opaque.ready;
@@ -53,6 +69,12 @@ export class WGOPAQUEClient {
         };
     }
 
+    /**
+     * Recover credentials from the server response and finish the exchange.
+     * @param {string} responseHex Hex-encoded OPAQUE credential response.
+     * @returns {Object}
+     * @throws {Error} If start() was not called or credential recovery fails.
+     */
     finish(responseHex) {
         if (!this.requestState) {
             throw new Error("OPAQUE authentication was not started");
