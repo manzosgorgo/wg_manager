@@ -379,7 +379,7 @@ export class WGSecureSession {
    * @param {string} method HTTP method.
    * @param {string} path Canonical request target covered by the MAC.
    * @param {Uint8Array} [body] Raw request body.
-   * @returns {Promise<{session_id:string,counter:number,nonce:string,mac:string}>}
+   * @returns {Promise<Object>}
    */
   async createRequestAuth(method, path, body = new Uint8Array(0)) {
     if (typeof method !== "string") throw new WGInvalidFieldError("method must be str");
@@ -471,7 +471,7 @@ export class WGSecureSession {
 
   /**
    * Authenticate a response using the request's session ID, counter and nonce.
-   * @returns {Promise<{session_id:string,counter:number,mac:string}>}
+   * @returns {Promise<Object>}
    */
   async createResponseAuth(requestAuth, status, body = new Uint8Array(0)) {
     if (!Number.isInteger(status)) throw new WGInvalidFieldError("status must be int");
