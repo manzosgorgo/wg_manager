@@ -97,16 +97,30 @@ def run(
     cwd: Path | None = None,
     capture: bool = False,
 ) -> subprocess.CompletedProcess[str]:
-    """Run a command and fail loudly on errors."""
+    """Run a command and stop with readable diagnostics on failure."""
 
-    print("$", " ".join(command))
+    print("$", " ".join(command), flush=True)
 
-    return subprocess.run(
+    result = subprocess.run(
         command,
         cwd=cwd,
-        check=True,
+        check=False,
         text=True,
         capture_output=capture,
+    )
+
+    if result.returncode == 0:
+        return result
+
+    if capture:
+        if result.stdout:
+            print(result.stdout, file=sys.stderr, end="")
+        if result.stderr:
+            print(result.stderr, file=sys.stderr, end="")
+
+    fail(
+        "command failed with exit status "
+        f"{result.returncode}: {' '.join(command)}"
     )
 
 
