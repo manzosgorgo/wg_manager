@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+HTTPS client adapters used by wg-client and integration tests.
+
+WGControllerClient is the production mTLS client for the privileged controller.
+WGClientClient targets the per-session wg-client API and can add WGSecureSession
+request/response authentication when supplied.
+"""
+
 import http.client
 import json
 import ssl
@@ -11,7 +19,13 @@ from src.wg_client.wg_client_API_handler import AUTH_SESSION_ID_HEADER, AUTH_COU
 
 
 class WGControllerClient:
+    """
+    Small mTLS JSON client for the privileged wg-manager controller API.
+    """
     def __init__(self, host, port, ca, cert, key, timeout=10):
+        """
+        Build a TLS 1.3 client context with CA verification and a client certificate.
+        """
         self.host = host
         self.port = port
         self.timeout = timeout
@@ -74,15 +88,24 @@ class WGControllerClient:
             conn.close()
 
     def status(self):
+        """
+        Return the controller /v1/status document.
+        """
         status, obj = self._request("GET", "/v1/status")
 
         return obj
 
     def provisioning(self):
+        """
+        Return controller provisioning metadata for client configuration generation.
+        """
         status, obj = self._request("GET", "/v1/provisioning")
         return obj
 
     def add_peer(self, public_key, allowed_ip):
+        """
+        Create a controller peer from public key and allowed IP.
+        """
         status, obj = self._request(
             "POST",
             "/v1/peers",
@@ -95,6 +118,9 @@ class WGControllerClient:
         return obj
 
     def remove_peer(self, public_key):
+        """
+        Remove one controller peer by public key.
+        """
         path = "/v1/peers/" + quote(public_key, safe="")
 
         status, obj = self._request("DELETE", path)
@@ -103,7 +129,13 @@ class WGControllerClient:
 
 
 class WGClientClient:
+    """
+    HTTP client for a per-session wg-client API, optionally using WGSecureSession.
+    """
     def __init__(self, host, port, ca, cert, key, timeout=10,listen_path=None,secure_session=None):
+        """
+        Configure TLS, optional listen-path prefix and optional secure-session authentication.
+        """
         self.log = logging.getLogger("wg_client.ClientClient")
         self.host = host
         self.port = port
@@ -195,11 +227,17 @@ class WGClientClient:
             conn.close()
 
     def status(self):
+        """
+        Return the per-session /v1/status document.
+        """
         status, obj = self._request("GET", "/v1/status")
 
         return obj
 
     def add_peer(self, public_key, allowed_ip):
+        """
+        Add a peer through the authenticated wg-client API.
+        """
         status, obj = self._request(
             "PUT",
             "/v1/peers/" + quote(public_key, safe=""),
@@ -212,6 +250,9 @@ class WGClientClient:
         return obj
 
     def remove_peer(self, public_key):
+        """
+        Remove a peer through the authenticated wg-client API.
+        """
         path = "/v1/peers/" + quote(public_key, safe="")
 
         status, obj = self._request("DELETE", path)
