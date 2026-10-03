@@ -1,5 +1,6 @@
 /**
- * Authenticated browser client for the per-session wg-client HTTPS API.\nSigns canonical API targets with WGSecureSession and verifies every authenticated response before JSON decoding.
+ * Authenticated browser client for the per-session wg-client HTTPS API.
+ * Signs canonical API targets with WGSecureSession and verifies every authenticated response before JSON decoding.
  * @module wg_client_api
  */
 import {
@@ -77,9 +78,9 @@ export class WGClientAPI {
      *
      * @param {string} method HTTP method.
      * @param {string} apiPath Canonical signed API path.
-     * @param {Object|null} [object=null] JSON request body.
+     * @param {?Object} [object=null] JSON request body.
      * @param {string} [transportPath=apiPath] Path actually sent over HTTP.
-     * @returns {Promise<{status:number, ok:boolean, data:Object|null}>}
+     * @returns {Promise<Object>}
      */
     async request(method, apiPath, object = null, transportPath = apiPath) {
         const bodyText = object === null
