@@ -3,7 +3,7 @@
 #
 #          FILE: generate_CA.sh
 #
-#         USAGE: ./generate_CA.sh <name>
+#         USAGE: ./generate_CA.sh <name> <profile>
 #
 #   DESCRIPTION:
 #       Generates a private key, CSR and X.509 certificate signed by the
@@ -13,7 +13,12 @@
 #           ../ca.crt
 #           ../ca.key
 #           <name>.cnf
-#           <name>-ext.cnf
+#           tools/pki/profiles/<profile>.cnf
+#
+#       Profiles:
+#           server
+#           client
+#           server-client
 #
 #       Generated files:
 #           <name>.key
@@ -26,6 +31,7 @@ set -Eeuo pipefail
 umask 077
 
 SCRIPT_NAME="$(basename "$0")"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 #-------------------------------------------------------------------------------
 # Configuration
@@ -45,7 +51,7 @@ CA_KEY="../ca.key"
 usage() {
     cat <<EOF
 Usage:
-    $SCRIPT_NAME <name>
+    $SCRIPT_NAME <name> <profile>
 
 Description:
     Generate a private key, CSR and X.509 certificate signed by the local CA.
@@ -53,27 +59,39 @@ Description:
 Arguments:
     name        Base name used for the generated files.
 
-                Example:
-                    $SCRIPT_NAME myserver
+    profile     Certificate extension profile:
+                    server
+                    client
+                    server-client
+
+                Examples:
+                    $SCRIPT_NAME controller server
+                    $SCRIPT_NAME apache-client client
+                    $SCRIPT_NAME client server-client
 
                 Generates:
-                    myserver.key
-                    myserver.csr
-                    myserver.crt
+                    <name>.key
+                    <name>.csr
+                    <name>.crt
 
 Required files:
     ../ca.crt
     ../ca.key
     <name>.cnf
-    <name>-ext.cnf
+
+Extension profiles:
+    $SCRIPT_DIR/profiles/server.cnf
+    $SCRIPT_DIR/profiles/client.cnf
+    $SCRIPT_DIR/profiles/server-client.cnf
 
 Options:
     -h, --help  Show this help message and exit.
 
 Examples:
-    $SCRIPT_NAME server
-    $SCRIPT_NAME jupyter
-    $SCRIPT_NAME nas
+    $SCRIPT_NAME auth server
+    $SCRIPT_NAME apache-client client
+    $SCRIPT_NAME client server-client
+    $SCRIPT_NAME controller server
 
 EOF
 }
@@ -122,14 +140,30 @@ case "$1" in
         ;;
 esac
 
-if [[ $# -ne 1 ]]; then
-    echo "ERROR: expected exactly one argument." >&2
+if [[ $# -ne 2 ]]; then
+    echo "ERROR: expected exactly two arguments." >&2
     echo >&2
     usage
     exit 1
 fi
 
 NAME="$1"
+PROFILE="$2"
+
+case "$PROFILE" in
+    server)
+        EXT_SECTION="v3_server"
+        ;;
+    client)
+        EXT_SECTION="v3_client"
+        ;;
+    server-client)
+        EXT_SECTION="v3_server_client"
+        ;;
+    *)
+        error "unknown certificate profile: $PROFILE"
+        ;;
+esac
 
 #-------------------------------------------------------------------------------
 # Validate name
@@ -153,7 +187,7 @@ CSR_FILE="./${NAME}.csr"
 CERT_FILE="./${NAME}.crt"
 
 CSR_CONFIG="./${NAME}.cnf"
-EXT_CONFIG="./${NAME}-ext.cnf"
+EXT_CONFIG="$SCRIPT_DIR/profiles/${PROFILE}.cnf"
 
 #-------------------------------------------------------------------------------
 # Dependency checks
@@ -199,6 +233,8 @@ echo
 echo "Certificate generation"
 echo "----------------------"
 echo "Name        : $NAME"
+echo "Profile     : $PROFILE"
+echo "Section     : $EXT_SECTION"
 echo "Key size    : $KEY_BITS bits"
 echo "Validity    : $CERT_DAYS days"
 echo "Hash        : $HASH_ALGORITHM"
@@ -249,7 +285,7 @@ openssl x509 \
     -days "$CERT_DAYS" \
     -"$HASH_ALGORITHM" \
     -extfile "$EXT_CONFIG" \
-    -extensions v3_server
+    -extensions "$EXT_SECTION"
 
 chmod 644 "$CERT_FILE"
 
