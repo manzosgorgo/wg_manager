@@ -8,7 +8,7 @@ case "$1" in
         fi
 
         if command -v a2enmod >/dev/null 2>&1; then
-            a2enmod alias proxy proxy_http ssl >/dev/null
+            a2enmod alias proxy proxy_http ssl headers >/dev/null
         fi
         ;;
 esac
@@ -19,10 +19,24 @@ esac
 if [ "$1" = "configure" ]; then
     install -d -o wg-auth -g wg-auth -m 0700 /var/lib/wg-manager/auth
 
-    install -d -o root -g root      -m 0755 /etc/wg-manager/cert
+    install -d -o root -g root -m 0755 /etc/wg-manager
+    install -d -o root -g root -m 0755 /etc/wg-manager/cert
     install -d -o root -g wg-auth   -m 0750 /etc/wg-manager/cert/auth
     install -d -o root -g wg-client -m 0750 /etc/wg-manager/cert/client
     install -d -o root -g www-data  -m 0750 /etc/wg-manager/cert/apache
+
+    if [ -e /etc/wg-manager/wg-auth.conf ]; then
+        chown root:wg-auth /etc/wg-manager/wg-auth.conf
+        chmod 0640 /etc/wg-manager/wg-auth.conf
+    fi
+    if [ -e /etc/wg-manager/wg-client.conf ]; then
+        chown root:wg-client /etc/wg-manager/wg-client.conf
+        chmod 0640 /etc/wg-manager/wg-client.conf
+    fi
+    if [ -e /etc/apache2/conf-available/wg-manager.conf ]; then
+        chown root:root /etc/apache2/conf-available/wg-manager.conf
+        chmod 0644 /etc/apache2/conf-available/wg-manager.conf
+    fi
 
     if [ -e /etc/wg-manager/cert/ca.crt ]; then
         chown root:root /etc/wg-manager/cert/ca.crt

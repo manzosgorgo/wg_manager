@@ -284,6 +284,7 @@ openssl x509 \
     -out "$CERT_FILE" \
     -days "$CERT_DAYS" \
     -"$HASH_ALGORITHM" \
+    -copy_extensions copy \
     -extfile "$EXT_CONFIG" \
     -extensions "$EXT_SECTION"
 

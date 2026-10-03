@@ -47,6 +47,8 @@ check_user www-data
 check_file /etc/wg-manager/wg-auth.conf
 check_file /etc/wg-manager/wg-client.conf
 check_file /etc/apache2/conf-available/wg-manager.conf
+check_readable_as wg-auth /etc/wg-manager/wg-auth.conf
+check_readable_as wg-client /etc/wg-manager/wg-client.conf
 
 check_file /etc/wg-manager/cert/ca.crt
 check_readable_as wg-auth /etc/wg-manager/cert/auth/auth.crt
