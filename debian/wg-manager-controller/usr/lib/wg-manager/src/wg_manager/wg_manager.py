@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+"""
+Privileged socket-activated WireGuard controller.
+
+Each systemd Accept=yes instance receives one connected TCP socket on file
+descriptor 3, upgrades it to TLS 1.3 with mandatory client certificates,
+parses one bounded HTTP/1.1 request, applies policy to the configured WireGuard
+interface through the wg executable, replies with JSON and exits.
+"""
+
 import base64, configparser, ipaddress, json, os, socket, ssl, subprocess, sys
 from http import HTTPStatus
 from urllib.parse import unquote
@@ -11,15 +20,27 @@ if not CONFIG:
 
 
 def log(msg):
+    """
+    Write one controller diagnostic line to stderr.
+    """
     print(f"[wg_manager] {msg}", file=sys.stderr, flush=True)
 
 
 class E(Exception):
+    """
+    Internal request error carrying the HTTP status and public error message.
+    """
     def __init__(self, code, msg):
+        """
+        Create an internal controller error with HTTP status and message.
+        """
         self.code, self.msg = code, msg
 
 
 def cfg():
+    """
+    Load WG_CONFIG and return normalized interface, TLS and VPN policy values.
+    """
     c = configparser.ConfigParser()
     if not c.read(CONFIG):
         raise RuntimeError(f"cannot read {CONFIG}")
@@ -34,6 +55,9 @@ def cfg():
 
 
 def reply(s, code, obj):
+    """
+    Send one JSON HTTP/1.1 response and close-oriented headers.
+    """
     b = json.dumps(obj, separators=(",", ":")).encode()
     h = (
         f"HTTP/1.1 {code} {HTTPStatus(code).phrase}\r\nContent-Type: application/json\r\nContent-Length: {len(b)}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n"
@@ -42,6 +66,9 @@ def reply(s, code, obj):
 
 
 def request(s):
+    """
+    Read and validate one bounded HTTP/1.1 request from the connected socket.
+    """
     s.settimeout(10)
     d = b""
     while b"\r\n\r\n" not in d:
@@ -77,6 +104,9 @@ def request(s):
 
 
 def wg(args):
+    """
+    Execute the configured wg program with a five-second timeout and return stdout.
+    """
     #    log(f"wg {' '.join(args)}")
     p = subprocess.run(
         [WG_PROGRAM, *args],
@@ -92,6 +122,9 @@ def wg(args):
 
 
 def key(k):
+    """
+    Validate a standard-base64 WireGuard public key and return it unchanged.
+    """
     try:
         b = base64.b64decode(k, validate=True)
     except Exception:
@@ -102,6 +135,9 @@ def key(k):
 
 
 def peers(interface):
+    """
+    Return normalized peer state parsed from wg show INTERFACE dump.
+    """
     out = wg(["show", interface, "dump"])
     r = []
     for l in out.splitlines()[1:]:
@@ -121,6 +157,9 @@ def peers(interface):
 
 
 def provisioning(c):
+    """
+    Return public key, listen port, VPN policy and currently used host addresses.
+    """
     out = wg(["show", c["if"], "dump"])
     lines = out.splitlines()
 
@@ -158,6 +197,9 @@ def provisioning(c):
 
 
 def add(c, o):
+    """
+    Validate policy/uniqueness and add one WireGuard peer.
+    """
     if not isinstance(o, dict):
         raise E(400, "JSON object required")
     pk = key(o.get("public_key", ""))
@@ -178,6 +220,9 @@ def add(c, o):
 
 
 def remove(c, pk):
+    """
+    Validate existence and remove one WireGuard peer.
+    """
     pk = key(pk)
     if not any(p["public_key"] == pk for p in peers(c["if"])):
         raise E(404, "peer not found")
@@ -186,6 +231,9 @@ def remove(c, pk):
 
 
 def dispatch(c, m, t, b):
+    """
+    Route the controller HTTP method/target to status, provisioning or peer mutation.
+    """
     if m == "GET" and t == "/v1/status":
         return 200, {"ok": True, "interface": c["if"], "peers": peers(c["if"])}
     if m == "GET" and t == "/v1/provisioning":
@@ -203,6 +251,9 @@ def dispatch(c, m, t, b):
 
 
 def systemd_socket():
+    """
+    Adopt exactly one socket passed by systemd socket activation on file descriptor 3.
+    """
     pid = os.environ.get("LISTEN_PID")
     nfds = os.environ.get("LISTEN_FDS")
 
@@ -216,6 +267,9 @@ def systemd_socket():
 
 
 def tls(c):
+    """
+    Wrap the inherited socket in TLS 1.3 and require a client certificate from the configured CA.
+    """
     raw = systemd_socket()
     raw.settimeout(10)
 
@@ -229,6 +283,9 @@ def tls(c):
 
 
 def main():
+    """
+    Process one socket-activated controller request and return a process exit status.
+    """
     c = cfg()
     s = None
     try:

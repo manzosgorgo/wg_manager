@@ -1,6 +1,17 @@
+/**
+ * Browser-side OPAQUE authentication orchestration for wg-auth.
+ * Keeps the resulting session identifier, shared session key and activation metadata only in memory.
+ * @module wg_auth_session
+ */
 import { WGOPAQUEClient } from "./wg_opaque_client.js";
 
+/**
+ * One browser authentication session against wg-auth.
+ */
 export class WGAuthSession {
+    /**
+     * @param {string} [baseUrl=""] Base URL prepended to wg-auth endpoints.
+     */
     constructor(baseUrl = "") {
         this.baseUrl = baseUrl.replace(/\/$/, "");
         this.sessionId = null;
@@ -43,10 +54,25 @@ export class WGAuthSession {
         };
     }
 
+    /**
+     * Read coarse authentication/client activation state from wg-auth.
+     * @returns {Promise<Object>}
+     */
     async status() {
         return this._request("GET", "/status");
     }
 
+    /**
+     * Complete the two-message OPAQUE login and persist session material in memory.
+     *
+     * The client and server OPAQUE session keys are compared before the session
+     * is accepted. A mismatch is treated as a fatal authentication failure.
+     *
+     * @param {string} username
+     * @param {string} password
+     * @returns {Promise<Object>} wg-auth verification/activation response.
+     * @throws {Error} If OPAQUE or either HTTP phase fails.
+     */
     async authenticate(username, password) {
         const opaque = new WGOPAQUEClient(username, password);
         const startRequest = await opaque.start();
@@ -104,6 +130,10 @@ export class WGAuthSession {
         };
     }
 
+    /**
+     * Erase all browser-held authentication/session material.
+     * @returns {void}
+     */
     clear() {
         this.username = null;
         this.sessionId = null;

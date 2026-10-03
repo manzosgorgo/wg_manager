@@ -29,6 +29,8 @@
  *     o verificano un MAC restituiscono una Promise, e la costruzione
  *     dell'istanza avviene tramite la factory asincrona
  *     WGSecureSession.create(...) invece che nel costruttore.
+ *
+ * @module wg_secure_session
  */
 
 import {
@@ -86,12 +88,22 @@ function concatBytes(...arrays) {
   return out;
 }
 
+/**
+ * Encode bytes as lowercase hexadecimal.
+ * @param {Uint8Array} bytes
+ * @returns {string}
+ */
 function bytesToHex(bytes) {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
+/**
+ * Decode an even-length hexadecimal string.
+ * @param {string} hex
+ * @returns {Uint8Array}
+ */
 function hexToBytes(hex) {
   if (hex.length % 2 !== 0) {
     throw new WGProtocolError("hex string must have even length");
@@ -104,6 +116,11 @@ function hexToBytes(hex) {
 }
 
 // Base64 URL-safe, equivalente a base64.urlsafe_b64encode/decode di Python
+/**
+ * Encode bytes as URL-safe base64 compatible with Python urlsafe_b64encode.
+ * @param {Uint8Array} bytes
+ * @returns {string}
+ */
 function b64encode(bytes) {
   let binary = "";
   for (const byte of bytes) {
@@ -113,6 +130,11 @@ function b64encode(bytes) {
   return standard.replace(/\+/g, "-").replace(/\//g, "_");
 }
 
+/**
+ * Decode URL-safe base64 into bytes.
+ * @param {string} str
+ * @returns {Uint8Array}
+ */
 function b64decode(str) {
   if (typeof str !== "string") {
     throw new WGInvalidFieldError("encoded value must be a string");
@@ -150,6 +172,13 @@ const MAC_SIZE = 32;
 
 const PROTOCOL_VERSION = textEncoder.encode("wg_manager secure session v1");
 
+/**
+ * Web Crypto implementation of the wg_manager secure-session protocol.
+ *
+ * Instances own request/response counters, replay windows, pending outgoing
+ * requests and session lifetime. Use {@link WGSecureSession.create} rather
+ * than calling the constructor directly.
+ */
 export class WGSecureSession {
   /**
    * Costruttore "privato": usare WGSecureSession.create(...), perche'
@@ -326,10 +355,12 @@ export class WGSecureSession {
     );
   }
 
+  /** @returns {Uint8Array} Raw session identifier. */
   get sessionId() {
     return this._sessionId;
   }
 
+  /** @returns {string} URL-safe base64 session identifier used on the wire. */
   get sessionIdB64() {
     return b64encode(this._sessionId);
   }
@@ -338,6 +369,18 @@ export class WGSecureSession {
   // Autenticazione richieste
   // ------------------------------------------------------------------
 
+  /**
+   * Allocate and authenticate one outgoing request.
+   *
+   * The counter is reserved synchronously before the first await, so concurrent
+   * callers cannot receive the same counter. The request remains pending until
+   * verifyResponse() succeeds or abandonRequest() explicitly removes it.
+   *
+   * @param {string} method HTTP method.
+   * @param {string} path Canonical request target covered by the MAC.
+   * @param {Uint8Array} [body] Raw request body.
+   * @returns {Promise<Object>}
+   */
   async createRequestAuth(method, path, body = new Uint8Array(0)) {
     if (typeof method !== "string") throw new WGInvalidFieldError("method must be str");
     if (typeof path !== "string") throw new WGInvalidFieldError("path must be str");
@@ -367,6 +410,11 @@ export class WGSecureSession {
     return auth;
   }
 
+  /**
+   * Remove an outgoing request from the pending-response table without reusing its counter.
+   * @param {Object} requestAuth Authentication object returned by createRequestAuth().
+   * @returns {void}
+   */
   abandonRequest(requestAuth) {
     const validated = this._validateRequestAuth(requestAuth);
 
@@ -377,6 +425,10 @@ export class WGSecureSession {
     delete this._pendingRequests[validated.counter];
   }
 
+  /**
+   * Verify an incoming request MAC and atomically commit its counter to the replay window.
+   * @returns {Promise<boolean>} True when authentication succeeds.
+   */
   async verifyRequest(auth, method, path, body = new Uint8Array(0)) {
     if (typeof method !== "string") throw new WGInvalidFieldError("method must be str");
     if (typeof path !== "string") throw new WGInvalidFieldError("path must be str");
@@ -417,6 +469,10 @@ export class WGSecureSession {
   // Autenticazione risposte
   // ------------------------------------------------------------------
 
+  /**
+   * Authenticate a response using the request's session ID, counter and nonce.
+   * @returns {Promise<Object>}
+   */
   async createResponseAuth(requestAuth, status, body = new Uint8Array(0)) {
     if (!Number.isInteger(status)) throw new WGInvalidFieldError("status must be int");
     if (!(body instanceof Uint8Array)) throw new WGInvalidFieldError("body must be bytes");
@@ -441,6 +497,14 @@ export class WGSecureSession {
     };
   }
 
+  /**
+   * Verify an incoming response against the exact pending request it answers.
+   *
+   * A response is accepted only once and removes the corresponding request from
+   * the pending table after successful MAC/replay validation.
+   *
+   * @returns {Promise<boolean>} True when authentication succeeds.
+   */
   async verifyResponse(auth, requestAuth, status, body = new Uint8Array(0)) {
     if (!Number.isInteger(status)) throw new WGInvalidFieldError("status must be int");
     if (!(body instanceof Uint8Array)) throw new WGInvalidFieldError("body must be bytes");

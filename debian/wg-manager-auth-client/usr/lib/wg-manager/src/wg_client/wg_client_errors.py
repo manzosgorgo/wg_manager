@@ -1,3 +1,7 @@
+"""
+Exception hierarchy shared by wg-client HTTP, IPC, controller and secure-session layers.
+"""
+
 class WGError(Exception):
     """Base class for all wg-manager exceptions."""
 
@@ -8,6 +12,9 @@ class WGControllerError(WGError):
     """Error returned by the WireGuard controller."""
 
     def __init__(self, status, message, response=None):
+        """
+        Create a controller transport/HTTP error with status, message and optional response.
+        """
         super().__init__(message)
         self.status = status
         # The API handler reads exc.message: it was never set before.
@@ -25,6 +32,9 @@ class WGPeerError(WGClientError):
     """A peer operation could not be completed (carries an HTTP status)."""
 
     def __init__(self, status, message):
+        """
+        Create a peer-service error carrying the HTTP status returned to the API client.
+        """
         super().__init__(message)
         self.status = status
         self.message = message
@@ -58,6 +68,9 @@ class WGPeerPersistenceError(WGProtocolError):
     """Semantic error returned by the auth persistence IPC."""
 
     def __init__(self, status, message):
+        """
+        Create a semantic persistence error returned by wg-auth IPC.
+        """
         super().__init__(message)
         self.status = status
         self.message = message

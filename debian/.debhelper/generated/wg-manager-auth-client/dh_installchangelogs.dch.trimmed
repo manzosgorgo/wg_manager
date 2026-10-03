@@ -1,3 +1,24 @@
+wg-manager (0.1.0-8) unstable; urgency=medium
+
+  * Fix JSDoc type expressions and escaped newlines that broke API generation.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 11:40:00 +0200
+
+wg-manager (0.1.0-7) unstable; urgency=medium
+
+  * Add JSDoc API documentation for production frontend modules.
+  * Generate Python and JavaScript API references during documentation publish.
+  * Refresh stale JavaScript protocol/error documentation.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 11:25:00 +0200
+
+wg-manager (0.1.0-6) unstable; urgency=medium
+
+  * Refresh pydoc source documentation across auth, client and controller.
+  * Document the pydoc generation workflow.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 10:55:00 +0200
+
 wg-manager (0.1.0-5) unstable; urgency=medium
 
   * Add production deployment and configuration documentation.

@@ -1,3 +1,13 @@
+/**
+ * Browser application wiring for the wg_manager VPN frontend.
+ *
+ * Coordinates login, authenticated session lifetime, peer CRUD, provisioning,
+ * local X25519 WireGuard key generation, config/QR export and admin account/
+ * ownership operations. Private keys exist only in browser memory and rendered
+ * configuration until the user exports or discards them.
+ *
+ * @module vpn_app
+ */
 import { WGAuthSession } from "/js/wg_auth_session.js";
 import { WGClientAPI } from "/js/wg_client_api.js";
 
@@ -40,10 +50,19 @@ let generatedKeyPair = null;
 let provisionedPeer = false;
 let configPendingExport = false;
 
+/**
+ * Track whether an unexported generated private key/configuration would be lost.
+ * @param {boolean} pending
+ */
 function setConfigPendingExport(pending) {
     configPendingExport = Boolean(pending);
 }
 
+/**
+ * Ask for confirmation before discarding a generated configuration containing a private key.
+ * @param {string} [message]
+ * @returns {boolean}
+ */
 function confirmDiscardPendingConfig(message) {
     if (!configPendingExport) {
         return true;
@@ -82,6 +101,7 @@ window.wgFrontend = {
 const HEARTBEAT_INTERVAL_MS = 10_000;
 let heartbeatTimer = null;
 
+/** Stop authenticated session heartbeat scheduling. */
 function stopHeartbeat() {
     if (heartbeatTimer !== null) {
         clearInterval(heartbeatTimer);
@@ -89,6 +109,12 @@ function stopHeartbeat() {
     }
 }
 
+/**
+ * Start periodic authenticated heartbeats and continuously pre-arm fast logout.
+ *
+ * A failed heartbeat tears down browser-side client state and returns to the
+ * authentication view; auth-side idle timeout then cleans up the server session.
+ */
 function startHeartbeat() {
     stopHeartbeat();
 
@@ -124,18 +150,21 @@ function startHeartbeat() {
     }, HEARTBEAT_INTERVAL_MS);
 }
 
+/** Switch the SPA to the authentication view. */
 function showAuthView() {
     postauthView.hidden = true;
     authView.hidden = false;
     document.title = "Malandrino · Accesso";
 }
 
+/** Select the normal peer-management panel. */
 function showPeerView() {
     for (const [name, panel] of Object.entries(panels)) {
         panel.hidden = name !== "peers";
     }
 }
 
+/** Show the authenticated application shell and current username. */
 function showPostauthView() {
     showPeerView();
     authView.hidden = true;
@@ -145,6 +174,10 @@ function showPostauthView() {
     document.title = "Malandrino · WireGuard";
 }
 
+/**
+ * Render the peer list returned by WGClientAPI.status().
+ * @param {Object} result Authenticated API response wrapper.
+ */
 function renderPeers(result) {
     const peers = result?.data?.peers;
 
@@ -371,6 +404,12 @@ function renderPeers(result) {
     }
 }
 
+/**
+ * Convert the UI routing mode into WireGuard AllowedIPs for the generated client config.
+ * @param {Object} data Provisioning metadata.
+ * @param {string} mode Routing mode selected by the user.
+ * @returns {string[]}
+ */
 function clientAllowedIpsForMode(data, mode) {
     if (mode === "full") {
         return ["0.0.0.0/0", "::/0"];
@@ -381,6 +420,11 @@ function clientAllowedIpsForMode(data, mode) {
         : [];
 }
 
+/**
+ * Convert unpadded base64url from Web Crypto JWK fields to standard WireGuard base64.
+ * @param {string} value
+ * @returns {string}
+ */
 function base64UrlToWireGuard(value) {
     const normalized = value
         .replace(/-/g, "+")
@@ -389,6 +433,12 @@ function base64UrlToWireGuard(value) {
     return normalized + padding;
 }
 
+/**
+ * Generate an exportable X25519 key pair in the browser and convert it to WireGuard encoding.
+ *
+ * The private key is returned to in-memory UI state only; it is never sent to wg_manager.
+ * @returns {Promise<Object>}
+ */
 async function generateWireGuardKeyPair() {
     const keyPair = await crypto.subtle.generateKey(
         { name: "X25519" },
@@ -416,6 +466,11 @@ async function generateWireGuardKeyPair() {
     };
 }
 
+/**
+ * Return whether a rendered client config contains no unresolved placeholder markers.
+ * @param {string} text
+ * @returns {boolean}
+ */
 function configIsComplete(text) {
     return (
         typeof text === "string"
@@ -425,6 +480,7 @@ function configIsComplete(text) {
     );
 }
 
+/** Enable or hide config export/QR controls based on provisioning completeness. */
 function updateQrAvailability() {
     const configText = peerConfigPreview.textContent ?? "";
     const ready = provisionedPeer && configIsComplete(configText);
@@ -441,6 +497,9 @@ function updateQrAvailability() {
     }
 }
 
+/**
+ * Render the complete WireGuard client configuration from local key material and server provisioning state.
+ */
 function renderClientConfigPreview() {
     const data = provisioningState ?? {};
     const address = peerAllowedIpInput.value;
@@ -475,6 +534,10 @@ function renderClientConfigPreview() {
     updateQrAvailability();
 }
 
+/**
+ * Fetch provisioning state, repopulate available addresses and refresh config preview/debug state.
+ * @returns {Promise<Object>} Authenticated provisioning response wrapper.
+ */
 async function refreshProvisioning() {
     const client = window.wgFrontend.client;
     if (!client) {
@@ -537,6 +600,10 @@ async function refreshProvisioning() {
 }
 
 
+/**
+ * Refresh and render the current principal's visible WireGuard peers.
+ * @returns {Promise<Object>} Authenticated status response wrapper.
+ */
 async function refreshPeers() {
     const client = window.wgFrontend.client;
     if (!client) {
@@ -558,6 +625,10 @@ async function refreshPeers() {
 }
 
 
+/**
+ * Render admin users plus consistent/orphan/stale peer ownership state and bind reassignment actions.
+ * @param {Object} result Admin-state API response wrapper.
+ */
 function renderAdminState(result) {
     const data = result?.data ?? {};
     const users = Array.isArray(data.users) ? data.users : [];
@@ -687,6 +758,10 @@ function renderAdminState(result) {
     }
 }
 
+/**
+ * Refresh the admin-only ownership/account view.
+ * @returns {Promise<Object>} Authenticated admin response wrapper.
+ */
 async function refreshAdmin() {
     const client = window.wgFrontend.client;
     if (!client) {
@@ -708,6 +783,10 @@ async function refreshAdmin() {
 }
 
 
+/**
+ * Probe wg-auth availability and surface whether a server-side session already exists.
+ * @returns {Promise<void>}
+ */
 async function refreshAuthStatus() {
     try {
         const result = await auth.status();
@@ -984,6 +1063,9 @@ peerNewProvisioningButton.addEventListener("click", async () => {
     renderClientConfigPreview();
 });
 
+/**
+ * Render the current complete WireGuard config as a QR code without transmitting the private key.
+ */
 function renderQrCode() {
     const configText = peerConfigPreview.textContent ?? "";
 

@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+Persistent storage for OPAQUE accounts and per-user peer ownership.
+
+Each user is stored as one JSON file containing a base64 OPAQUE credential
+record and a peer list. Writes use temporary files and atomic replacement.
+"""
+
 import base64
 import binascii
 import json
@@ -11,12 +18,18 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class WGAuthUser:
+    """
+    Immutable in-memory representation of one persisted auth account.
+    """
     username: str
     credential_record: bytes
     peers: tuple[str, ...]
 
     @property
     def principal(self):
+        """
+        Return the principal payload propagated to wg-client at activation.
+        """
         return {"username": self.username, "peers": list(self.peers)}
 
 
@@ -24,6 +37,9 @@ class WGAuthUserStore:
     """Persistent OPAQUE credentials and peer ownership records."""
 
     def __init__(self, login_dir, opaque_record_len=256):
+        """
+        Create a store rooted at *login_dir* with the expected OPAQUE record size.
+        """
         self.login_dir = login_dir
         self.opaque_record_len = opaque_record_len
         self._lock = threading.RLock()
@@ -43,6 +59,9 @@ class WGAuthUserStore:
         return os.path.join(self.login_dir, username)
 
     def load(self, username):
+        """
+        Validate and load one user record from disk.
+        """
         path = self._path(username)
 
         with open(path, "r", encoding="utf-8") as f:
@@ -120,6 +139,9 @@ class WGAuthUserStore:
                 pass
 
     def add_peer(self, username, public_key):
+        """
+        Persist ownership of *public_key* for a user and return the updated record.
+        """
         if not isinstance(public_key, str) or not public_key:
             raise ValueError("public_key must be a non-empty string")
 
@@ -139,6 +161,9 @@ class WGAuthUserStore:
             return updated
 
     def remove_peer(self, username, public_key):
+        """
+        Remove peer ownership from a user and return the updated record.
+        """
         if not isinstance(public_key, str) or not public_key:
             raise ValueError("public_key must be a non-empty string")
 
@@ -162,6 +187,9 @@ class WGAuthUserStore:
 
 
     def create_user(self, username, credential_record):
+        """
+        Atomically create a new user record without overwriting an existing account.
+        """
         if not isinstance(credential_record, bytes):
             raise ValueError("credential_record must be bytes")
 
@@ -179,6 +207,9 @@ class WGAuthUserStore:
             return user
 
     def delete_user(self, username):
+        """
+        Delete an account only when it owns no peers.
+        """
         with self._lock:
             user = self.load(username)
 
@@ -191,6 +222,9 @@ class WGAuthUserStore:
 
 
     def list_users(self):
+        """
+        Load all non-hidden user records in deterministic name order.
+        """
         with self._lock:
             users = []
 
@@ -207,6 +241,9 @@ class WGAuthUserStore:
             return users
 
     def peer_owners(self):
+        """
+        Build a public-key to username map and reject conflicting ownership.
+        """
         owners = {}
 
         for user in self.list_users():

@@ -1,21 +1,44 @@
+"""
+Client-side helper for driving the wg-client activation protocol.
+
+Primarily useful to tests and administrative tooling: it connects to the Unix
+activation socket, answers an optional STATE_SNAPSHOT reconciliation round and
+returns an object that keeps the control socket alive.
+"""
+
 import json
 import socket
 import time
 
 class WGClientActivation:
+    """
+    Context-managed activation result that owns the persistent control socket.
+    """
     def __init__(self, sock, response):
+        """
+        Store the connected socket and final activation response.
+        """
         self.sock = sock
         self.response = response
 
     def close(self):
+        """
+        Close the activation/control socket once.
+        """
         if self.sock is not None:
             self.sock.close()
             self.sock = None
 
     def __enter__(self):
+        """
+        Return this activation handle.
+        """
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Close the activation handle on context exit.
+        """
         self.close()
 
 def activate_client(
@@ -28,6 +51,9 @@ def activate_client(
         principal,
         state_reconcile=None,
 ):
+    """
+    Send an activation packet, service state reconciliation and return the connected activation handle.
+    """
     packet = {
         "protocol_version": 1,
         "session_id": session_id,
