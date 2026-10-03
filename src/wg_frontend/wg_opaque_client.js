@@ -1,5 +1,6 @@
 /**
- * Thin browser adapter around the vendored libopaque implementation.\nOwns one OPAQUE credential request and recovers the shared session key after the server response.
+ * Thin browser adapter around the vendored libopaque implementation.
+ * Owns one OPAQUE credential request and recovers the shared session key after the server response.
  * @module wg_opaque_client
  */
 function opaqueLibrary() {
@@ -39,7 +40,7 @@ export class WGOPAQUEClient {
 
     /**
      * Create the OPAQUE credential request sent to POST /auth.
-     * @returns {Promise<{pub:string}>} Hex-encoded public credential request.
+     * @returns {Promise<Object>} Hex-encoded public credential request.
      */
     async start() {
         const opaque = opaqueLibrary();
@@ -59,7 +60,7 @@ export class WGOPAQUEClient {
     /**
      * Recover credentials from the server response and finish the exchange.
      * @param {string} responseHex Hex-encoded OPAQUE credential response.
-     * @returns {{auth:string, sessionKey:string, exportKey:string}}
+     * @returns {Object}
      * @throws {Error} If start() was not called or credential recovery fails.
      */
     finish(responseHex) {
