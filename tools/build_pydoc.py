@@ -22,6 +22,7 @@ PACKAGES = (
 
 
 def discover_modules():
+    """Return every importable implementation module covered by the API docs."""
     modules = []
 
     for package_dir in PACKAGES:
@@ -37,6 +38,7 @@ def discover_modules():
 
 
 def build_environment():
+    """Build the import environment used by subprocess pydoc generation."""
     env = os.environ.copy()
 
     python_path = [
@@ -59,10 +61,12 @@ def build_environment():
 
 
 def output_filename(module):
+    """Return the deterministic HTML filename for an importable module name."""
     return f"{module}.html"
 
 
 def generate_module(module, env):
+    """Run pydoc for one module and return the completed subprocess result."""
     result = subprocess.run(
         [
             sys.executable,
@@ -81,6 +85,7 @@ def generate_module(module, env):
 
 
 def write_index(successes, failures):
+    """Write the pydoc landing page, grouping successful modules by package."""
     groups = {}
 
     for module in successes:
@@ -154,6 +159,7 @@ def write_index(successes, failures):
 
 
 def main():
+    """Regenerate all pydoc HTML and return nonzero if any module fails."""
     OUTPUT.mkdir(parents=True, exist_ok=True)
 
     for old in OUTPUT.glob("*.html"):
