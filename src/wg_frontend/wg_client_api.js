@@ -1,3 +1,7 @@
+/**
+ * Authenticated browser client for the per-session wg-client HTTPS API.\nSigns canonical API targets with WGSecureSession and verifies every authenticated response before JSON decoding.
+ * @module wg_client_api
+ */
 import {
     WGSecureSession,
     hexToBytes,
@@ -5,6 +9,7 @@ import {
 
 const textEncoder = new TextEncoder();
 
+/** Default browser-side secure-session parameters matching production Python defaults. */
 export const DEFAULT_SECURE_SESSION_CONFIG = {
     secure_session: {
         session_id_size: 16,
@@ -15,7 +20,15 @@ export const DEFAULT_SECURE_SESSION_CONFIG = {
     },
 };
 
+/**
+ * High-level authenticated API client used by the VPN frontend.
+ */
 export class WGClientAPI {
+    /**
+     * @param {string} baseUrl Origin/base URL for requests.
+     * @param {string} listenPath Per-session path prefix assigned during activation.
+     * @param {WGSecureSession} session Authenticated secure-session state.
+     */
     constructor(baseUrl, listenPath, session) {
         this.baseUrl = baseUrl.replace(/\/$/, "");
         this.listenPath = listenPath.startsWith("/")
@@ -25,6 +38,12 @@ export class WGClientAPI {
         this._preparedLogoutAuth = null;
     }
 
+    /**
+     * Build a client API from an authenticated WGAuthSession.
+     * @param {Object} authSession Source containing sessionId and kSession.
+     * @param {Object} [options]
+     * @returns {Promise<WGClientAPI>}
+     */
     static async fromAuthSession(
         authSession,
         {
@@ -50,6 +69,18 @@ export class WGClientAPI {
         );
     }
 
+    /**
+     * Send one authenticated JSON API request and verify its response MAC.
+     *
+     * apiPath is the canonical path covered by the MAC. transportPath may differ
+     * when a reverse proxy requires extra escaping, but is never what gets signed.
+     *
+     * @param {string} method HTTP method.
+     * @param {string} apiPath Canonical signed API path.
+     * @param {Object|null} [object=null] JSON request body.
+     * @param {string} [transportPath=apiPath] Path actually sent over HTTP.
+     * @returns {Promise<{status:number, ok:boolean, data:Object|null}>}
+     */
     async request(method, apiPath, object = null, transportPath = apiPath) {
         const bodyText = object === null
             ? ""
@@ -139,23 +170,28 @@ export class WGClientAPI {
         };
     }
 
+    /** Read the current peer/status view. */
     status() {
         return this.request("GET", "/v1/status");
     }
 
+    /** Send an authenticated heartbeat that refreshes auth-side idle state. */
     heartbeat() {
         return this.request("GET", "/v1/heartbeat");
     }
 
+    /** Read merged provisioning metadata and available VPN addresses. */
     provisioning() {
         return this.request("GET", "/v1/provisioning");
     }
 
+    /** Perform normal authenticated session logout. */
     logout() {
         this.discardPreparedLogout();
         return this.request("DELETE", "/v1/session");
     }
 
+    /** Abandon any preallocated fast-logout request counter. */
     discardPreparedLogout() {
         if (this._preparedLogoutAuth === null) {
             return;
@@ -165,6 +201,7 @@ export class WGClientAPI {
         this._preparedLogoutAuth = null;
     }
 
+    /** Preallocate authentication metadata for a keepalive-style page-unload logout. */
     async prepareFastLogout() {
         this.discardPreparedLogout();
 
@@ -175,6 +212,7 @@ export class WGClientAPI {
         );
     }
 
+    /** Best-effort fire-and-forget logout using preallocated authentication metadata. */
     fastLogout() {
         const auth = this._preparedLogoutAuth;
         if (auth === null) {
@@ -207,6 +245,7 @@ export class WGClientAPI {
         return true;
     }
 
+    /** Return canonical and Apache-safe transport paths for a WireGuard public key. */
     peerPath(publicKey) {
         const canonicalPath =
             "/v1/peers/" + encodeURIComponent(publicKey);
@@ -222,6 +261,7 @@ export class WGClientAPI {
         };
     }
 
+    /** Create a peer through the authenticated client API. */
     addPeer(publicKey, allowedIp) {
         const { canonicalPath, transportPath } =
             this.peerPath(publicKey);
@@ -237,6 +277,7 @@ export class WGClientAPI {
         );
     }
 
+    /** Remove a peer through the authenticated client API. */
     removePeer(publicKey) {
         const { canonicalPath, transportPath } =
             this.peerPath(publicKey);
@@ -249,10 +290,12 @@ export class WGClientAPI {
         );
     }
 
+    /** Read the admin-only combined runtime/ownership view. */
     adminStatus() {
         return this.request("GET", "/v1/admin/peers");
     }
 
+    /** Reassign a live peer to another persisted user. */
     reassignOwner(publicKey, username) {
         const canonicalPath =
             "/v1/admin/peers/"
@@ -269,6 +312,7 @@ export class WGClientAPI {
         );
     }
 
+    /** Create an account through the admin API. */
     createUser(username, password) {
         return this.request(
             "POST",
@@ -280,6 +324,7 @@ export class WGClientAPI {
         );
     }
 
+    /** Delete an account through the admin API. */
     deleteUser(username) {
         return this.request(
             "DELETE",
