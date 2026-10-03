@@ -29,9 +29,9 @@
  *     o verificano un MAC restituiscono una Promise, e la costruzione
  *     dell'istanza avviene tramite la factory asincrona
  *     WGSecureSession.create(...) invece che nel costruttore.
-  *
+ *
  * @module wg_secure_session
-*/
+ */
 
 import {
   WGProtocolError,
