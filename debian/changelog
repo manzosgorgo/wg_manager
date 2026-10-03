@@ -1,3 +1,10 @@
+wg-manager (0.1.0-9) unstable; urgency=medium
+
+  * Fix controller Accept=yes socket activation with StandardInput=socket.
+  * Require matching package/protocol versions between wg-client and controller.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 14:25:00 +0200
+
 wg-manager (0.1.0-8) unstable; urgency=medium
 
   * Fix JSDoc type expressions and escaped newlines that broke API generation.

@@ -2,8 +2,8 @@
 """
 Privileged socket-activated WireGuard controller.
 
-Each systemd Accept=yes instance receives one connected TCP socket on file
-descriptor 3, upgrades it to TLS 1.3 with mandatory client certificates,
+Each systemd Accept=yes instance receives one connected TCP socket on stdin
+through StandardInput=socket, upgrades it to TLS 1.3 with mandatory client certificates,
 parses one bounded HTTP/1.1 request, applies policy to the configured WireGuard
 interface through the wg executable, replies with JSON and exits.
 """
@@ -11,6 +11,8 @@ interface through the wg executable, replies with JSON and exits.
 import base64, configparser, ipaddress, json, os, socket, ssl, subprocess, sys
 from http import HTTPStatus
 from urllib.parse import unquote
+
+from src.wg_version import PACKAGE_VERSION, PROTOCOL_VERSION_HEADER
 
 CONFIG = os.environ.get("WG_CONFIG")
 WG_PROGRAM = os.environ.get("WG_PROGRAM", "/usr/bin/wg")
@@ -60,7 +62,12 @@ def reply(s, code, obj):
     """
     b = json.dumps(obj, separators=(",", ":")).encode()
     h = (
-        f"HTTP/1.1 {code} {HTTPStatus(code).phrase}\r\nContent-Type: application/json\r\nContent-Length: {len(b)}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n"
+        f"HTTP/1.1 {code} {HTTPStatus(code).phrase}\r\n"
+        f"Content-Type: application/json\r\n"
+        f"Content-Length: {len(b)}\r\n"
+        f"Cache-Control: no-store\r\n"
+        f"{PROTOCOL_VERSION_HEADER}: {PACKAGE_VERSION}\r\n"
+        f"Connection: close\r\n\r\n"
     ).encode()
     s.sendall(h + b)
 
@@ -95,6 +102,13 @@ def request(s):
         raise E(400, "invalid Content-Length")
     if n > 65536:
         raise E(413, "body too large")
+    protocol_version = H.get(PROTOCOL_VERSION_HEADER.lower())
+    if protocol_version != PACKAGE_VERSION:
+        raise E(
+            426,
+            f"incompatible protocol version: expected {PACKAGE_VERSION}",
+        )
+
     while len(body) < n:
         x = s.recv(min(4096, n - len(body)))
         if not x:
@@ -252,18 +266,13 @@ def dispatch(c, m, t, b):
 
 def systemd_socket():
     """
-    Adopt exactly one socket passed by systemd socket activation on file descriptor 3.
+    Adopt the connected socket supplied by systemd through stdin.
+
+    wg-manager.socket uses Accept=yes and wg-manager@.service uses
+    StandardInput=socket, so the accepted connection is descriptor 0 rather
+    than a LISTEN_FDS descriptor starting at fd 3.
     """
-    pid = os.environ.get("LISTEN_PID")
-    nfds = os.environ.get("LISTEN_FDS")
-
-    if pid != str(os.getpid()):
-        raise RuntimeError("invalid LISTEN_PID")
-
-    if nfds != "1":
-        raise RuntimeError(f"expected 1 socket, got {nfds}")
-
-    return socket.socket(fileno=3)
+    return socket.socket(fileno=os.dup(sys.stdin.fileno()))
 
 
 def tls(c):

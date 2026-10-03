@@ -15,6 +15,7 @@ from urllib.parse import quote
 import logging
 
 from src.wg_client.wg_client_errors import WGControllerError
+from src.wg_version import PACKAGE_VERSION, PROTOCOL_VERSION_HEADER
 from src.wg_client.wg_client_API_handler import AUTH_SESSION_ID_HEADER, AUTH_COUNTER_HEADER, AUTH_NONCE_HEADER, AUTH_MAC_HEADER
 
 
@@ -50,6 +51,7 @@ class WGControllerClient:
         headers = {
             "Accept": "application/json",
             "Connection": "close",
+            PROTOCOL_VERSION_HEADER: PACKAGE_VERSION,
         }
 
         if data is not None:
@@ -62,6 +64,15 @@ class WGControllerClient:
 
                 response = conn.getresponse()
                 raw = response.read()
+
+                remote_version = response.getheader(PROTOCOL_VERSION_HEADER)
+                if remote_version != PACKAGE_VERSION:
+                    raise WGControllerError(
+                        502,
+                        "controller protocol version mismatch: "
+                        f"expected {PACKAGE_VERSION}, got "
+                        f"{remote_version or 'missing'}",
+                    )
 
             # ssl.SSLError and TimeoutError are subclasses of OSError.
             except (OSError, http.client.HTTPException) as exc:

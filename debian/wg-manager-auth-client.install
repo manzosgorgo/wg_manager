@@ -1,4 +1,5 @@
 # Python runtime package root.
+src/wg_version.py usr/lib/wg-manager/src/
 src/wg_auth/*.py usr/lib/wg-manager/src/wg_auth/
 src/wg_client/*.py usr/lib/wg-manager/src/wg_client/
 
