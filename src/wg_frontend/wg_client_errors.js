@@ -20,7 +20,9 @@
  *           └── WGRequestRateExceededError
  *
  * @module wg_client_errors
- */\n\n/** Base class for all browser-side wg_manager errors. */
+ */
+
+/** Base class for all browser-side wg_manager errors. */
 export class WGError extends Error {
   constructor(message) {
     super(message);
