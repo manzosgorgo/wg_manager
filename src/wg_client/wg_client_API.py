@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+mTLS HTTPS server wrapper for a single authenticated wg-client session.
+
+The API binds only after activation/reconciliation succeeds and exposes a
+WGPeerService below the per-session listen path.
+"""
+
 import logging
 import ssl
 
@@ -15,7 +22,13 @@ log.setLevel(logging.DEBUG)
 
 
 class WGClientAPI:
+    """
+    Own the per-session HTTPS server, controller client and peer service.
+    """
     def __init__(self, config, listen_path, session, lifecycle=None):
+        """
+        Build one authenticated API instance from normalized config and session state.
+        """
         self.server = None
         log.debug("Initializing WGClientAPI")
 
