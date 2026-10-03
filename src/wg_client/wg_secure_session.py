@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 
+"""
+Cryptographic request/response authentication for one wg_manager session.
+
+Keys are derived from the OPAQUE K_session with HKDF-SHA256. HMAC-SHA256
+binds method/path/body or status/body to a session ID, counter and nonce.
+Mutable counter, replay-window, pending-request and lifetime state is protected
+by a lock so one instance may be shared by HTTP worker threads.
+"""
+
 import base64
 import binascii
 import hashlib
@@ -62,6 +71,9 @@ class WGSecureSession:
             rng=None,
             clock=None,
     ):
+        """
+        Validate secure-session policy, normalize the principal, derive request/response keys and initialize replay state.
+        """
         log.info("initializing WGSecureSession")
         self.config = config
 
@@ -189,26 +201,41 @@ class WGSecureSession:
 
     @property
     def session_id(self) -> bytes:
+        """
+        Return the raw session identifier bytes.
+        """
         log.debug("session_id property")
         return self._session_id
 
     @property
     def session_id_b64(self) -> str:
+        """
+        Return the session identifier encoded for X-WG-Session-ID.
+        """
         log.debug("session_id_b64 property")
         return self._b64(self._session_id)
 
     @property
     def principal(self):
+        """
+        Return the normalized authenticated principal, or None.
+        """
         return self._principal
 
     @property
     def is_admin(self):
+        """
+        Return True when the authenticated principal username is admin.
+        """
         return (
             self._principal is not None
             and self._principal["username"] == "admin"
         )
 
     def can_access_peer(self, public_key):
+        """
+        Return whether the principal may operate on a public key; admin may access all peers.
+        """
         if self._principal is None:
             return False
 
@@ -218,6 +245,9 @@ class WGSecureSession:
         )
 
     def register_peer(self, public_key):
+        """
+        Add a newly created peer to non-admin in-memory ownership state.
+        """
         if self._principal is None or self.is_admin:
             return
 
@@ -227,6 +257,9 @@ class WGSecureSession:
             self._principal["peers"] = peers + (public_key,)
 
     def unregister_peer(self, public_key):
+        """
+        Remove a deleted peer from non-admin in-memory ownership state.
+        """
         if self._principal is None or self.is_admin:
             return
 
@@ -271,6 +304,8 @@ class WGSecureSession:
         """
         Create authentication parameters for a new request.
 
+        Allocates a unique request counter, creates a random nonce and stores
+        the resulting auth record as pending until its response is verified.
         Thread-safe: concurrent callers never obtain the same counter.
         """
         with self._lock:
@@ -346,7 +381,10 @@ class WGSecureSession:
         body: bytes = b"",
     ) -> dict:
         """
-        Create authentication parameters for a response.
+        Authenticate a response to an already verified request.
+
+        The response deliberately reuses the request counter and nonce; it is
+        MACed with the independent response key and the HTTP status/body.
         """
         with self._lock:
             return self._create_response_auth_unlocked(
@@ -414,10 +452,10 @@ class WGSecureSession:
         body: bytes = b"",
     ) -> bool:
         """
-        Verify request authentication.
+        Verify request authentication against session, MAC and replay policy.
 
-        Thread-safe: the replay check and the counter update are one
-        atomic step, so a request is accepted at most once.
+        Thread-safe: MAC verification, replay-window acceptance and counter
+        state update are one atomic step, so a request is accepted at most once.
         """
         with self._lock:
             return self._verify_request_unlocked(auth, method, path, body)
@@ -509,9 +547,11 @@ class WGSecureSession:
         body: bytes = b"",
     ) -> bool:
         """
-        Verify authentication of a server response.
+        Verify a response against its original pending request.
 
-        Thread-safe: a response is accepted at most once.
+        Session ID and counter must match the request, the response MAC must
+        validate, and the counter must still be inside the response replay
+        window. A response is accepted at most once.
         """
         with self._lock:
             return self._verify_response_unlocked(
