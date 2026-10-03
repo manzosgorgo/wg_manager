@@ -1,5 +1,13 @@
 # src/wg_auth/wg_auth_session.py
 
+"""
+Server-side OPAQUE authentication state for one login attempt.
+
+The session moves NEW -> AUTHENTICATING -> AUTHENTICATED. Successful OPAQUE
+authentication yields a random session identifier and the 64-byte shared
+secret exported as hexadecimal for wg-client activation.
+"""
+
 import logging
 import secrets
 
@@ -18,12 +26,18 @@ OPAQUE_SESSION_KEY_SIZE = 64
 
 
 class WGAuthSession:
+    """
+    Own the transient OPAQUE server state and authenticated session secret.
+    """
 
     STATE_NEW = "NEW"
     STATE_AUTHENTICATING = "AUTHENTICATING"
     STATE_AUTHENTICATED = "AUTHENTICATED"
 
     def __init__(self, username, credential_record, context, principal=None):
+        """
+        Create a NEW authentication session for one persisted user.
+        """
         self.username = username
         self.credential_record = credential_record
         self.context = context
@@ -39,10 +53,16 @@ class WGAuthSession:
 
     @property
     def authenticated(self):
+        """
+        Return True only after the OPAQUE proof has been verified.
+        """
         return self._state == self.STATE_AUTHENTICATED
 
     @property
     def session_id(self):
+        """
+        Return the authenticated session identifier; reject access before authentication.
+        """
         if not self.authenticated:
             raise WGAuthSessionError(
                 "session is not authenticated"
@@ -52,6 +72,9 @@ class WGAuthSession:
 
     @property
     def k_session(self):
+        """
+        Return the OPAQUE shared secret as hex; reject access before authentication.
+        """
         if not self.authenticated:
             raise WGAuthSessionError(
                 "session is not authenticated"
@@ -64,6 +87,9 @@ class WGAuthSession:
     # ------------------------------------------------------------------
 
     def create_credential_response(self, pubU):
+        """
+        Process the client's OPAQUE credential request and enter AUTHENTICATING.
+        """
         if self._state != self.STATE_NEW:
             raise WGAuthSessionError(
                 "authentication is already in progress"
@@ -124,6 +150,9 @@ class WGAuthSession:
         return response
 
     def authenticate(self, authU):
+        """
+        Verify the client OPAQUE authenticator and enter AUTHENTICATED.
+        """
         if self._state != self.STATE_AUTHENTICATING:
             raise WGAuthSessionError(
                 "authentication is not in progress"
@@ -164,6 +193,9 @@ class WGAuthSession:
         )
 
     def logout(self):
+        """
+        Erase transient authentication/session state and return to NEW.
+        """
         self._state = self.STATE_NEW
 
         self._session_id = None
