@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+Load and validate wg-client runtime configuration.
+
+WG_CLIENT_CONFIG selects the INI file. The loader normalizes numeric values,
+applies secure-session defaults and rejects invalid port, timeout, counter,
+replay-window and request-rate combinations before runtime starts.
+"""
+
 import configparser
 import math
 import os
@@ -22,6 +30,9 @@ DEFAULT_REPLAY_WINDOW_SIZE = 64
 
 
 def load_config():
+    """
+    Load, validate and normalize the selected wg-client INI configuration.
+    """
     path = os.environ.get(
         "WG_CLIENT_CONFIG",
         DEFAULT_CONFIG,
