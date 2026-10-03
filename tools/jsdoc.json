@@ -1,0 +1,11 @@
+{
+  "sourceType": "module",
+  "tags": {
+    "allowUnknownTags": false,
+    "dictionaries": ["jsdoc", "closure"]
+  },
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true
+  }
+}
