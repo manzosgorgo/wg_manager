@@ -15,6 +15,7 @@ Pipeline:
         +--> protocol_flow.py src/wg_manager
         |
         +--> build_pydoc.py
+        +--> build_jsdoc.py
         |
         +--> docs/
                 |
@@ -83,6 +84,7 @@ AI_DIR = DOCS_DIR / "ai"
 PROJECT_INDEX = TOOLS_DIR / "project_index.py"
 PROTOCOL_FLOW = TOOLS_DIR / "protocol_flow.py"
 BUILD_PYDOC = TOOLS_DIR / "build_pydoc.py"
+BUILD_JSDOC = TOOLS_DIR / "build_jsdoc.py"
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +218,7 @@ def generate_protocol_snapshots() -> None:
 
 
 def generate_pydoc() -> None:
-    print("\n[3/7] Generating Python API documentation")
+    print("\n[3/6] Generating Python API documentation")
 
     if not BUILD_PYDOC.is_file():
         fail(f"build_pydoc.py not found: {BUILD_PYDOC}")
@@ -230,6 +232,23 @@ def generate_pydoc() -> None:
     )
 
 
+def generate_jsdoc() -> None:
+    """Generate JavaScript API documentation from production frontend sources."""
+
+    print("\n[4/6] Generating JavaScript API documentation")
+
+    if not BUILD_JSDOC.is_file():
+        fail(f"build_jsdoc.py not found: {BUILD_JSDOC}")
+
+    run(
+        [
+            sys.executable,
+            str(BUILD_JSDOC),
+        ],
+        cwd=PROJECT_ROOT,
+    )
+
+
 def generate_readme() -> None:
     """
     Generate docs/README.md.
@@ -237,7 +256,7 @@ def generate_readme() -> None:
     This becomes README.md at the root of the public GitHub repository.
     """
 
-    print("\n[4/7] Generating documentation README")
+    print("\n[5/6] Generating documentation README")
 
     readme = """# wg-manager documentation
 
@@ -269,6 +288,18 @@ Automatically generated documentation for the `wg_manager` project.
 
 The Python API reference is generated from module/class/function docstrings
 with `tools/build_pydoc.py`.
+
+## JavaScript API documentation
+
+- [JSDoc API index](ai/jsdoc/index.html)
+
+The browser API reference is generated from JSDoc comments in the production
+frontend sources with `tools/build_jsdoc.py`.
+
+## Operational documentation
+
+- [Debian deployment](deployment.md)
+- [Production configuration](configuration.md)
 
 ## Source documentation
 
@@ -311,7 +342,7 @@ The protocol snapshots are generated independently for:
 # ---------------------------------------------------------------------------
 
 def validate_required_files() -> None:
-    print("\n[5/7] Validating generated documentation")
+    print("\n[6/6] Validating generated documentation")
 
     required = [
         DOCS_DIR / "README.md",
@@ -326,6 +357,7 @@ def validate_required_files() -> None:
         AI_DIR / "wg_manager_proto.md",
         AI_DIR / "wg_all_proto.md",
         AI_DIR / "pydoc" / "index.html",
+        AI_DIR / "jsdoc" / "index.html",
     ]
 
     missing = [path for path in required if not path.is_file()]
@@ -802,6 +834,7 @@ def main() -> int:
     generate_project_index()
     generate_protocol_snapshots()
     generate_pydoc()
+    generate_jsdoc()
     generate_readme()
 
     # ------------------------------------------------------------------
