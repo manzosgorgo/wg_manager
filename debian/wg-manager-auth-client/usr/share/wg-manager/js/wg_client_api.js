@@ -6,7 +6,7 @@
 import {
     WGSecureSession,
     hexToBytes,
-} from "./wg_secure_session.js";
+} from "./wg_secure_session.js?v=0.1.0-11";
 
 const textEncoder = new TextEncoder();
 

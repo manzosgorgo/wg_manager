@@ -3,7 +3,7 @@
  * Keeps the resulting session identifier, shared session key and activation metadata only in memory.
  * @module wg_auth_session
  */
-import { WGOPAQUEClient } from "./wg_opaque_client.js";
+import { WGOPAQUEClient } from "./wg_opaque_client.js?v=0.1.0-11";
 
 /**
  * One browser authentication session against wg-auth.

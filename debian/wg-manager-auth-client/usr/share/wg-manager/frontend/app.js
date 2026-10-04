@@ -8,8 +8,8 @@
  *
  * @module vpn_app
  */
-import { WGAuthSession } from "/js/wg_auth_session.js";
-import { WGClientAPI } from "/js/wg_client_api.js";
+import { WGAuthSession } from "/js/wg_auth_session.js?v=0.1.0-11";
+import { WGClientAPI } from "/js/wg_client_api.js?v=0.1.0-11";
 
 const authView = document.querySelector("#auth-view");
 const postauthView = document.querySelector("#postauth-view");

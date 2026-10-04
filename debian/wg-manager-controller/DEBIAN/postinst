@@ -26,8 +26,14 @@ fi
 
 
 if [ "$1" = "configure" ]; then
+    install -d -o root -g root       -m 0755 /etc/wg-manager
     install -d -o root -g root       -m 0755 /etc/wg-manager/cert
     install -d -o root -g wg-manager -m 0750 /etc/wg-manager/cert/controller
+
+    if [ -e /etc/wg-manager/wg-manager.conf ]; then
+        chown root:wg-manager /etc/wg-manager/wg-manager.conf
+        chmod 0640 /etc/wg-manager/wg-manager.conf
+    fi
 
     if [ -e /etc/wg-manager/cert/ca.crt ]; then
         chown root:root /etc/wg-manager/cert/ca.crt

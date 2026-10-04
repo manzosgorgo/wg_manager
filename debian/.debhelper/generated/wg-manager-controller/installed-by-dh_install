@@ -1,3 +1,4 @@
+./src/wg_version.py
 ./src/wg_manager/wg_manager.py
 ./systemd/production/wg-manager.socket
 ./systemd/production/wg-manager@.service

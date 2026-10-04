@@ -1,9 +1,9 @@
 Package: wg-manager-controller
 Source: wg-manager
-Version: 0.1.0-8
+Version: 0.1.0-11
 Architecture: all
 Maintainer: wg_manager local package <root@localhost>
-Installed-Size: 46
+Installed-Size: 48
 Depends: python3, wireguard-tools, systemd, util-linux
 Section: net
 Priority: optional

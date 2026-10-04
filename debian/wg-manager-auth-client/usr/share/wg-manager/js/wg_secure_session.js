@@ -46,7 +46,7 @@ import {
   WGReplayError,
   WGSessionExpiredError,
   WGRequestRateExceededError,
-} from "./wg_client_errors.js";
+} from "./wg_client_errors.js?v=0.1.0-11";
 
 // ----------------------------------------------------------------------
 // Helper: risoluzione dell'oggetto SubtleCrypto e del CSPRNG

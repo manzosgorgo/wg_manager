@@ -1,3 +1,28 @@
+wg-manager (0.1.0-11) unstable; urgency=medium
+
+  * Make peer and admin cards responsive on narrow mobile displays.
+  * Allow long WireGuard public keys and peer details to wrap inside cards.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 18:30:00 +0200
+
+wg-manager (0.1.0-10) unstable; urgency=medium
+
+  * Version frontend assets from the Debian package version and prevent stale
+    cached index pages from pinning old frontend resources.
+  * Normalize permissions on existing configuration and certificate files
+    without replacing local configuration.
+  * Preserve CSR-requested SAN extensions when signing project certificates.
+  * Extend package setup checks to verify service users can read their configs.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 15:50:00 +0200
+
+wg-manager (0.1.0-9) unstable; urgency=medium
+
+  * Fix controller Accept=yes socket activation with StandardInput=socket.
+  * Require matching package/protocol versions between wg-client and controller.
+
+ -- wg_manager local package <root@localhost>  Sat, 03 Oct 2026 14:25:00 +0200
+
 wg-manager (0.1.0-8) unstable; urgency=medium
 
   * Fix JSDoc type expressions and escaped newlines that broke API generation.

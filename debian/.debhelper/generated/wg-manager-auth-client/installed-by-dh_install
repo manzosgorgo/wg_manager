@@ -1,3 +1,4 @@
+./src/wg_version.py
 ./src/wg_auth/__init__.py
 ./src/wg_auth/wg_auth.py
 ./src/wg_auth/wg_auth_account_service.py

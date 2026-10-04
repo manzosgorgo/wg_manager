@@ -313,6 +313,8 @@ body {
 }
 
 .placeholder-card {
+  min-width: 0;
+  overflow: hidden;
   border: 1px dashed var(--border);
   border-radius: 12px;
   padding: 18px;
@@ -322,6 +324,9 @@ body {
 .placeholder-card strong,
 .placeholder-card span {
   display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .placeholder-card strong {
@@ -385,6 +390,25 @@ body {
 
   .postauth-nav {
     flex-wrap: wrap;
+  }
+
+  .postauth-panel {
+    min-width: 0;
+    padding: 18px;
+  }
+
+  .card-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .inline-admin-form {
+    flex-direction: column;
+  }
+
+  .inline-admin-form select,
+  .inline-admin-form button {
+    width: 100%;
   }
 }
 
