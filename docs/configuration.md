@@ -142,6 +142,14 @@ specificati nel file.
 `interface`
 : Interfaccia WireGuard sulla macchina controller.
 
+`state_file`
+: File JSON persistente dei peer creati tramite `wg-manager`.
+  Production: `/var/lib/wg-manager/controller/peers.json`.
+  Il controller salva solo public key e allowed IP; non salva private key.
+  Prima di ogni richiesta riconcilia questi peer con lo stato live
+  dell'interfaccia, così i peer gestiti vengono ripristinati dopo la
+  ricreazione di `wg0` o un reboot.
+
 ### [tls]
 
 `server_cert`, `server_key`
