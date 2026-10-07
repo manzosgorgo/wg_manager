@@ -167,8 +167,8 @@ Controllare almeno:
 interface = wg0
 
 [policy]
-vpn_network = 10.8.0.0/24
-server_address = 10.8.0.1/24
+vpn_network = 10.20.0.0/24
+server_address = 10.20.0.1/32
 ```
 
 Il socket controller ascolta sulla porta TCP 9443. La reachability e il
