@@ -1,3 +1,11 @@
+wg-manager (0.1.0-13) unstable; urgency=medium
+
+  * Restore the production WireGuard network to 10.20.0.0/24.
+  * Represent the WireGuard server address as 10.20.0.1/32 so provisioning
+    reserves exactly the server host address.
+
+ -- wg_manager local package <root@localhost>  Wed, 07 Oct 2026 11:20:00 +0200
+
 wg-manager (0.1.0-12) unstable; urgency=medium
 
   * Persist peers created by the controller independently from wg0.conf.
