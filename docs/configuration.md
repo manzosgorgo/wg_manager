@@ -164,7 +164,9 @@ specificati nel file.
 : Rete dalla quale possono essere assegnati gli IP dei peer.
 
 `server_address`
-: Indirizzo del server WireGuard riportato nei dati di provisioning.
+: Indirizzo del server WireGuard riportato nei dati di provisioning. Deve essere
+  espresso come singolo host (production: `10.20.0.1/32`) così viene considerato
+  un indirizzo occupato e non una rete.
 
 ## Apache
 
