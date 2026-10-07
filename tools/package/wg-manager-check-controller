@@ -31,6 +31,22 @@ else
     bad "/etc/wg-manager/wg-manager.conf is missing"
 fi
 
+state_file="/var/lib/wg-manager/controller/peers.json"
+if [ -f /etc/wg-manager/wg-manager.conf ]; then
+    configured_state=$(sed -n '/^[[:space:]]*\[manager\][[:space:]]*$/,/^[[:space:]]*\[/ {
+        s/^[[:space:]]*state_file[[:space:]]*=[[:space:]]*//p
+    }' /etc/wg-manager/wg-manager.conf | head -n1)
+    if [ -n "$configured_state" ]; then
+        state_file="$configured_state"
+    fi
+fi
+state_dir=$(dirname "$state_file")
+if [ -d "$state_dir" ] && runuser -u wg-manager -- test -w "$state_dir"; then
+    ok "$state_dir is writable by wg-manager"
+else
+    bad "$state_dir is not writable by wg-manager"
+fi
+
 for file in     /etc/wg-manager/cert/ca.crt     /etc/wg-manager/cert/controller/server.crt     /etc/wg-manager/cert/controller/server.key
 do
     if [ -f "$file" ]; then
