@@ -23,6 +23,7 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 PrivateDevices=yes
 ProtectSystem=strict
+ReadWritePaths=/var/lib/wg-manager/controller
 ProtectHome=yes
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
